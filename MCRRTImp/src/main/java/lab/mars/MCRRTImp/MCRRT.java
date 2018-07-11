@@ -40,7 +40,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
             availableDirections.add(rotation);
         }
         List<Vector2> Way = new ArrayList<>();
-        for (int i = 0; i < n; ) {
+        do {
             double randomR = MathUtil.random(0, R);
             double randomTheta = MathUtil.random(-alpha, alpha);
             Vector2 SA = direction.cpy().rotate(randomTheta).normalize().scale(randomR);
@@ -59,8 +59,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
                     availableDirections.stream().collect(Collectors.toMap(dir -> dir, SA::angle))
                             .entrySet().stream().sorted(Comparator.comparingDouble(Map.Entry::getValue));
 
-            i++;
-        }
+        } while (Way.size() != n);
         return null;
     }
 }

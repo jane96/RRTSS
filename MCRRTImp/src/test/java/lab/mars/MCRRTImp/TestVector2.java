@@ -43,7 +43,8 @@ public class TestVector2 {
         Vector2 v1 = new Vector2(1, 0);
         Vector2 v2 = v1.cpy().rotate(30);
         System.out.println(v2);
-        assert MathUtil.epsilonEquals(v2.x, Math.cos(Math.PI / 6)) && MathUtil.epsilonEquals(v2.y, Math.sin(Math.PI / 6));
+        assert MathUtil.epsilonEquals(v2.x, Math.cos(Math.PI / 6));
+        assert MathUtil.epsilonEquals(v2.y, Math.sin(Math.PI / 6));
     }
 
     @Test

@@ -7,7 +7,7 @@ public class TestMathUtil {
     @Test
     public void testDoubleEqualityWithError() {
         double d1 = 1;
-        double d2 = 1.00002;
+        double d2 = 1.0002;
         boolean result = MathUtil.epsilonEquals(d1, d2);
         assert !result;
         result = MathUtil.epsilonEquals(d1, d2, 1);

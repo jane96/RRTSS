@@ -5,7 +5,7 @@
     <parent>
         <artifactId>RRT</artifactId>
         <groupId>lab.mars</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -26,8 +26,8 @@
     <dependencies>
         <dependency>
             <groupId>lab.mars</groupId>
-            <artifactId>RRT</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>RRTBase</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

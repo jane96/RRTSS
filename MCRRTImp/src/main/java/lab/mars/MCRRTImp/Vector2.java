@@ -94,8 +94,8 @@ public class Vector2 implements Vector<Vector2> {
     public Vector2 rotate(double alpha) {
         double cos = Math.cos(alpha * D2R);
         double sin = Math.sin(alpha * D2R);
-        double x_n = x * cos + y * sin;
-        double y_n = -x * sin + y * cos;
+        double x_n = x * cos - y * sin;
+        double y_n = x * sin + y * cos;
         x = x_n;
         y = y_n;
         return this;
