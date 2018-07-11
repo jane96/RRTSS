@@ -19,4 +19,9 @@ public interface Aircraft<V extends Vector<V>> {
      * @return return the aircraft's current available directions in degree
      */
     double rotationLimits();
+
+    /**
+     * @return graduation of rotation angle
+     */
+    int rotationGraduation();
 }

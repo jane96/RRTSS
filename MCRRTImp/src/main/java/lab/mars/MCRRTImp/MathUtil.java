@@ -3,7 +3,7 @@ package lab.mars.MCRRTImp;
 public class MathUtil {
 
     public static boolean epsilonEquals(double d1, double d2) {
-        return epsilonEquals(d1, d2, 0.001);
+        return epsilonEquals(d1, d2, 0.00001);
     }
 
     public static boolean epsilonEquals(double d1, double d2, double epsilon) {
@@ -11,6 +11,20 @@ public class MathUtil {
             return true;
         }
         return false;
+    }
+
+    /**
+     * returns a random number in [low, up)
+     *
+     * @param low
+     * @param up
+     * @return
+     */
+    public static double random(double low, double up) {
+        if (low == up) {
+            return low;
+        }
+        return Math.random() * (up - low) + low;
     }
 
 }
