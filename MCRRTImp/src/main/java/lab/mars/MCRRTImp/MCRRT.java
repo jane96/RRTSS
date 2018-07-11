@@ -5,21 +5,23 @@ import lab.mars.RRTBase.*;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
 
 
-    public MCRRT(
-            Provider<List<Obstacle>> obstacleProvider,
-            Provider<Attacker> aircraftProvider,
-            Provider<WayPoint2D> targetProvider,
-            Applier<Path2D> pathApplier
+    public MCRRT(float deltaTime,
+                 Provider<List<Obstacle>> obstacleProvider,
+                 Provider<Attacker> aircraftProvider,
+                 Provider<WayPoint2D> targetProvider,
+                 Applier<Path2D> pathApplier
     ) {
-        super(obstacleProvider, aircraftProvider, targetProvider, pathApplier);
+        super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
     }
 
 
@@ -42,7 +44,21 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
             double randomR = MathUtil.random(0, R);
             double randomTheta = MathUtil.random(-alpha, alpha);
             Vector2 SA = direction.cpy().rotate(randomTheta).normalize().scale(randomR);
-            List<Double> sorted = availableDirections.stream().collect(Collectors.toMap(dir -> dir, dir -> SA.angle((Vector2) dir)));
+            Vector2 A = SA.cpy().add(position);
+            boolean collide = false;
+            for (Obstacle obs : obstacles) {
+                if (obs.contains(A)) {
+                    collide = true;
+                    break;
+                }
+            }
+            if (collide) {
+                continue;
+            }
+            Stream<Map.Entry<Vector2, Double>> sorted =
+                    availableDirections.stream().collect(Collectors.toMap(dir -> dir, SA::angle))
+                            .entrySet().stream().sorted(Comparator.comparingDouble(Map.Entry::getValue));
+
             i++;
         }
         return null;
