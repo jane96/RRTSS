@@ -2,6 +2,7 @@ package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.WayPoint;
 
+import java.util.LinkedList;
 import java.util.Objects;
 
 public class WayPoint2D implements WayPoint<Vector2> {

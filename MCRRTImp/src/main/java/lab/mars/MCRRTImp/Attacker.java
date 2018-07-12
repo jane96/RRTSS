@@ -3,6 +3,8 @@ package lab.mars.MCRRTImp;
 import lab.mars.RRTBase.Aircraft;
 import lab.mars.RRTBase.Vector;
 
+import java.util.List;
+
 public class Attacker implements Aircraft<Vector2> {
 
     private Vector2 position;
