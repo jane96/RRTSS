@@ -5,15 +5,13 @@ import java.util.List;
 
 public class DirectionCaculator {
 
-    public static List <AvailableDirectionPoint> getNextPosList(double curX, double curY, double mainDegree, double thetaGap, double timeSlice, double velocity){
+    public static List <AvailableDirectionPoint> getNextPosList(double curX, double curY, double mainDegree, double thetaGap, double timeSlice, double velocity, int directionNum){
         ArrayList <AvailableDirectionPoint> listNextPos = new ArrayList<>();
 
-        for(int i=2; i>=-2; i--){
-            AvailableDirectionPoint nextPos = new AvailableDirectionPoint();
+        for(int i=(directionNum - 1)/2; i>=-(directionNum - 1)/2; i--){
             double newX = curX;
             double newY = curY;
             double alpha = mainDegree + i * thetaGap;
-            nextPos.direction = alpha;
 
             for(int j=1;j<101;j++){
                 double tmpDegree = mainDegree + (i * thetaGap / 100) * j;
@@ -21,8 +19,7 @@ public class DirectionCaculator {
                 newY += Math.sin(Math.toRadians(tmpDegree)) * velocity * (timeSlice / 100);
             }
 
-            nextPos.x = newX;
-            nextPos.y = newY;
+            AvailableDirectionPoint nextPos = new AvailableDirectionPoint(newX, newY, alpha);
             listNextPos.add(nextPos);
         }
 
