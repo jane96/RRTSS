@@ -92,7 +92,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
 
         Provider<Vector2> gridOriginProvider  = null;
         Grid2D grid = new Grid2D(environMentWidth,environMentHeigh,environMentWidth, environMentHeigh,gridOriginProvider);
-        obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,100,currentPosition,targetPosition);
+        obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,200,currentPosition,targetPosition);
         generateNewGrid(grid,obstacleSpace,environMentWidth,environMentHeigh);
         feasiableWayPoint = getFeasibleWayPoint(grid.getGrid());
         return grid;
@@ -100,86 +100,65 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     public  ArrayList<WayPoint2D> classicalRRT(WayPoint2D currentPosition,WayPoint2D targetPosition,ArrayList<CircleObstacle> listObstacle,Grid2D grid2D,double stepLength){
         ArrayList<WayPoint2D> pathList = new ArrayList<>();
         ArrayList<WayPoint2D> leafList = new ArrayList<>();
-        leafList.add(currentPosition);
+        treeList.add(currentPosition);
         int step = 0;
         double randDouble = 0.1d;
-        int ponitNumber = 15;
-        int selectNumber = 10;
+        int ponitNumber = 1;
+        int selectNumber = 1;
         double arriveDistance = stepLength;
         ArrayList<WayPoint2D> selectList = new ArrayList<>();
         selectList.add(currentPosition);
         long start = System.currentTimeMillis();
-        while( step < environMentWidth * environMentHeigh  / 2){
-
-            //generate random point
-            for(int i = 0; i < selectList.size();i++){
-                ArrayList<WayPoint2D> listWay = generateNewPoint(environMentWidth,environMentHeigh,selectList.get(i),targetPosition,ponitNumber,stepLength,randDouble,listObstacle);
-                treeList.addAll(listWay);
-                leafList.addAll(listWay);
-                if(isArriveTarget(listWay,targetPosition,arriveDistance)){
-                    return pathList;
-                }
+        ArrayList<WayPoint2D> listWay = new ArrayList<>();
+        while(step < environMentHeigh * environMentWidth ){
+            //generate a random point
+            WayPoint2D randomPoint = generateRandomPoint(randDouble,targetPosition);
+            WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,targetPosition));
+            if(isArriveTarget(nearPoint,targetPosition,stepLength)){
+                return pathList;
             }
-            selectList.clear();
-            // add listWay to leafList and  select some nearest point
-            int k = 0;
-            while(k < selectNumber && k < leafList.size()){
-                int number = getNearestWaypoint(leafList,targetPosition);
-                WayPoint2D nearPoint = leafList.get(number);
-                selectList.add(nearPoint);
-                //remove selected point from leafList
-                leafList.remove(number);
-                k++;
-            }
+            currentPosition = produceNewTemp(nearPoint,randomPoint,stepLength);
 
-            //currentPosition = nearPoint;
-            //pathList.add(currentPosition);
+            if(isAdjustWayPoint(currentPosition,obstacleSpace,environMentWidth,environMentHeigh)){
+                treeList.add(currentPosition);
+            }
             step++;
-            long end = System.currentTimeMillis();
-            if(end - start >= 3000){
-                break;
-            }
         }
 
         return pathList;
     }
 
-    public boolean isArriveTarget(ArrayList<WayPoint2D> listWay,WayPoint2D targetPosition,double distance){
-        for (int i = 0; i < listWay.size(); i++) {
-            if(listWay.get(i).origin.distance(targetPosition.origin) <= distance){
+    public boolean isArriveTarget(WayPoint2D wayPoint2D,WayPoint2D targetPosition,double distance){
+
+            if(wayPoint2D.origin.distance(targetPosition.origin) <= distance){
                 return true;
             }
-        }
+
         return false;
     }
-    /** 
-    * @Description: generate n new  point 
-    * @Param: [currentPosition, listObstacle, pointNumber, stepLength] 
-    * @return: java.util.ArrayList<lab.mars.HRRTImp.WayPoint2D> 
-    * @Date: 2018/7/12 
-    */ 
-    public ArrayList<WayPoint2D> generateNewPoint(int w,int h,WayPoint2D currentPosition,WayPoint2D targetPosition,int pointNumber,double stepLength,double closeToTargetProb,ArrayList<CircleObstacle> obstacleSpace){
-        ArrayList<WayPoint2D> listWay = new ArrayList<>();
-
-        int i = 0;
-        while(i < pointNumber){
-            WayPoint2D wayPoint2D = new WayPoint2D();
-            double randNumber = produceRandomNumber();
-            if(randNumber < closeToTargetProb){
-                wayPoint2D = produceNewTemp(currentPosition,targetPosition,stepLength);
-            }else{
-                int randPoint = (int)(produceRandomNumber() * feasiableWayPoint.size());
-                wayPoint2D = produceNewTemp(currentPosition,feasiableWayPoint.get(randPoint),stepLength);
-            }
-
-            if(!isConflictWithPoint(obstacleSpace,wayPoint2D.origin.x,wayPoint2D.origin.y) && 0 < wayPoint2D.origin.x && wayPoint2D.origin.x < h && 0 < wayPoint2D.origin.y && wayPoint2D.origin.y < w){
-
-                listWay.add(wayPoint2D);
-            }
-
-            i++;
+    public boolean isAdjustWayPoint(WayPoint2D wayPoint2D,ArrayList<CircleObstacle> obstacleSpace,int w,int h){
+        double x = wayPoint2D.origin.x;
+        double y = wayPoint2D.origin.y;
+        if(isConflictWithPoint(obstacleSpace,x,y) || x <= 0 || x >= h || y <= 0 || y >= w){
+            return false;
         }
-        return listWay;
+        return true;
+    }
+    public WayPoint2D generateNewPoint(int w,int h,WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength,double closeToTargetProb,ArrayList<CircleObstacle> obstacleSpace){
+        WayPoint2D wayPoint2D = new WayPoint2D();
+        double randNumber = produceRandomNumber();
+        if(randNumber < closeToTargetProb){
+            wayPoint2D = produceNewTemp(currentPosition,targetPosition,stepLength);
+        }else{
+            int randPoint = (int)(produceRandomNumber() * feasiableWayPoint.size());
+            wayPoint2D = produceNewTemp(currentPosition,feasiableWayPoint.get(randPoint),stepLength);
+        }
+        double x = wayPoint2D.origin.x;
+        double y = wayPoint2D.origin.y;
+        if(isConflictWithPoint(obstacleSpace,x,y) || x <= 0 || x >= h || y <= 0 || y >= w){
+            wayPoint2D = null;
+        }
+        return wayPoint2D;
 
 
     }
@@ -355,6 +334,17 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         
     }
 
+    public WayPoint2D generateRandomPoint(double closeToTargetProb,WayPoint2D targetPosition){
+        WayPoint2D wayPoint2D = new WayPoint2D();
+        double randNumber = produceRandomNumber();
+        if(randNumber < closeToTargetProb){
+            wayPoint2D = targetPosition;
+        }else{
+            int randPoint = (int)(produceRandomNumber() * feasiableWayPoint.size());
+            wayPoint2D = feasiableWayPoint.get(randPoint);
+        }
+        return wayPoint2D;
+    }
     public List<WayPoint2D> produceTempPoint(){
         return null;
     }

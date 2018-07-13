@@ -18,9 +18,7 @@ import lab.mars.RRTBase.WayPoint;
 import java.util.ArrayList;
 
 
-/**
- * @author zk
- */
+
 public class MainUI extends Application {
 
     public Parent createContent() {
@@ -44,10 +42,10 @@ public class MainUI extends Application {
         }
         DecisionMaker decisoner = new DecisionMaker();
         WayPoint2D currentPosition = new WayPoint2D(new Vector2(70,3));
-        WayPoint2D targetPosition = new WayPoint2D(new Vector2(160,160));
+        WayPoint2D targetPosition = new WayPoint2D(new Vector2(100,100));
         Grid2D grid2D = decisoner.perform(currentPosition,targetPosition);
         double times =7;
-        double stepLength = 5;
+        double stepLength = 3;
         boolean[][] matrix = grid2D.getGrid();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
@@ -67,16 +65,17 @@ public class MainUI extends Application {
             root.getChildren().add(c);
         }
 
-        root.getChildren().add(new Circle(20 * times,3 * times,3,Color.YELLOW));
-        root.getChildren().add(new Circle(60 * times,60 * times,5,Color.RED));
+        root.getChildren().add(new Circle(70 * times,3 * times,3,Color.YELLOW));
+        root.getChildren().add(new Circle(100 * times,100 * times,5,Color.RED));
         ArrayList<WayPoint2D> pathList = decisoner.classicalRRT(currentPosition,targetPosition,list,grid2D,stepLength);
         for(int i = 0; i < pathList.size() - 1; i++){
             root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times,pathList.get(i).origin.y * times)),new WayPoint2D(new Vector2(pathList.get(i+1).origin.x * 20,pathList.get(i+1).origin.y * 20)),Color.DEEPPINK));
         }
         ArrayList<WayPoint2D> treeList = decisoner.getTreeList();
-        for (int i = 0; i < treeList.size(); i++) {
-            Circle circle = new Circle(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times,2,Color.YELLOW);
-            root.getChildren().add(circle);
+        for (int i = 0; i < treeList.size() - 1; i++) {
+            Line line = createLine(new WayPoint2D(new Vector2(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times)),new WayPoint2D(new Vector2(treeList.get(i+1).origin.x * times,treeList.get(i+1).origin.y * times)),Color.BLACK);
+
+            root.getChildren().add(line);
         }
         return root;
     }
