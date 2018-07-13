@@ -99,26 +99,17 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     }
     public  ArrayList<WayPoint2D> classicalRRT(WayPoint2D currentPosition,WayPoint2D targetPosition,ArrayList<CircleObstacle> listObstacle,Grid2D grid2D,double stepLength){
         ArrayList<WayPoint2D> pathList = new ArrayList<>();
-        ArrayList<WayPoint2D> leafList = new ArrayList<>();
         treeList.add(currentPosition);
         int step = 0;
         double randDouble = 0.1d;
-        int ponitNumber = 1;
-        int selectNumber = 1;
-        double arriveDistance = stepLength;
-        ArrayList<WayPoint2D> selectList = new ArrayList<>();
-        selectList.add(currentPosition);
-        long start = System.currentTimeMillis();
-        ArrayList<WayPoint2D> listWay = new ArrayList<>();
-        while(step < environMentHeigh * environMentWidth ){
+       while(step < environMentHeigh * environMentWidth ){
             //generate a random point
             WayPoint2D randomPoint = generateRandomPoint(randDouble,targetPosition);
-            WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,targetPosition));
+            WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,randomPoint));
             if(isArriveTarget(nearPoint,targetPosition,stepLength)){
                 return pathList;
             }
             currentPosition = produceNewTemp(nearPoint,randomPoint,stepLength);
-
             if(isAdjustWayPoint(currentPosition,obstacleSpace,environMentWidth,environMentHeigh)){
                 treeList.add(currentPosition);
             }

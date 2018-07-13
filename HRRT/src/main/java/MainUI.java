@@ -45,7 +45,7 @@ public class MainUI extends Application {
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(100,100));
         Grid2D grid2D = decisoner.perform(currentPosition,targetPosition);
         double times =7;
-        double stepLength = 3;
+        double stepLength = 5;
         boolean[][] matrix = grid2D.getGrid();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
@@ -68,14 +68,17 @@ public class MainUI extends Application {
         root.getChildren().add(new Circle(70 * times,3 * times,3,Color.YELLOW));
         root.getChildren().add(new Circle(100 * times,100 * times,5,Color.RED));
         ArrayList<WayPoint2D> pathList = decisoner.classicalRRT(currentPosition,targetPosition,list,grid2D,stepLength);
-        for(int i = 0; i < pathList.size() - 1; i++){
+        /*for(int i = 0; i < pathList.size() - 1; i++){
             root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times,pathList.get(i).origin.y * times)),new WayPoint2D(new Vector2(pathList.get(i+1).origin.x * 20,pathList.get(i+1).origin.y * 20)),Color.DEEPPINK));
-        }
+        }*/
         ArrayList<WayPoint2D> treeList = decisoner.getTreeList();
-        for (int i = 0; i < treeList.size() - 1; i++) {
-            Line line = createLine(new WayPoint2D(new Vector2(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times)),new WayPoint2D(new Vector2(treeList.get(i+1).origin.x * times,treeList.get(i+1).origin.y * times)),Color.BLACK);
-
-            root.getChildren().add(line);
+        for (int i = 0; i < treeList.size(); i++) {
+            double x = treeList.get(i).origin.x;
+            double y = treeList.get(i).origin.y;
+            double radius = treeList.get(i).radius;
+            //Line line = createLine(new WayPoint2D(new Vector2(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times)),new WayPoint2D(new Vector2(treeList.get(i+1).origin.x * times,treeList.get(i+1).origin.y * times)),Color.BLACK);
+            Circle circle = new Circle(x * times,y * times,3,Color.YELLOW);
+            root.getChildren().add(circle);
         }
         return root;
     }
