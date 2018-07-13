@@ -37,7 +37,6 @@ public class WayPoint2D implements WayPoint<Vector2> {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(origin, radius, utility);
     }
 

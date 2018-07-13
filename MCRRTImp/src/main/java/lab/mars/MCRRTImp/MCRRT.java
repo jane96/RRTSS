@@ -24,6 +24,13 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
     }
 
+    private Path2D firstLevelRRT() {
+        double R = aircraft.viewDistance();
+        Vector2 aircraftPosition = aircraft.position();
+        Grid2D gridWorld = new Grid2D(R, R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
+        //TODO : need to complete grid world scan
+        return null;
+    }
 
     @Override
     public Path2D algorithm() {

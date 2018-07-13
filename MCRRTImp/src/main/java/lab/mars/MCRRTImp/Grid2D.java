@@ -1,7 +1,10 @@
 package lab.mars.MCRRTImp;
 
 import javafx.util.Pair;
+import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
+
+import java.util.List;
 
 /**
  * A rectangular grid with discretization <br>
@@ -46,6 +49,12 @@ public class Grid2D {
         int row = (int) (delta.x / xGrad);
         int column = (int) (delta.y / yGrad);
         return new Vector2(row, column);
+    }
+
+    public void scan(List<Obstacle> obstacles) {
+        Vector2 cursor = gridOriginProvider.provide();
+        double cursorStep = width / rowCount;
+
     }
 
     /**

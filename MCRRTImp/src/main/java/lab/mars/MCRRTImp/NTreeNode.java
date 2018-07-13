@@ -6,10 +6,9 @@ import java.util.stream.Collectors;
 
 public class NTreeNode<E> implements Iterable<E> {
 
-    E element;
-
-    NTreeNode<E> parent;
-    LinkedList<NTreeNode<E>> children;
+    private E element;
+    private NTreeNode<E> parent;
+    private LinkedList<NTreeNode<E>> children;
 
     public NTreeNode(E element, NTreeNode<E> parent) {
         this.element = element;
@@ -30,6 +29,14 @@ public class NTreeNode<E> implements Iterable<E> {
 
     public void concatChild(NTreeNode<E>... child) {
         for (NTreeNode<E> c : child) {
+            c.parent = this;
+            this.children.add(c);
+        }
+    }
+
+    public void createChild(E... elements) {
+        for (E e : elements) {
+            NTreeNode<E> c = new NTreeNode<>(e);
             c.parent = this;
             this.children.add(c);
         }
