@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
+public class NTreeNode<E> implements Iterable<E> {
 
     E element;
 
@@ -28,9 +28,13 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         this.children.set(idx, child);
     }
 
-    public void concatChild(NTreeNode<E> child) {
-        this.children.add(child);
+    public void concatChild(NTreeNode<E>... child) {
+        for (NTreeNode<E> c : child) {
+            c.parent = this;
+            this.children.add(c);
+        }
     }
+
 
     public NTreeNode<E> getParent() {
         return parent;
@@ -38,18 +42,6 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
 
     public List<NTreeNode<E>> getChildren() {
         return children;
-    }
-
-    public List<NTreeNode<E>> find(E element) {
-        Iterator<NTreeNode<E>> it = this.iterator();
-        List<NTreeNode<E>> ret = new ArrayList<>();
-        while (it.hasNext()) {
-            NTreeNode<E> node = it.next();
-            if (element.equals(node.element)) {
-                ret.add(node);
-            }
-        }
-        return ret;
     }
 
     private class VisitRecorder {
@@ -61,41 +53,26 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         }
     }
 
-    public NTreeNode<E> findTrace(E element) {
+    public List<E> findTrace(E element) {
         Stack<VisitRecorder> stack = new Stack<>();
-        VisitRecorder now = stack.peek();
+        stack.push(new VisitRecorder(this));
         while (true) {
-            VisitRecorder poped = null;
+            VisitRecorder now = stack.peek();
             if (now.node.children.size() == 0) {
-                poped = stack.pop();
-                if (stack.size() != 0) {
-                    VisitRecorder parent = stack.peek();
-                    parent.childVisited++;
-                }
+                stack.pop();
+                now = stack.peek();
             }
             if (now.childVisited == now.node.children.size()) {
-                poped = stack.pop();
+                stack.pop();
+                now = stack.peek();
             }
-            for (NTreeNode<E> aChildren : children) {
-                stack.push(new VisitRecorder(aChildren));
-            }
-            if (poped != null) {
-                if (poped.node.element.equals(element)) {
-                    stack.push(poped);
-                    break;
-                }
+            stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
+            if (stack.peek().node.element.equals(element)) {
+                break;
             }
         }
-        List<NTreeNode<E>> trace = stack.stream().map(e -> e.node).collect(Collectors.toList());
-        Collections.reverse(trace);
-        NTreeNode<E> start = trace.get(0);
-        NTreeNode<E> traverser = start;
-        for (int i = 1; i < trace.size(); i++) {
-            NTreeNode<E> cur = trace.get(i);
-            traverser.concatChild(cur);
-            traverser = cur;
-        }
-        return start;
+        List<E> trace = stack.stream().map(e -> e.node.element).collect(Collectors.toList());
+        return trace;
     }
 
     private NTreeNode<E> self() {
@@ -103,11 +80,11 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
     }
 
     @Override
-    public Iterator<NTreeNode<E>> iterator() {
+    public Iterator<E> iterator() {
         return new NTreeIterator();
     }
 
-    public class NTreeIterator implements Iterator<NTreeNode<E>> {
+    public class NTreeIterator implements Iterator<E> {
 
 
         Stack<VisitRecorder> stack;
@@ -119,26 +96,20 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
 
         @Override
         public boolean hasNext() {
-            return stack.empty();
+            return !stack.empty();
         }
 
         @Override
-        public NTreeNode<E> next() {
-            VisitRecorder now = stack.peek();
-            if (now.node.children.size() == 0) {
-                stack.pop();
-                if (stack.size() != 0) {
-                    VisitRecorder parent = stack.peek();
-                    parent.childVisited++;
+        public E next() {
+            while (!stack.empty()) {
+                VisitRecorder now = stack.peek();
+                if (now.node.children.size() == 0) {
+                    return stack.pop().node.element;
                 }
-                return now.node;
-            }
-            if (now.childVisited == now.node.children.size()) {
-                stack.pop();
-                return now.node;
-            }
-            for (NTreeNode<E> aChildren : children) {
-                stack.push(new VisitRecorder(aChildren));
+                if (now.childVisited == now.node.children.size()) {
+                    return stack.pop().node.element;
+                }
+                stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
             }
             throw new RuntimeException("NTreeNode bug");
         }

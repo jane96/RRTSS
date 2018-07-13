@@ -15,7 +15,7 @@ public class Grid2D {
     /**
      * column first, row second grid
      */
-    double[][] grid;
+    boolean[][] grid;
 
     private double max = 0;
 
@@ -49,17 +49,13 @@ public class Grid2D {
     }
 
     /**
-     * record one childVisited of a position in the original coordinate system
+     * record one visit time of a position in the original coordinate system
      *
      * @param position a position in the original coordinate system
      */
     public void record(Vector2 position) {
         Vector2 transformed = transform(position);
-        double newValue = grid[((int) transformed.x)][((int) transformed.y)] + 0.1;
-        if (newValue > max) {
-            max = newValue;
-        }
-        grid[((int) transformed.x)][((int) transformed.y)] = newValue;
+        grid[((int) transformed.x)][((int) transformed.y)] = true;
     }
 
     /**
@@ -68,9 +64,9 @@ public class Grid2D {
      * @param position a position in the original coordinate system
      * @return position's childVisited time divided by the current position
      */
-    public double sample(Vector2 position) {
+    public boolean sample(Vector2 position) {
         Vector2 transformed = transform(position);
-        return grid[((int) transformed.x)][((int) transformed.y)] / max;
+        return grid[((int) transformed.x)][((int) transformed.y)];
     }
 
     /**
@@ -79,17 +75,15 @@ public class Grid2D {
      * the position's x should be (0 + offset, width + offset) <br>
      * the position's y should be (0 + offset, height + offset) <br>
      * offset is determined by the delta between origin and this position
-     *
-     * @param rowCount           how much rows in the grid, row is defined in y direction
-     * @param columnCount        how much columns in the grid, column is defined in x direction
      * @param gridOriginProvider provide current left bottom corner of the grid
+     * @param scalar resolution scalar, used to determine row count and column count
      */
-    public Grid2D(int rowCount, int columnCount, double width, double height, Provider<Vector2> gridOriginProvider) {
-        this.rowCount = rowCount;
-        this.columnCount = columnCount;
+    public Grid2D(double width, double height, double scalar, Provider<Vector2> gridOriginProvider) {
+        this.rowCount = (int) (width / scalar);
+        this.columnCount = (int) (height / scalar);
         this.width = width;
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;
-        this.grid = new double[columnCount][rowCount];
+        this.grid = new boolean[columnCount][rowCount];
     }
 }
