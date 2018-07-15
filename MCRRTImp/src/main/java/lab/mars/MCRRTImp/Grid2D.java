@@ -54,13 +54,14 @@ public class Grid2D {
         Vector2 cursor = origin.cpy();
         double cursorXStep = width / (columnCount);
         double cursorYStep = height / (rowCount);
+        double deltaX = cursorXStep / 10.0;
+        double deltaY = cursorYStep / 10.0;
+        Vector2 moved = new Vector2(0, 0);
         while(true) {
             for (int c = 0; c < 10; c ++) {
                 boolean flag = false;
                 for (int r = 0; r < 10; r ++) {
-                    double x = cursorXStep / 10.0 * c;
-                    double y = cursorYStep / 10.0 * r;
-                    Vector2 moved = cursor.cpy().add(x, y);
+                    moved.set(cursor.x + c * deltaX, cursor.y + r * deltaY);
                     if (sample(moved)) {
                         flag =true;
                         break;
