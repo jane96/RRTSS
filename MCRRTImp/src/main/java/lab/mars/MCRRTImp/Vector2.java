@@ -71,6 +71,12 @@ public class Vector2 implements Vector<Vector2> {
         return this;
     }
 
+    public Vector2 add(double x, double y) {
+        this.x += x;
+        this.y += y;
+        return this;
+    }
+
     public double dot(Vector2 v) {
         return x * v.x + y * v.y;
     }

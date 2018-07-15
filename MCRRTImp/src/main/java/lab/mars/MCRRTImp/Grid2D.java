@@ -52,35 +52,39 @@ public class Grid2D {
     public void scan(List<Obstacle> obstacles) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 cursor = origin.cpy();
-        double cursorXStep = width / (columnCount * 10);
-        double cursorYStep = height / (rowCount * 10);
+        double cursorXStep = width / (columnCount);
+        double cursorYStep = height / (rowCount);
         while(true) {
-            if (cursor.x >= (width - cursorXStep) && cursor.y >= (height - cursorYStep)) {
-                break;
-            }
-            obstacles.forEach(obs -> {
-                if (obs.contains(cursor)) {
-                    record(cursor);
+            for (int c = 0; c < 10; c ++) {
+                boolean flag = false;
+                for (int r = 0; r < 10; r ++) {
+                    double x = cursorXStep / 10.0 * c;
+                    double y = cursorYStep / 10.0 * r;
+                    Vector2 moved = cursor.cpy().add(x, y);
+                    if (sample(moved)) {
+                        flag =true;
+                        break;
+                    }
+                    obstacles.forEach(obs -> {
+                        if (obs.contains(moved)) {
+                            record(moved);
+                        }
+                    });
                 }
-            });
-            if (sample(cursor)) {
-                Vector2 transformed = transform(cursor);
-                if (transformed.x == columnCount - 1 && transformed.y == rowCount - 1) {
+                if (flag) {
                     break;
                 }
-                if (transformed.x == columnCount - 1) {
-                    cursor.x = origin.x;
-                    cursor.y = (transformed.y + 1) * cursorYStep * 10;
-                } else {
-                    cursor.x = (transformed.x + 1) * cursorXStep * 10;
-                }
-                continue;
             }
-            if (cursor.x >= (width - cursorXStep)) {
-                cursor.y += cursorYStep;
+            Vector2 transformed = transform(cursor);
+            if ((int)transformed.x == columnCount - 1 && (int)transformed.y == rowCount - 1) {
+                break;
+            }
+            if ((int)transformed.x == columnCount - 1) {
                 cursor.x = origin.x;
+                cursor.y = (transformed.y + 1) * cursorYStep;
             } else {
-                cursor.x += cursorXStep;
+                cursor.x = (transformed.x + 1) * cursorXStep;
+                cursor.y = (transformed.y) * cursorYStep;
             }
         }
     }
@@ -90,7 +94,8 @@ public class Grid2D {
      *
      * @param position a position in the original coordinate system
      */
-    public void record(Vector2 position) {
+    public void record(Vector2 position)
+    {
         Vector2 transformed = transform(position);
         grid[((int) transformed.x)][((int) transformed.y)] = true;
     }
