@@ -20,8 +20,6 @@ public class Grid2D {
      */
     boolean[][] grid;
 
-    private double max = 0;
-
     /**
      * represents y dimension
      */
@@ -52,9 +50,39 @@ public class Grid2D {
     }
 
     public void scan(List<Obstacle> obstacles) {
-        Vector2 cursor = gridOriginProvider.provide();
-        double cursorStep = width / rowCount;
-
+        Vector2 origin = gridOriginProvider.provide();
+        Vector2 cursor = origin.cpy();
+        double cursorXStep = width / (columnCount * 10);
+        double cursorYStep = height / (rowCount * 10);
+        while(true) {
+            if (cursor.x >= (width - cursorXStep) && cursor.y >= (height - cursorYStep)) {
+                break;
+            }
+            obstacles.forEach(obs -> {
+                if (obs.contains(cursor)) {
+                    record(cursor);
+                }
+            });
+            if (sample(cursor)) {
+                Vector2 transformed = transform(cursor);
+                if (transformed.x == columnCount - 1 && transformed.y == rowCount - 1) {
+                    break;
+                }
+                if (transformed.x == columnCount - 1) {
+                    cursor.x = origin.x;
+                    cursor.y = (transformed.y + 1) * cursorYStep * 10;
+                } else {
+                    cursor.x = (transformed.x + 1) * cursorXStep * 10;
+                }
+                continue;
+            }
+            if (cursor.x >= (width - cursorXStep)) {
+                cursor.y += cursorYStep;
+                cursor.x = origin.x;
+            } else {
+                cursor.x += cursorXStep;
+            }
+        }
     }
 
     /**
@@ -85,11 +113,12 @@ public class Grid2D {
      * the position's y should be (0 + offset, height + offset) <br>
      * offset is determined by the delta between origin and this position
      * @param gridOriginProvider provide current left bottom corner of the grid
-     * @param scalar resolution scalar, used to determine row count and column count
+     * @param scaledHeight column count
+     * @param scaledWidth row count
      */
-    public Grid2D(double width, double height, double scalar, Provider<Vector2> gridOriginProvider) {
-        this.rowCount = (int) (width / scalar);
-        this.columnCount = (int) (height / scalar);
+    public Grid2D(double width, double height, int scaledWidth, int scaledHeight, Provider<Vector2> gridOriginProvider) {
+        this.rowCount = scaledHeight;
+        this.columnCount = scaledWidth;
         this.width = width;
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;

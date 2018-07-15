@@ -51,9 +51,6 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
     }
 
-    public DecisionMaker() {
-    }
-
     @Override
     public Path2D algorithm() {
         Path2D path = new Path2D();

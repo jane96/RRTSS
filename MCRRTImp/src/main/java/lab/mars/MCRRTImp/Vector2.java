@@ -143,4 +143,10 @@ public class Vector2 implements Vector<Vector2> {
 
         return Objects.hash(x, y);
     }
+
+    public Vector2 set(double x, double y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
 }

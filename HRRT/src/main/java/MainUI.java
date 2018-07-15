@@ -40,7 +40,7 @@ public class MainUI extends Application {
             label2.setLayoutY(50 * i);
             root.getChildren().add(label2);
         }
-        DecisionMaker decisoner = new DecisionMaker();
+        DecisionMaker decisoner = null;
         WayPoint2D currentPosition = new WayPoint2D(new Vector2(70,3));
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(100,100));
         Grid2D grid2D = decisoner.perform(currentPosition,targetPosition);
