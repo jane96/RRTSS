@@ -1,15 +1,16 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.Path;
+import lab.mars.RRTBase.WayPoint;
 
 import java.util.LinkedList;
 
-public class Path2D implements Path<WayPoint2D> {
+public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
 
 
-    private LinkedList<WayPoint2D> pathStorage = new LinkedList<>();
+    private LinkedList<W> pathStorage = new LinkedList<>();
 
-    public WayPoint2D next(WayPoint2D current) {
+    public W next(W current) {
         int idx = pathStorage.indexOf(current);
         if (idx >= pathStorage.size() - 1) {
             return null;
@@ -17,7 +18,7 @@ public class Path2D implements Path<WayPoint2D> {
         return pathStorage.get(idx + 1);
     }
 
-    public WayPoint2D last(WayPoint2D current) {
+    public W last(W current) {
         int idx = pathStorage.indexOf(current);
         if (idx == 1) {
             return null;
@@ -31,16 +32,16 @@ public class Path2D implements Path<WayPoint2D> {
     }
 
     @Override
-    public void add(WayPoint2D wayPoint2D) {
-        pathStorage.addLast(wayPoint2D);
+    public void add(W W) {
+        pathStorage.addLast(W);
     }
 
 
-    public void add(int idx, WayPoint2D wayPoint) {
+    public void add(int idx, W wayPoint) {
         pathStorage.set(idx, wayPoint);
     }
 
-    public WayPoint2D get(int idx) {
+    public W get(int idx) {
         return pathStorage.get(idx);
     }
 
@@ -49,22 +50,22 @@ public class Path2D implements Path<WayPoint2D> {
         return pathStorage.isEmpty();
     }
 
-    public WayPoint2D removeAt(int idx) {
+    public W removeAt(int idx) {
         return pathStorage.remove(idx);
     }
 
     @Override
-    public void remove(WayPoint2D current) {
+    public void remove(W current) {
         pathStorage.removeFirstOccurrence(current);
     }
 
     @Override
-    public WayPoint2D start() {
+    public W start() {
         return pathStorage.peekFirst();
     }
 
     @Override
-    public WayPoint2D end() {
+    public W end() {
         return pathStorage.peekLast();
     }
 }

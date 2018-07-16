@@ -1,40 +1,42 @@
 package lab.mars.MCRRTImp;
-
-
 import lab.mars.RRTBase.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
+public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>> {
 
 
     public MCRRT(float deltaTime,
                  Provider<List<Obstacle>> obstacleProvider,
                  Provider<Attacker> aircraftProvider,
                  Provider<WayPoint2D> targetProvider,
-                 Applier<Path2D> pathApplier
+                 Applier<Path2D<WayPoint2D>> pathApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
     }
 
-    private Path2D firstLevelRRT() {
+    private Path2D<Cell2D> firstLevelRRT() {
         double R = aircraft.viewDistance();
         Vector2 aircraftPosition = aircraft.position();
-//        Grid2D gridWorld = new Grid2D(R, R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
+        Grid2D gridWorld = new Grid2D(R, R, 100, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
+        obstacles.add(new EyeSight(() -> aircraftPosition, () -> R));
+        gridWorld.scan(obstacles);
+        Vector2 gridAircraft = gridWorld.toCellCenter(aircraftPosition);
+        Vector2 gridCellSize = gridWorld.cellSize();
+        NTreeNode<Cell2D> root = new NTreeNode<>(new Cell2D(gridAircraft, gridCellSize.x, gridCellSize.y));
+        
         //TODO : need to complete grid world scan
         return null;
     }
 
     @Override
-    public Path2D algorithm() {
-        Path2D path = new Path2D();
+    public Path2D<WayPoint2D> algorithm() {
+        Path2D<WayPoint2D> path = new Path2D<>();
         double R = aircraft.viewDistance();
         double totalRotationAngle = aircraft.rotationLimits();
         double alpha = totalRotationAngle / 2.0;

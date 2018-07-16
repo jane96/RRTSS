@@ -1,6 +1,5 @@
 package lab.mars.MCRRTImp;
 
-import javafx.util.Pair;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
 
@@ -34,36 +33,50 @@ public class Grid2D {
 
     private double height;
 
+    private double widthScalar;
+
+    private double heightScalar;
+
     /**
      * provides current position of left bottom corner of the grid
      */
     private Provider<Vector2> gridOriginProvider;
 
-    private Vector2 transform(Vector2 position) {
+    public Vector2 transform(Vector2 position) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 delta = position.subtract(origin);
-        double xGrad = width / columnCount;
-        double yGrad = height / rowCount;
+        double xGrad = widthScalar;
+        double yGrad = heightScalar;
         int row = (int) (delta.x / xGrad);
         int column = (int) (delta.y / yGrad);
         return new Vector2(row, column);
     }
 
+    public Vector2 cellSize() {
+        return new Vector2(widthScalar, heightScalar);
+    }
+
+    public Vector2 toCellCenter(Vector2 position) {
+        Vector2 transformed = transform(position);
+        transformed.add(0.5, 0.5);
+        return transformed.scale(widthScalar, heightScalar);
+    }
+
     public void scan(List<Obstacle> obstacles) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 cursor = origin.cpy();
-        double cursorXStep = width / (columnCount);
-        double cursorYStep = height / (rowCount);
+        double cursorXStep = widthScalar;
+        double cursorYStep = heightScalar;
         double deltaX = cursorXStep / 10.0;
         double deltaY = cursorYStep / 10.0;
         Vector2 moved = new Vector2(0, 0);
-        while(true) {
-            for (int c = 0; c < 10; c ++) {
+        while (true) {
+            for (int c = 0; c < 10; c++) {
                 boolean flag = false;
-                for (int r = 0; r < 10; r ++) {
+                for (int r = 0; r < 10; r++) {
                     moved.set(cursor.x + c * deltaX, cursor.y + r * deltaY);
-                    if (sample(moved)) {
-                        flag =true;
+                    if (check(moved)) {
+                        flag = true;
                         break;
                     }
                     obstacles.forEach(obs -> {
@@ -77,10 +90,10 @@ public class Grid2D {
                 }
             }
             Vector2 transformed = transform(cursor);
-            if ((int)transformed.x == columnCount - 1 && (int)transformed.y == rowCount - 1) {
+            if ((int) transformed.x == columnCount - 1 && (int) transformed.y == rowCount - 1) {
                 break;
             }
-            if ((int)transformed.x == columnCount - 1) {
+            if ((int) transformed.x == columnCount - 1) {
                 cursor.x = origin.x;
                 cursor.y = (transformed.y + 1) * cursorYStep;
             } else {
@@ -95,8 +108,7 @@ public class Grid2D {
      *
      * @param position a position in the original coordinate system
      */
-    public void record(Vector2 position)
-    {
+    public void record(Vector2 position) {
         Vector2 transformed = transform(position);
         grid[((int) transformed.x)][((int) transformed.y)] = true;
     }
@@ -107,9 +119,19 @@ public class Grid2D {
      * @param position a position in the original coordinate system
      * @return position's childVisited time divided by the current position
      */
-    public boolean sample(Vector2 position) {
+    public boolean check(Vector2 position) {
         Vector2 transformed = transform(position);
         return grid[((int) transformed.x)][((int) transformed.y)];
+    }
+
+    public Vector2 sample() {
+        while (true) {
+            int x = (int) MathUtil.random(0, columnCount);
+            int y = (int) MathUtil.random(0, rowCount);
+            if (!grid[x][y]) {
+                return new Vector2(x, y);
+            }
+        }
     }
 
     /**
@@ -118,9 +140,10 @@ public class Grid2D {
      * the position's x should be (0 + offset, width + offset) <br>
      * the position's y should be (0 + offset, height + offset) <br>
      * offset is determined by the delta between origin and this position
+     *
      * @param gridOriginProvider provide current left bottom corner of the grid
-     * @param scaledHeight column count
-     * @param scaledWidth row count
+     * @param scaledHeight       column count
+     * @param scaledWidth        row count
      */
     public Grid2D(double width, double height, int scaledWidth, int scaledHeight, Provider<Vector2> gridOriginProvider) {
         this.rowCount = scaledHeight;
@@ -129,5 +152,7 @@ public class Grid2D {
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;
         this.grid = new boolean[columnCount][rowCount];
+        this.widthScalar = width / columnCount;
+        this.heightScalar = height / rowCount;
     }
 }

@@ -87,6 +87,12 @@ public class Vector2 implements Vector<Vector2> {
         return this;
     }
 
+    public Vector2 scale(double x, double y) {
+        this.x *= x;
+        this.y *= y;
+        return this;
+    }
+
     public Vector2 scale(Vector2 v) {
         this.x = x * v.x;
         this.y = y * v.y;
