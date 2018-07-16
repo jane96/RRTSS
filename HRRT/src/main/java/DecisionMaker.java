@@ -1,4 +1,4 @@
-import javafx.scene.shape.Circle;
+
 import lab.mars.HRRTImp.*;
 import lab.mars.RRTBase.*;
 
@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * @program: RRT
@@ -16,8 +17,9 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     MultiTree treeList = new MultiTree();
     ArrayList<WayPoint2D> feasiableWayPoint = new ArrayList<>();
     ArrayList<WayPoint2D> listTree = new ArrayList<>();
-    int environMentWidth =170;
-    int environMentHeigh = 180;
+    int environMentWidth ;
+    int environMentHeigh ;
+    private Grid2D grid2D;
 
     public ArrayList<WayPoint2D> getListTree() {
         return listTree;
@@ -43,56 +45,67 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         this.feasiableWayPoint = feasiableWayPoint;
     }
 
+    public Grid2D getGrid2D() {
+        return grid2D;
+    }
+
+    public void setGrid2D(Grid2D grid2D) {
+        this.grid2D = grid2D;
+    }
+
     public DecisionMaker(float deltaTime,
+                         int environMentWidth,
+                         int environMentHeigh,
                          Provider<List<Obstacle>> obstacleProvider,
                          Provider<Attacker> aircraftProvider,
                          Provider<WayPoint2D> targetProvider,
                          Applier<Path2D> pathApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
+        this.environMentWidth = environMentWidth;
+        this.environMentHeigh = environMentHeigh;
+        this.grid2D = new Grid2D(this.environMentWidth,this.environMentHeigh,this.environMentWidth,this.environMentHeigh,null);
     }
 
-    public DecisionMaker() {
-    }
+
 
     @Override
     public Path2D algorithm() {
-        Path2D path = new Path2D();
-        double R = aircraft.viewDistance();
-        double totalRotationAngle = aircraft.rotationLimits();
-        double alpha = totalRotationAngle / 2.0;
-        double n = aircraft.rotationGraduation();
-        Vector2 position = aircraft.position();
-        Vector2 direction = aircraft.velocity().cpy().normalize();
-        List<Vector2> availableDirections = new ArrayList<>();
-        WayPoint2D targetPosition = target;
-        int pointNumber = 15;
-        double speed = 0d;
-        double stepLength = deltaTime * speed;
-        double randomVar = produceRandomNumber();
-        double curAngle = 0d;
-        double searchProb = 0.3f;
-        int precision = 1;
-        int environMentWidth = 2000  * precision;
-        int environMentHeigh = 1350 *  precision;
-        ArrayList<SquareObstacle> obstacleSpace = new ArrayList<>();
-        Integer[][] matrix = mapMatrix(environMentWidth,environMentHeigh);
-        recongniseObstacle(obstacleSpace,matrix);
-        double randomNumber = produceRandomNumber();
-        List<WayPoint2D> listTemp = new ArrayList<>();
-        LinkedList<WayPoint2D> leafList = new LinkedList<>();
-        if(randomNumber < searchProb){
-            listTemp = produceRandomPointAndTempPoint(environMentWidth,environMentHeigh,matrix,pointNumber,leafList,targetPosition,stepLength,randomVar,curAngle,totalRotationAngle);
-        }else {
-
+        Path2D path2D = new Path2D();
+        //get the grid
+        List<CircleObstacle> converted = obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
+        this.grid2D.generateNewGrid(converted,environMentWidth,environMentHeigh);
+        feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid());
+        WayPoint2D currentPosition = new WayPoint2D(this.aircraft.position());
+        WayPoint2D targetPosition = this.target;
+        int w = grid2D.getGrid().length;
+        int h = grid2D.getGrid()[0].length;
+        //add the currentPosition into treeList
+        treeList.setCurrentPoint(currentPosition);
+        double stepLength = this.aircraft.velocity().len() * deltaTime;
+        int step = 0;
+        double randDouble = 0.1d;
+        while(step < w * h) {
+            //generate a random point
+            WayPoint2D randomPoint = generateRandomPoint(randDouble, targetPosition);
+            //get a closed point
+            MultiTree tree = treeList.getClosedPoint(randomPoint);
+            WayPoint2D nearPoint = tree.getCurrentPoint();
+            //arrive target
+            if (isArriveTarget(nearPoint, targetPosition, stepLength)) {
+                while (tree.getParent() != null) {
+                    path2D.add(tree.getCurrentPoint());//add the point into path
+                    tree = tree.getParent();
+                }
+                return path2D;
+            }
         }
-
-        return null;
+        return path2D;
     }
     public Grid2D perform(WayPoint2D currentPosition,WayPoint2D targetPosition){
         Provider<Vector2> gridOriginProvider  = null;
         Grid2D grid = new Grid2D(environMentWidth,environMentHeigh,environMentWidth, environMentHeigh,gridOriginProvider);
-        obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,100,currentPosition,targetPosition);
+        //obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,100,currentPosition,targetPosition);
         generateNewGrid(grid,obstacleSpace,environMentWidth,environMentHeigh);
         feasiableWayPoint = getFeasibleWayPoint(grid.getGrid());
         return grid;
@@ -122,7 +135,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
                 currentPosition = rotationPlot(currentPosition);
                 MultiTree curTree = new MultiTree(currentPosition);
                 curTree.setParent(tree);
-                curTree.setChild(new ArrayList<>());
+                curTree.setChild(new ArrayList<MultiTree>());
                 //treeList.add(currentPosition);
                 listTree.add(currentPosition);
                 tree.getChild().add(curTree);
@@ -398,29 +411,6 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
       }
       return false;
     }
-    /** 
-    * @Description: produce obstacle
-    * @Param: [w, h, number] 
-    * @return: java.util.ArrayList<lab.mars.HRRTImp.CircleObstacle> 
-    * @Date: 2018/7/12 
-    */ 
-    public ArrayList<CircleObstacle> produceObstacle(int w, int h,int number,WayPoint2D currentPosition,WayPoint2D targetPosition){
-        ArrayList<CircleObstacle> list = new ArrayList<>();
-        int i = 0;
 
-        while(i < number){
-            double radius = 5.0d;
-            double x = produceRandomNumber() * h;
-            double y = produceRandomNumber() * w;
-            radius = radius * produceRandomNumber();
-            if(x <= radius  || y <= radius || x > h - radius || y >= w - radius || currentPosition.origin.distance(new Vector2(x,y)) <= radius || targetPosition.origin.distance(new Vector2(x,y)) <= radius){
-                continue;
-            }
-            CircleObstacle obs = new CircleObstacle(x,y,radius);
-            list.add(obs);
-            i++;
-        }
-        return list;
-    }
 
 }
