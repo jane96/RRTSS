@@ -13,17 +13,18 @@ import java.util.Random;
  **/
 public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     ArrayList<CircleObstacle> obstacleSpace;
-    ArrayList<WayPoint2D> treeList = new ArrayList<>();
+    MultiTree treeList = new MultiTree();
     ArrayList<WayPoint2D> feasiableWayPoint = new ArrayList<>();
-
+    ArrayList<WayPoint2D> listTree = new ArrayList<>();
     int environMentWidth =170;
     int environMentHeigh = 180;
-    public ArrayList<WayPoint2D> getTreeList() {
-        return treeList;
+
+    public ArrayList<WayPoint2D> getListTree() {
+        return listTree;
     }
 
-    public void setTreeList(ArrayList<WayPoint2D> treeList) {
-        this.treeList = treeList;
+    public void setListTree(ArrayList<WayPoint2D> listTree) {
+        this.listTree = listTree;
     }
 
     public ArrayList<CircleObstacle> getObstacleSpace() {
@@ -89,29 +90,42 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         return null;
     }
     public Grid2D perform(WayPoint2D currentPosition,WayPoint2D targetPosition){
-
         Provider<Vector2> gridOriginProvider  = null;
         Grid2D grid = new Grid2D(environMentWidth,environMentHeigh,environMentWidth, environMentHeigh,gridOriginProvider);
-        obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,200,currentPosition,targetPosition);
+        obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,100,currentPosition,targetPosition);
         generateNewGrid(grid,obstacleSpace,environMentWidth,environMentHeigh);
         feasiableWayPoint = getFeasibleWayPoint(grid.getGrid());
         return grid;
     }
-    public  ArrayList<WayPoint2D> classicalRRT(WayPoint2D currentPosition,WayPoint2D targetPosition,ArrayList<CircleObstacle> listObstacle,Grid2D grid2D,double stepLength){
+    public  ArrayList<WayPoint2D> classicalRRT(WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength){
         ArrayList<WayPoint2D> pathList = new ArrayList<>();
-        treeList.add(currentPosition);
+        treeList.setCurrentPoint(currentPosition);
+        listTree.add(currentPosition);
         int step = 0;
         double randDouble = 0.1d;
-       while(step < environMentHeigh * environMentWidth ){
+        while(step < environMentHeigh * environMentWidth ){
             //generate a random point
             WayPoint2D randomPoint = generateRandomPoint(randDouble,targetPosition);
-            WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,randomPoint));
+            //WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,randomPoint));
+            MultiTree tree = treeList.getClosedPoint(randomPoint);
+            WayPoint2D nearPoint = tree.getCurrentPoint();
             if(isArriveTarget(nearPoint,targetPosition,stepLength)){
+                while(tree.getParent() != null){
+                    pathList.add(tree.getCurrentPoint());
+                    tree = tree.getParent();
+                }
                 return pathList;
             }
             currentPosition = produceNewTemp(nearPoint,randomPoint,stepLength);
+
             if(isAdjustWayPoint(currentPosition,obstacleSpace,environMentWidth,environMentHeigh)){
-                treeList.add(currentPosition);
+                currentPosition = rotationPlot(currentPosition);
+                MultiTree curTree = new MultiTree(currentPosition);
+                curTree.setParent(tree);
+                curTree.setChild(new ArrayList<>());
+                //treeList.add(currentPosition);
+                listTree.add(currentPosition);
+                tree.getChild().add(curTree);
             }
             step++;
         }
@@ -119,6 +133,14 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         return pathList;
     }
 
+    public WayPoint2D rotationPlot(WayPoint2D wayPoint2D){
+        int minX = (int)Math.floor(wayPoint2D.origin.x);
+        int minY = (int) Math.floor(wayPoint2D.origin.y);
+        int maxX = (int)Math.ceil((wayPoint2D.origin.x));
+        int maxY =(int)Math.ceil(wayPoint2D.origin.y);
+        wayPoint2D = new WayPoint2D(new Vector2(minX + (maxX - minX) / 2.0,minY + (maxY - minY) / 2.0));
+        return wayPoint2D;
+    }
     public boolean isArriveTarget(WayPoint2D wayPoint2D,WayPoint2D targetPosition,double distance){
 
             if(wayPoint2D.origin.distance(targetPosition.origin) <= distance){
@@ -192,7 +214,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     public boolean isConflictWithPoint(ArrayList<CircleObstacle> listObstacle,double x,double y){
         for (int i = 0; i < listObstacle.size(); i++) {
             CircleObstacle circleObstacle = listObstacle.get(i);
-            if(circleObstacle.getMinX() <= x && x <= circleObstacle.getMaxX() && circleObstacle.getMinY() <= y && y <= circleObstacle.getMaxY()){
+            if((circleObstacle.getMinX()  - 1<= x && x <= circleObstacle.getMaxX() + 1) && (circleObstacle.getMinY() - 1 <= y && y <= circleObstacle.getMaxY() + 1)){
                 return true;
             }
         }
@@ -364,9 +386,10 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     */ 
     public WayPoint2D produceNewTemp(WayPoint2D nearPoint,WayPoint2D randPoint,double stepLength){
         WayPoint2D tempPoint = new WayPoint2D();
+        double length = Math.pow(nearPoint.origin.x - randPoint.origin.x,2) + Math.pow(nearPoint.origin.y - randPoint.origin.y,2);
         tempPoint.origin = new Vector2();
-        tempPoint.origin.x = nearPoint.origin.x + stepLength * (randPoint.origin.x - nearPoint.origin.x) / (Math.pow(nearPoint.origin.dot(randPoint.origin),0.5f));
-        tempPoint.origin.y = nearPoint.origin.y + stepLength * (randPoint.origin.y - nearPoint.origin.y) / (Math.pow(nearPoint.origin.dot(randPoint.origin),0.5f));
+        tempPoint.origin.x = nearPoint.origin.x + stepLength * (randPoint.origin.x - nearPoint.origin.x) / (Math.pow(length,0.5f));
+        tempPoint.origin.y = nearPoint.origin.y + stepLength * (randPoint.origin.y - nearPoint.origin.y) / (Math.pow(length,0.5f));
         return tempPoint;
     }
     public Boolean inTheAdjustSpace(WayPoint2D nearPoint,WayPoint2D randPoint,Double stepLength,Double curAngle,Double maxTurnAngle){

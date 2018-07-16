@@ -45,7 +45,7 @@ public class MainUI extends Application {
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(100,100));
         Grid2D grid2D = decisoner.perform(currentPosition,targetPosition);
         double times =7;
-        double stepLength = 5;
+        double stepLength = 2;
         boolean[][] matrix = grid2D.getGrid();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
@@ -53,7 +53,7 @@ public class MainUI extends Application {
                     Circle circle = new Circle(i * times,j * times,2,Color.BLUE);
                     root.getChildren().add(circle);
                 }else{
-                    Circle circle = new Circle(i * times,j * times,2,Color.RED);
+                    Circle circle = new Circle(i * times,j * times,1,Color.YELLOW);
                     root.getChildren().add(circle);
                 }
             }
@@ -61,23 +61,29 @@ public class MainUI extends Application {
 
         ArrayList<CircleObstacle> list = decisoner.getObstacleSpace();
         for (int i = 0; i < list.size(); i++) {
-            Circle c = new Circle(list.get(i).getOrigin().x * times,list.get(i).getOrigin().y * times,list.get(i).getRadius() * times,Color.BLACK);
+            Circle c = new Circle(list.get(i).getOrigin().x * times,list.get(i).getOrigin().y * times,list.get(i).getRadius() * times,Color.WHITE);
+            Label label = new Label();
+            label.setLayoutX(list.get(i).getOrigin().x * times);
+            label.setLayoutY(list.get(i).getOrigin().y * times);
+            label.setText(i + "");
+
             root.getChildren().add(c);
+            root.getChildren().add(label);
         }
 
-        root.getChildren().add(new Circle(70 * times,3 * times,3,Color.YELLOW));
-        root.getChildren().add(new Circle(100 * times,100 * times,5,Color.RED));
-        ArrayList<WayPoint2D> pathList = decisoner.classicalRRT(currentPosition,targetPosition,list,grid2D,stepLength);
-        /*for(int i = 0; i < pathList.size() - 1; i++){
-            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times,pathList.get(i).origin.y * times)),new WayPoint2D(new Vector2(pathList.get(i+1).origin.x * 20,pathList.get(i+1).origin.y * 20)),Color.DEEPPINK));
-        }*/
-        ArrayList<WayPoint2D> treeList = decisoner.getTreeList();
+        root.getChildren().add(new Circle(70 * times,3 * times,5,Color.BLACK));
+        root.getChildren().add(new Circle(100 * times,100 * times,5,Color.BLACK));
+        ArrayList<WayPoint2D> pathList = decisoner.classicalRRT(currentPosition,targetPosition,stepLength);
+        for(int i = 0; i < pathList.size() - 1; i++){
+            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times,pathList.get(i).origin.y * times)),new WayPoint2D(new Vector2(pathList.get(i+1).origin.x * times,pathList.get(i+1).origin.y * times)),Color.BLACK));
+        }
+        ArrayList<WayPoint2D> treeList = decisoner.getListTree();
         for (int i = 0; i < treeList.size(); i++) {
             double x = treeList.get(i).origin.x;
             double y = treeList.get(i).origin.y;
             double radius = treeList.get(i).radius;
             //Line line = createLine(new WayPoint2D(new Vector2(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times)),new WayPoint2D(new Vector2(treeList.get(i+1).origin.x * times,treeList.get(i+1).origin.y * times)),Color.BLACK);
-            Circle circle = new Circle(x * times,y * times,3,Color.YELLOW);
+            Circle circle = new Circle(x * times,y * times,3,Color.RED);
             root.getChildren().add(circle);
         }
         return root;
@@ -86,7 +92,7 @@ public class MainUI extends Application {
     public Line createLine(WayPoint2D nodeA, WayPoint2D nodeB, Paint value) {
         Line line = new Line(nodeA.origin.x, nodeA.origin.y, nodeB.origin.x, nodeB.origin.y);
         line.setStroke(value);
-        line.setStrokeWidth(1);
+        line.setStrokeWidth(5);
         return line;
     }
 
