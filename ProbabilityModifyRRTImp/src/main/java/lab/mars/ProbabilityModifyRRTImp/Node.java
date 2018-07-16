@@ -44,6 +44,10 @@ public class Node<N> {
         this.childList.remove(parent);
     }
 
+    public int getFound() {
+        return found;
+    }
+
     LinkedList <Node> findPath(N contentSearched) {
         node=this;
         Stack<Node<N>> nodeStack = new Stack<>();
