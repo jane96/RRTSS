@@ -6,7 +6,6 @@ import java.util.Stack;
 public class Node<N> {
     private N content;
     private LinkedList<Node<N>> childList = new LinkedList<>();
-    private LinkedList<Node>  parentList = new LinkedList<>();
     private int found = 0;
     private int visited = 0;
 
