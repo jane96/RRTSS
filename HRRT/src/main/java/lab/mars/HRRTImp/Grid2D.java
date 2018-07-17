@@ -116,20 +116,21 @@ public class Grid2D {
         }
         return list;
     }
-    public void generateNewGrid(List<CircleObstacle> circleObstacles,int w, int h){
-        recongniseCircleObstacle(circleObstacles,this,w,h);
+    public void generateNewGrid(List<CircleObstacle> circleObstacles,int w, int h,double scaleFactor){
+        recongniseCircleObstacle(circleObstacles,this,w,h,scaleFactor);
     }
-    public void recongniseCircleObstacle(List<CircleObstacle> circleObstacle,Grid2D grid2D,int w,int h){
+    public void recongniseCircleObstacle(List<CircleObstacle> circleObstacle,Grid2D grid2D,int w,int h,double scaleFactor){
         for(int k = 0; k < circleObstacle.size(); k++){
-            for (int i = circleObstacle.get(k).getMinX(); i <= circleObstacle.get(k).getMaxX(); i++) {
+            for (int i = circleObstacle.get(k).getMinX(); i <= circleObstacle.get(k).getMaxX() ; i++) {
                 for (int j = circleObstacle.get(k).getMinY(); j <= circleObstacle.get(k).getMaxY(); j++) {
-                    if(i >= h){
-                        grid2D.getGrid()[h - 1][j] = false;
+                    if(i >= h ){
+                        grid2D.getGrid()[(int)((h - 1) / scaleFactor)][(int)(j / scaleFactor)] = false;
                     }
-                    else if(j >= w){
-                        grid2D.getGrid()[i][w - 1] = false;
+                    else if(j >=  w ){
+                        grid2D.getGrid()[(int)(i / scaleFactor)][(int)((w - 1) / scaleFactor)] = false;
                     }else{
-                        grid2D.getGrid()[i][j] = false;
+
+                        grid2D.getGrid()[(int)(i)][(int)(j)] = false;
                     }
 
                 }

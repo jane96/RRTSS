@@ -13,13 +13,23 @@ import java.util.stream.Collectors;
  * @description: decision
  **/
 public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
-    ArrayList<CircleObstacle> obstacleSpace;
+
     MultiTree treeList = new MultiTree();
     ArrayList<WayPoint2D> feasiableWayPoint = new ArrayList<>();
     ArrayList<WayPoint2D> listTree = new ArrayList<>();
+    Path2D path2D;
+    double scaleFactor;
     int environMentWidth ;
     int environMentHeigh ;
     private Grid2D grid2D;
+
+    public Path2D getPath2D() {
+        return path2D;
+    }
+
+    public void setPath2D(Path2D path2D) {
+        this.path2D = path2D;
+    }
 
     public ArrayList<WayPoint2D> getListTree() {
         return listTree;
@@ -29,13 +39,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         this.listTree = listTree;
     }
 
-    public ArrayList<CircleObstacle> getObstacleSpace() {
-        return obstacleSpace;
-    }
 
-    public void setObstacleSpace(ArrayList<CircleObstacle> obstacleSpace) {
-        this.obstacleSpace = obstacleSpace;
-    }
 
     public ArrayList<WayPoint2D> getFeasiableWayPoint() {
         return feasiableWayPoint;
@@ -53,7 +57,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         this.grid2D = grid2D;
     }
 
-    public DecisionMaker(float deltaTime,
+    public DecisionMaker(double sacleFactor ,float deltaTime,
                          int environMentWidth,
                          int environMentHeigh,
                          Provider<List<Obstacle>> obstacleProvider,
@@ -62,30 +66,32 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
                          Applier<Path2D> pathApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
+        this.scaleFactor = sacleFactor;
         this.environMentWidth = environMentWidth;
         this.environMentHeigh = environMentHeigh;
-        this.grid2D = new Grid2D(this.environMentWidth,this.environMentHeigh,this.environMentWidth,this.environMentHeigh,null);
+        this.grid2D = new Grid2D(this.environMentWidth ,this.environMentHeigh,this.environMentWidth,this.environMentHeigh,null);
     }
 
 
 
     @Override
     public Path2D algorithm() {
-        Path2D path2D = new Path2D();
+        path2D = new Path2D();
         //get the grid
-        List<CircleObstacle> converted = obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
-        this.grid2D.generateNewGrid(converted,environMentWidth,environMentHeigh);
-        feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid());
+        List<CircleObstacle> obstacleSpace = obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
+        this.grid2D.generateNewGrid(obstacleSpace,environMentWidth,environMentHeigh,scaleFactor);
+        feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid(),scaleFactor);
         WayPoint2D currentPosition = new WayPoint2D(this.aircraft.position());
-        WayPoint2D targetPosition = this.target;
-        int w = grid2D.getGrid().length;
-        int h = grid2D.getGrid()[0].length;
+        currentPosition = new WayPoint2D(new Vector2(currentPosition.origin.x ,currentPosition.origin.y ));
+        WayPoint2D targetPosition = new WayPoint2D(new Vector2(this.target.origin.x ,this.target.origin.y));
+        int w = (int)(this.environMentWidth);
+        int h = (int)(this.environMentHeigh);
         //add the currentPosition into treeList
-        treeList.setCurrentPoint(currentPosition);
-        double stepLength = this.aircraft.velocity().len() * deltaTime;
+        treeList.setCurrentPoint(new WayPoint2D(new Vector2(currentPosition.origin.x ,currentPosition.origin.y )));
+        double stepLength = aircraft.velocity().len() * scaleFactor;
         int step = 0;
         double randDouble = 0.1d;
-        while(step < w * h) {
+        while(step < w * h * scaleFactor * scaleFactor) {
             //generate a random point
             WayPoint2D randomPoint = generateRandomPoint(randDouble, targetPosition);
             //get a closed point
@@ -99,58 +105,27 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
                 }
                 return path2D;
             }
-        }
-        return path2D;
-    }
-    public Grid2D perform(WayPoint2D currentPosition,WayPoint2D targetPosition){
-        Provider<Vector2> gridOriginProvider  = null;
-        Grid2D grid = new Grid2D(environMentWidth,environMentHeigh,environMentWidth, environMentHeigh,gridOriginProvider);
-        //obstacleSpace = produceObstacle(environMentWidth,environMentHeigh,100,currentPosition,targetPosition);
-        generateNewGrid(grid,obstacleSpace,environMentWidth,environMentHeigh);
-        feasiableWayPoint = getFeasibleWayPoint(grid.getGrid());
-        return grid;
-    }
-    public  ArrayList<WayPoint2D> classicalRRT(WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength){
-        ArrayList<WayPoint2D> pathList = new ArrayList<>();
-        treeList.setCurrentPoint(currentPosition);
-        listTree.add(currentPosition);
-        int step = 0;
-        double randDouble = 0.1d;
-        while(step < environMentHeigh * environMentWidth ){
-            //generate a random point
-            WayPoint2D randomPoint = generateRandomPoint(randDouble,targetPosition);
-            //WayPoint2D nearPoint = treeList.get(getNearestWaypoint(treeList,randomPoint));
-            MultiTree tree = treeList.getClosedPoint(randomPoint);
-            WayPoint2D nearPoint = tree.getCurrentPoint();
-            if(isArriveTarget(nearPoint,targetPosition,stepLength)){
-                while(tree.getParent() != null){
-                    pathList.add(tree.getCurrentPoint());
-                    tree = tree.getParent();
-                }
-                return pathList;
-            }
             currentPosition = produceNewTemp(nearPoint,randomPoint,stepLength);
 
-            if(isAdjustWayPoint(currentPosition,obstacleSpace,environMentWidth,environMentHeigh)){
-                currentPosition = rotationPlot(currentPosition);
+            if(isAdjustWayPoint(currentPosition,obstacleSpace,w,h,scaleFactor)){
+                currentPosition = rotationPlot(currentPosition,scaleFactor);
                 MultiTree curTree = new MultiTree(currentPosition);
                 curTree.setParent(tree);
                 curTree.setChild(new ArrayList<MultiTree>());
-                //treeList.add(currentPosition);
                 listTree.add(currentPosition);
                 tree.getChild().add(curTree);
             }
             step++;
         }
-
-        return pathList;
+        return path2D;
     }
 
-    public WayPoint2D rotationPlot(WayPoint2D wayPoint2D){
-        int minX = (int)Math.floor(wayPoint2D.origin.x);
-        int minY = (int) Math.floor(wayPoint2D.origin.y);
-        int maxX = (int)Math.ceil((wayPoint2D.origin.x));
-        int maxY =(int)Math.ceil(wayPoint2D.origin.y);
+
+    public WayPoint2D rotationPlot(WayPoint2D wayPoint2D,double scaleFactor){
+        int minX = (int)(((int)Math.floor(wayPoint2D.origin.x / scaleFactor) - 1) * scaleFactor);
+        int minY = (int)(((int)Math.floor(wayPoint2D.origin.y / scaleFactor) - 1) * scaleFactor);
+        int maxX = (int)(((int)Math.ceil(wayPoint2D.origin.x / scaleFactor) + 1) * scaleFactor);
+        int maxY =(int)(((int)Math.ceil(wayPoint2D.origin.y / scaleFactor) + 1) * scaleFactor);
         wayPoint2D = new WayPoint2D(new Vector2(minX + (maxX - minX) / 2.0,minY + (maxY - minY) / 2.0));
         return wayPoint2D;
     }
@@ -162,15 +137,15 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
 
         return false;
     }
-    public boolean isAdjustWayPoint(WayPoint2D wayPoint2D,ArrayList<CircleObstacle> obstacleSpace,int w,int h){
+    public boolean isAdjustWayPoint(WayPoint2D wayPoint2D,List<CircleObstacle> obstacleSpace,int w,int h,double scaleFactor){
         double x = wayPoint2D.origin.x;
         double y = wayPoint2D.origin.y;
-        if(isConflictWithPoint(obstacleSpace,x,y) || x <= 0 || x >= h || y <= 0 || y >= w){
+        if(isConflictWithPoint(obstacleSpace,x,y,scaleFactor) || x <= 0 || x >= h * scaleFactor || y <= 0 || y >= w * scaleFactor){
             return false;
         }
         return true;
     }
-    public WayPoint2D generateNewPoint(int w,int h,WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength,double closeToTargetProb,ArrayList<CircleObstacle> obstacleSpace){
+    public WayPoint2D generateNewPoint(int w,int h,WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength,double closeToTargetProb,List<CircleObstacle> obstacleSpace){
         WayPoint2D wayPoint2D = new WayPoint2D();
         double randNumber = produceRandomNumber();
         if(randNumber < closeToTargetProb){
@@ -181,7 +156,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         }
         double x = wayPoint2D.origin.x;
         double y = wayPoint2D.origin.y;
-        if(isConflictWithPoint(obstacleSpace,x,y) || x <= 0 || x >= h || y <= 0 || y >= w){
+        if(isConflictWithPoint(obstacleSpace,x,y,scaleFactor) || x <= 0 || x >= h || y <= 0 || y >= w){
             wayPoint2D = null;
         }
         return wayPoint2D;
@@ -224,10 +199,10 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     * @return: boolean
     * @Date: 2018/7/12
     */
-    public boolean isConflictWithPoint(ArrayList<CircleObstacle> listObstacle,double x,double y){
+    public boolean isConflictWithPoint(List<CircleObstacle> listObstacle,double x,double y,double scaleFactor){
         for (int i = 0; i < listObstacle.size(); i++) {
             CircleObstacle circleObstacle = listObstacle.get(i);
-            if((circleObstacle.getMinX()  - 1<= x && x <= circleObstacle.getMaxX() + 1) && (circleObstacle.getMinY() - 1 <= y && y <= circleObstacle.getMaxY() + 1)){
+            if((circleObstacle.getMinX() * scaleFactor - 1 * scaleFactor<= x   && x <= circleObstacle.getMaxX()* scaleFactor + 1 * scaleFactor) && (circleObstacle.getMinY()* scaleFactor - 1* scaleFactor <= y && y <= circleObstacle.getMaxY() * scaleFactor+ 1* scaleFactor)){
                 return true;
             }
         }
@@ -303,12 +278,12 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         }
     }
 
-    public  ArrayList<WayPoint2D> getFeasibleWayPoint(boolean[][] matrix){
+    public  ArrayList<WayPoint2D> getFeasibleWayPoint(boolean[][] matrix,double scaleFactor){
         ArrayList<WayPoint2D> list = new ArrayList<>();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
                 if(matrix[i][j] == true){
-                    list.add(new WayPoint2D(new Vector2(i,j)));
+                    list.add(new WayPoint2D(new Vector2(i * scaleFactor,j * scaleFactor)));
                 }
             }
         }
@@ -368,6 +343,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         }else{
             int randPoint = (int)(produceRandomNumber() * feasiableWayPoint.size());
             wayPoint2D = feasiableWayPoint.get(randPoint);
+
         }
         return wayPoint2D;
     }

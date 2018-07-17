@@ -2,9 +2,10 @@ package lab.mars.HRRTImp;
 
 import lab.mars.RRTBase.Vector;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Vector2 implements Vector<Vector2> {
+public class Vector2 implements Vector<Vector2>,Serializable{
 
     public double x = 0.0;
 

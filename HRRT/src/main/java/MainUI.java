@@ -9,14 +9,13 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import lab.mars.HRRTImp.*;
-import lab.mars.RRTBase.Applier;
 
-import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.Provider;
+import lab.mars.RRTBase.*;
 
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class MainUI extends Application {
@@ -26,52 +25,63 @@ public class MainUI extends Application {
     public Parent createContent() {
         Pane root = new Pane();
         root.setMinSize(1000, 1000);
-        root.setMaxSize(1600, 1300);
+        root.setMaxSize(2600, 1300);
 
+
+        float delTime = 1f;
+
+        double times = 5;
+        double ratationLimits = 360;
+        double viewDistance = 100f;
+        int gradation = 1000;
+        double scaleFactor = 6;
+        int w = 250;
+        int h = 350;
+        w = (int)(w / scaleFactor);
+        h = (int)(h / scaleFactor);
+
+        int obstacleNumber = 100;
+        Vector2 velocity = new Vector2(0,1);
+        WayPoint2D currentPosition = new WayPoint2D(new Vector2(70 , 3));
+        WayPoint2D targetPosition = new WayPoint2D(new Vector2(200, 200));
         for (int i = 0; i < 40; i++) {
-            Line line = createLine(new WayPoint2D(new Vector2(0, i * 50)), new WayPoint2D(new Vector2(2000, i * 50)), Color.BLACK);
-            Line line2 = createLine(new WayPoint2D(new Vector2(i * 50, 0)), new WayPoint2D(new Vector2(i * 50, 2000)), Color.BLACK);
+            Line line = createLine(new WayPoint2D(new Vector2(0, i * 50 / times)), new WayPoint2D(new Vector2(2000, i * 50 / times)), Color.BLACK);
+            Line line2 = createLine(new WayPoint2D(new Vector2(i * 50 / times, 0)), new WayPoint2D(new Vector2(i * 50 / times, 2000 / times)), Color.BLACK);
             // root.getChildren().add(line);
             //root.getChildren().add(line2);
-            Label label1 = new Label("" + 50 * i);
-            label1.setLayoutX(50 * i);
+            Label label1 = new Label("" + 50 * i / (int)times);
+            label1.setMinWidth(5);
+            label1.setLayoutX(50 * i );
             label1.setLayoutY(0);
             root.getChildren().add(label1);
-            Label label2 = new Label("" + 50 * i);
+            Label label2 = new Label("" + 50 * i / (int)times);
+            label2.setMinWidth(5);
             label2.setLayoutX(0);
             label2.setLayoutY(50 * i);
             root.getChildren().add(label2);
         }
-        float delTime = 1f;
-        int w = 170;
-        int h = 180;
-        double times = 7;
-        double stepLength = 2;
-        double ratationLimits = 360;
-        double viewDistance = 100f;
-        int gradation = 1000;
-        Vector2 velocity = new Vector2();
-        WayPoint2D currentPosition = new WayPoint2D(new Vector2(70, 3));
-        WayPoint2D targetPosition = new WayPoint2D(new Vector2(100, 100));
-
         Attacker attacker = new Attacker(currentPosition.origin, velocity, ratationLimits, viewDistance, gradation);
-        new World().initialWorld(attacker,2,h,currentPosition,targetPosition);
+        World world = new World();
+        world.initialWorld(scaleFactor,attacker,w,h,currentPosition,targetPosition,obstacleNumber);
+        //world.writeFile(world.obstacles);
+       //world.obstacles = world.getObstacles().stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
+
         Provider<List<Obstacle>> obstacleProvider = new Provider<List<Obstacle>>() {
             @Override
             public List<Obstacle> provide() {
-                return World.getInstance().obstacles;
+                return world.obstacles;
             }
         };
         Provider<Attacker> providerAttacker = new Provider<Attacker>() {
             @Override
             public Attacker provide() {
-                return World.getInstance().attacker;
+                return world.attacker;
             }
         };
         Provider<WayPoint2D> wayPoint2DProvider = new Provider<WayPoint2D>() {
             @Override
             public WayPoint2D provide() {
-                return World.getInstance().target;
+                return world.target;
             }
         };
         Applier<Path2D> path2DApplier = new Applier<Path2D>() {
@@ -80,49 +90,48 @@ public class MainUI extends Application {
 
             }
         };
-        DecisionMaker decisoner = new DecisionMaker(delTime, w, h, obstacleProvider, providerAttacker, wayPoint2DProvider, path2DApplier);
-        decisoner.algorithm();
-        //Grid2D grid2D = decisoner.perform(currentPosition,targetPosition);
+        DecisionMaker decisoner = new DecisionMaker(scaleFactor,delTime, w, h, obstacleProvider, providerAttacker, wayPoint2DProvider, path2DApplier);
+        decisoner.solve(true);
+
 
         boolean[][] matrix = decisoner.getGrid2D().getGrid();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
                 if (matrix[i][j] == true) {
-                    Circle circle = new Circle(i * times, j * times, 2, Color.BLUE);
+                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.BLUE);
                     root.getChildren().add(circle);
                 } else {
-                    Circle circle = new Circle(i * times, j * times, 1, Color.YELLOW);
+                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.RED);
                     root.getChildren().add(circle);
                 }
             }
         }
 
-       List<Obstacle> circleObstacleArrayList = World.getInstance().obstacles;
+        List<CircleObstacle> circleObstacleArrayList = world. obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
         for (int i = 0; i < circleObstacleArrayList.size(); i++) {
 
-            Circle c = new Circle(circleObstacleArrayList.get(i).getOrigin().x * times, circleObstacleArrayList.get(i).getOrigin().y * times, circleObstacleArrayList.get(i).getRadius() * times, Color.WHITE);
+            Circle c = new Circle(circleObstacleArrayList.get(i).getOrigin().x * times, circleObstacleArrayList.get(i).getOrigin().y * times, circleObstacleArrayList.get(i).getRadius() * times, Color.BLACK);
             Label label = new Label();
             label.setLayoutX(circleObstacleArrayList.get(i).getOrigin().x * times);
             label.setLayoutY(circleObstacleArrayList.get(i).getOrigin().y * times);
             label.setText(i + "");
-
             root.getChildren().add(c);
-            root.getChildren().add(label);
+            //root.getChildren().add(label);
         }
 
-        root.getChildren().add(new Circle(currentPosition.origin.x * times, currentPosition.origin.y * times, 5, Color.BLACK));
-        root.getChildren().add(new Circle(targetPosition.origin.x * times, targetPosition.origin.y * times, 5, Color.BLACK));
-        Path2D pathList = decisoner.algorithm();
+        root.getChildren().add(new Circle(currentPosition.origin.x * times , currentPosition.origin.y * times, 5, Color.YELLOW));
+        root.getChildren().add(new Circle(targetPosition.origin.x * times , targetPosition.origin.y * times , 5, Color.YELLOW));
+        Path2D pathList = decisoner.getPath2D();
         for (int i = 0; i < pathList.size() - 1; i++) {
             root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK));
         }
         ArrayList<WayPoint2D> treeList = decisoner.getListTree();
         for (int i = 0; i < treeList.size(); i++) {
             double x = treeList.get(i).origin.x;
-            double y = treeList.get(i).origin.y;
+            double y = treeList.get(i).origin.y ;
             double radius = treeList.get(i).radius;
             //Line line = createLine(new WayPoint2D(new Vector2(treeList.get(i).origin.x * times,treeList.get(i).origin.y * times)),new WayPoint2D(new Vector2(treeList.get(i+1).origin.x * times,treeList.get(i+1).origin.y * times)),Color.BLACK);
-            Circle circle = new Circle(x * times, y * times, 3, Color.RED);
+            Circle circle = new Circle(x * times, y * times, 3, Color.YELLOWGREEN);
             root.getChildren().add(circle);
         }
         return root;
