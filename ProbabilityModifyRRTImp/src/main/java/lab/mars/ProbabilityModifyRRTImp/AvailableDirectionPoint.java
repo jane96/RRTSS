@@ -6,12 +6,15 @@ public class AvailableDirectionPoint {
 
     double x = 0.0;
     double y = 0.0;
+    double len = 0.0;
 
-    public AvailableDirectionPoint(double x, double y, double direction) {
+    public AvailableDirectionPoint(double x, double y, double direction, double len) {
         this.x = x;
         this.y = y;
         this.direction = direction;
+        this.len = len;
     }
+
 
     @Override
     public boolean equals(Object o) {
