@@ -100,7 +100,7 @@ public class TestGrid2D {
 
     @Test
     public void testCreate() {
-        Grid2D grid = new Grid2D(10, 10, 10, new DummyOriginProvider());
+        Grid2D grid = new Grid2D(10, 10, 1, new DummyOriginProvider());
         assert grid.grid.length == 10;
         assert grid.grid[0].length == 10;
     }
@@ -134,9 +134,9 @@ public class TestGrid2D {
     public void testSample() {
         int  i =0;
         while (i < 100) {
-            Vector2 cell = gridWorld.sample();
-            System.out.println(cell);
-            assert !gridWorld.grid[(int)cell.x][(int)cell.y];
+            Vector2 sampled = gridWorld.sample();
+            System.out.println(sampled);
+            assert !gridWorld.check(sampled);
             i ++;
         }
     }
@@ -145,7 +145,7 @@ public class TestGrid2D {
     public void testCellSize() {
         Vector2 cellSize = gridWorld.cellSize();
         assert MathUtil.epsilonEquals(cellSize.x, 2);
-        assert MathUtil.epsilonEquals(cellSize.y, 1);
+        assert MathUtil.epsilonEquals(cellSize.y, 2);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class TestGrid2D {
         Vector2 test = new Vector2(50, 50);
         Vector2 centered = gridWorld.transformToCellCenter(test);
         assert MathUtil.epsilonEquals(centered.x, 51);
-        assert MathUtil.epsilonEquals(centered.y, 50.5);
+        assert MathUtil.epsilonEquals(centered.y, 51);
 
     }
 
