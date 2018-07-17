@@ -29,9 +29,9 @@ public class Grid2D {
      */
     private int columnCount;
 
-    private double width;
+    private int width;
 
-    private double height;
+    private int height;
 
     private double widthScalar;
 
@@ -56,7 +56,7 @@ public class Grid2D {
         return new Vector2(widthScalar, heightScalar);
     }
 
-    public Vector2 transofrmToCellCenter(Vector2 position) {
+    public Vector2 transformToCellCenter(Vector2 position) {
         Vector2 transformed = transform(position);
         transformed.add(0.5, 0.5);
         return transformed.scale(widthScalar, heightScalar);
@@ -148,9 +148,9 @@ public class Grid2D {
      *
      * @param scaledBase        row count
      */
-    public Grid2D(double width, double height, int scaledBase, Provider<Vector2> gridOriginProvider) {
-        this.rowCount = scaledBase;
-        this.columnCount = scaledBase;
+    public Grid2D(int width, int height, int scaledBase, Provider<Vector2> gridOriginProvider) {
+        this.rowCount = width  / scaledBase;
+        this.columnCount = height / scaledBase;
         this.width = width;
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;
