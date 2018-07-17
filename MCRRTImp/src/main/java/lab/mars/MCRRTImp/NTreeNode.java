@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class NTreeNode<E> implements Iterable<E> {
+public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
 
     private E element;
     private NTreeNode<E> parent;
@@ -23,10 +23,6 @@ public class NTreeNode<E> implements Iterable<E> {
         this.parent = null;
     }
 
-    public void replaceChild(int idx, NTreeNode<E> child) {
-        this.children.set(idx, child);
-    }
-
     public void concatChild(NTreeNode<E>... child) {
         for (NTreeNode<E> c : child) {
             c.parent = this;
@@ -34,7 +30,10 @@ public class NTreeNode<E> implements Iterable<E> {
         }
     }
 
-    public void createChild(E... elements) {
+    public void createChild(E element,  E... elements) {
+        NTreeNode<E> single = new NTreeNode<>(element);
+        single.parent = this;
+        single.children.add(single);
         for (E e : elements) {
             NTreeNode<E> c = new NTreeNode<>(e);
             c.parent = this;
@@ -42,13 +41,16 @@ public class NTreeNode<E> implements Iterable<E> {
         }
     }
 
+    public NTreeNode<E> getChild(int idx) {
+        return children.get(idx);
+    }
+
+    public E getElement() {
+        return element;
+    }
 
     public NTreeNode<E> getParent() {
         return parent;
-    }
-
-    public List<NTreeNode<E>> getChildren() {
-        return children;
     }
 
     private class VisitRecorder {
@@ -58,6 +60,23 @@ public class NTreeNode<E> implements Iterable<E> {
         VisitRecorder(NTreeNode<E> node) {
             this.node = node;
         }
+    }
+
+    public interface DistanceFunc<E> {
+        double distance(E from, E to);
+    }
+
+    public NTreeNode<E> findNearest(E element, DistanceFunc<E> func) {
+        NTreeNode<E> minimum = null;
+        double minDistance = Double.POSITIVE_INFINITY;
+        for (NTreeNode<E> node : this) {
+            double dis = func.distance(node.element, element);
+            if (dis < minDistance) {
+                minDistance = dis;
+                minimum = node;
+            }
+        }
+        return minimum;
     }
 
     public List<E> findTrace(E element) {
@@ -87,11 +106,11 @@ public class NTreeNode<E> implements Iterable<E> {
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public Iterator<NTreeNode<E>> iterator() {
         return new NTreeIterator();
     }
 
-    public class NTreeIterator implements Iterator<E> {
+    public class NTreeIterator implements Iterator<NTreeNode<E>> {
 
 
         Stack<VisitRecorder> stack;
@@ -107,14 +126,14 @@ public class NTreeNode<E> implements Iterable<E> {
         }
 
         @Override
-        public E next() {
+        public NTreeNode<E> next() {
             while (!stack.empty()) {
                 VisitRecorder now = stack.peek();
                 if (now.node.children.size() == 0) {
-                    return stack.pop().node.element;
+                    return stack.pop().node;
                 }
                 if (now.childVisited == now.node.children.size()) {
-                    return stack.pop().node.element;
+                    return stack.pop().node;
                 }
                 stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
             }

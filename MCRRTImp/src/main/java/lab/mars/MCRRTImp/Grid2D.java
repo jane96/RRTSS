@@ -56,7 +56,7 @@ public class Grid2D {
         return new Vector2(widthScalar, heightScalar);
     }
 
-    public Vector2 toCellCenter(Vector2 position) {
+    public Vector2 transofrmToCellCenter(Vector2 position) {
         Vector2 transformed = transform(position);
         transformed.add(0.5, 0.5);
         return transformed.scale(widthScalar, heightScalar);
@@ -124,12 +124,15 @@ public class Grid2D {
         return grid[((int) transformed.x)][((int) transformed.y)];
     }
 
+    /**
+     * @return a cell in the grid
+     */
     public Vector2 sample() {
         while (true) {
             int x = (int) MathUtil.random(0, columnCount);
             int y = (int) MathUtil.random(0, rowCount);
             if (!grid[x][y]) {
-                return new Vector2(x, y);
+                return new Vector2((x + 0.5) * widthScalar, (y + 0.5) * heightScalar);
             }
         }
     }
@@ -142,12 +145,12 @@ public class Grid2D {
      * offset is determined by the delta between origin and this position
      *
      * @param gridOriginProvider provide current left bottom corner of the grid
-     * @param scaledHeight       column count
-     * @param scaledWidth        row count
+     *
+     * @param scaledBase        row count
      */
-    public Grid2D(double width, double height, int scaledWidth, int scaledHeight, Provider<Vector2> gridOriginProvider) {
-        this.rowCount = scaledHeight;
-        this.columnCount = scaledWidth;
+    public Grid2D(double width, double height, int scaledBase, Provider<Vector2> gridOriginProvider) {
+        this.rowCount = scaledBase;
+        this.columnCount = scaledBase;
         this.width = width;
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;

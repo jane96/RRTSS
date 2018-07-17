@@ -1,10 +1,8 @@
 package lab.mars.MCRRTImp;
 
-import com.sun.org.apache.bcel.internal.generic.MULTIANEWARRAY;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -152,7 +150,7 @@ public class TestGrid2D {
     @Test
     public void testToCellCenter() {
         Vector2 test = new Vector2(50, 50);
-        Vector2 centered = gridWorld.toCellCenter(test);
+        Vector2 centered = gridWorld.transofrmToCellCenter(test);
         assert MathUtil.epsilonEquals(centered.x, 51);
         assert MathUtil.epsilonEquals(centered.y, 50.5);
 
