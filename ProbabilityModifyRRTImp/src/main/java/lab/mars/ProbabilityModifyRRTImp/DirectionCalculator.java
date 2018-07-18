@@ -2,22 +2,14 @@ package lab.mars.ProbabilityModifyRRTImp;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
-public class DirectionCaculator {
+public class DirectionCalculator {
 
-    public interface caculateVelocity{
-        double caculateV(double vTop, double curTheta);
+    public interface CalculateVelocity {
+        double calculateV(double vTop, double curTheta);
     }
 
-//    public class caculator implements caculateVelocity{
-//        @Override
-//        public double caculateV(double vTop, double curTheta) {
-//            return vTop / (1 + curTheta);
-//        }
-//    }
-
-    public static List <AvailableDirectionPoint> getNextPosList(Attacker attacker, double timeSlice,  caculateVelocity CaculateCurVelocity){
+    public static List <AvailableDirectionPoint> getNextPosList(Attacker attacker, double timeSlice,  CalculateVelocity calculateCurVelocity){
         ArrayList <AvailableDirectionPoint> listNextPos = new ArrayList<>();
         Vector2 o = new Vector2(1.0,0.0);
         double curX = attacker.position().x;
@@ -40,7 +32,7 @@ public class DirectionCaculator {
                 curTheta = Math.abs((i * thetaGap / 100) * j);
                 newX += Math.cos(Math.toRadians(tmpDegree)) * velocity * (timeSlice / 100);
                 newY += Math.sin(Math.toRadians(tmpDegree)) * velocity * (timeSlice / 100);
-                velocity = CaculateCurVelocity.caculateV(vTop, curTheta);
+                velocity = calculateCurVelocity.calculateV(vTop, curTheta);
             }
 
             AvailableDirectionPoint nextPos = new AvailableDirectionPoint(newX, newY, alpha, velocity);
