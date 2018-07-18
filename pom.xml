@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>lab.mars</groupId>
+    <groupId>lab.lab.mars</groupId>
     <artifactId>RRT</artifactId>
     <packaging>pom</packaging>
     <version>1.1</version>
@@ -12,6 +12,8 @@
         <module>ProbabilityModifyRRTImp</module>
         <module>RRTBase</module>
         <module>MCRRTImp</module>
+        <module>HRRT</module>
+        <module>PRRT</module>
     </modules>
 
     <distributionManagement>

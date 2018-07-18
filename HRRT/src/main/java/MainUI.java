@@ -34,7 +34,7 @@ public class MainUI extends Application {
         double ratationLimits = 360;
         double viewDistance = 100f;
         int gradation = 1000;
-        double scaleFactor = 6;
+        double scaleFactor = 10;
         int w = 250;
         int h = 350;
         w = (int)(w / scaleFactor);
@@ -45,10 +45,10 @@ public class MainUI extends Application {
         WayPoint2D currentPosition = new WayPoint2D(new Vector2(70 , 3));
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(200, 200));
         for (int i = 0; i < 40; i++) {
-            Line line = createLine(new WayPoint2D(new Vector2(0, i * 50 / times)), new WayPoint2D(new Vector2(2000, i * 50 / times)), Color.BLACK);
-            Line line2 = createLine(new WayPoint2D(new Vector2(i * 50 / times, 0)), new WayPoint2D(new Vector2(i * 50 / times, 2000 / times)), Color.BLACK);
-            // root.getChildren().add(line);
-            //root.getChildren().add(line2);
+            Line line = createLine(new WayPoint2D(new Vector2(0, i * scaleFactor * times)), new WayPoint2D(new Vector2(h * scaleFactor * times, i * scaleFactor * times)), Color.BLUE);
+            Line line2 = createLine(new WayPoint2D(new Vector2( i * scaleFactor * times, 0)), new WayPoint2D(new Vector2(i * scaleFactor * times, w * scaleFactor * times)), Color.BLUE);
+             root.getChildren().add(line);
+            root.getChildren().add(line2);
             Label label1 = new Label("" + 50 * i / (int)times);
             label1.setMinWidth(5);
             label1.setLayoutX(50 * i );
@@ -116,6 +116,7 @@ public class MainUI extends Application {
             label.setLayoutY(circleObstacleArrayList.get(i).getOrigin().y * times);
             label.setText(i + "");
             root.getChildren().add(c);
+            root.getChildren().addAll(drawSquare((int)(circleObstacleArrayList.get(i).getMinX()* times * scaleFactor),(int)(circleObstacleArrayList.get(i).getMinY()* times* scaleFactor),(int)(circleObstacleArrayList.get(i).getMaxX()* times* scaleFactor),(int)(circleObstacleArrayList.get(i).getMaxY()* times* scaleFactor)));
             //root.getChildren().add(label);
         }
 
@@ -140,7 +141,7 @@ public class MainUI extends Application {
     public Line createLine(WayPoint2D nodeA, WayPoint2D nodeB, Paint value) {
         Line line = new Line(nodeA.origin.x, nodeA.origin.y, nodeB.origin.x, nodeB.origin.y);
         line.setStroke(value);
-        line.setStrokeWidth(5);
+        line.setStrokeWidth(3);
         return line;
     }
 
@@ -149,7 +150,14 @@ public class MainUI extends Application {
         primaryStage.setScene(new Scene(createContent()));
         primaryStage.show();
     }
-
+    public List<Line> drawSquare(int x1,int y1,int x2,int y2){
+        List<Line> listLine = new ArrayList<>();
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1,y1)),new WayPoint2D(new Vector2(x2,y1)),Color.RED));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1,y1)),new WayPoint2D(new Vector2(x1,y2)),Color.RED));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x2,y1)),new WayPoint2D(new Vector2(x2,y2)),Color.RED));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1,y2)),new WayPoint2D(new Vector2(x2,y2)),Color.RED));
+        return listLine;
+    }
     public static void main(String[] args) {
 
         launch(args);

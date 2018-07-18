@@ -91,7 +91,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         double stepLength = aircraft.velocity().len() * scaleFactor;
         int step = 0;
         double randDouble = 0.1d;
-        while(step < w * h * scaleFactor * scaleFactor) {
+        while(step < w * h * scaleFactor ) {
             //generate a random point
             WayPoint2D randomPoint = generateRandomPoint(randDouble, targetPosition);
             //get a closed point
@@ -202,7 +202,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     public boolean isConflictWithPoint(List<CircleObstacle> listObstacle,double x,double y,double scaleFactor){
         for (int i = 0; i < listObstacle.size(); i++) {
             CircleObstacle circleObstacle = listObstacle.get(i);
-            if((circleObstacle.getMinX() * scaleFactor - 1 * scaleFactor<= x   && x <= circleObstacle.getMaxX()* scaleFactor + 1 * scaleFactor) && (circleObstacle.getMinY()* scaleFactor - 1* scaleFactor <= y && y <= circleObstacle.getMaxY() * scaleFactor+ 1* scaleFactor)){
+            if((circleObstacle.getMinX() * scaleFactor <= x   && x <= circleObstacle.getMaxX()* scaleFactor) && (circleObstacle.getMinY()* scaleFactor <= y && y <= circleObstacle.getMaxY() * scaleFactor)){
                 return true;
             }
         }
