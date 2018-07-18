@@ -1,7 +1,7 @@
 package lab.mars.HRRTImp;
 
 import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.WayPoint;
+
 
 import java.io.*;
 import java.util.ArrayList;
@@ -29,10 +29,10 @@ public class World {
     public void initialWorld(double scaleFactor,Attacker attacker, int w, int h, WayPoint2D current,WayPoint2D target,int obstacleNumber){
         this.attacker = attacker;
         this.target = target;
-        target = new WayPoint2D(new Vector2(target.origin.x * scaleFactor,target.origin.y * scaleFactor));
-        current = new WayPoint2D(new Vector2(current.origin.x * scaleFactor,current.origin.y * scaleFactor));
+        target = new WayPoint2D(new Vector2(target.origin.x ,target.origin.y));
+        current = new WayPoint2D(new Vector2(current.origin.x ,current.origin.y));
 
-        this.obstacles = produceObstacle((int)(w * scaleFactor),(int)(h * scaleFactor),obstacleNumber,current,target,scaleFactor);
+        this.obstacles = produceObstacle(w,h,obstacleNumber,current,target,scaleFactor);
     }
     /**
      * @Description: produce obstacle
@@ -49,7 +49,7 @@ public class World {
             double x = produceRandomNumber() * h;
             double y = produceRandomNumber() * w;
             radius = radius * produceRandomNumber();
-            if(x <= radius  || y <= radius || x >= h - radius || y >= w - radius || currentPosition.origin.distance(new Vector2(x,y)) <= radius + 1 * scaleFactor || targetPosition.origin.distance(new Vector2(x,y)) <= radius + 1 * scaleFactor){
+            if(x >= h - radius || y >= w - radius || isConflictWithNode(currentPosition,x,y,radius,scaleFactor) || isConflictWithNode(targetPosition,x,y,radius,scaleFactor)){
                 continue;
             }
             CircleObstacle obs = new CircleObstacle(x,y,radius,scaleFactor);
@@ -57,6 +57,53 @@ public class World {
             i++;
         }
         return list;
+    }
+    public boolean isConflictWithNode(WayPoint2D currentPosition,double x,double y,double radius,double scaleFactor){
+        double cx = currentPosition.origin.x + 0.00001;
+        double cy = currentPosition.origin.y + 0.00001;
+        int minX;
+        int minY;
+        int maxX;
+        int maxY;
+        minX = (int)((int)Math.floor(cx/ scaleFactor) * scaleFactor);
+        maxX = (int)((int)Math.ceil(cx / scaleFactor) * scaleFactor);
+        minY = (int)((int)Math.floor(cy / scaleFactor) * scaleFactor);
+        maxY = (int)((int)Math.ceil(cy / scaleFactor) * scaleFactor);
+
+
+
+        if(x <= radius || y <= radius){
+            return true;
+        }
+        if( minX <= x  && x <=maxX  && minY <= y && y <= maxY){
+            return true;
+        }
+        if( minX <= x  && x <=maxX  && minY <= y - radius && y - radius <= maxY){
+            return true;
+        }
+        if( minX <= x  && x <=maxX  && minY <= y + radius && y + radius <= maxY){
+            return true;
+        }
+        if( minX <= x - radius && x- radius <=maxX  && minY <= y && y <= maxY){
+            return true;
+        }
+        if( minX <= x - radius && x- radius <=maxX  && minY <= y- radius && y + radius<= maxY){
+            return true;
+        }
+        if( minX <= x - radius && x- radius <=maxX  && minY <= y + radius && y + radius<= maxY){
+            return true;
+        }
+        if( minX <= x + radius && x+ radius <=maxX  && minY <= y && y <= maxY){
+            return true;
+        }
+        if( minX <= x + radius && x+ radius <=maxX  && minY <= y- radius && y - radius<= maxY){
+            return true;
+        }
+        if( minX <= x + radius && x+ radius <=maxX  && minY <= y + radius && y + radius<= maxY){
+            return true;
+        }
+        return false;
+
     }
     /**
      * @Description: generate the random number

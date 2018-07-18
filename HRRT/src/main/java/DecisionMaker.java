@@ -18,6 +18,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     ArrayList<WayPoint2D> feasiableWayPoint = new ArrayList<>();
     ArrayList<WayPoint2D> listTree = new ArrayList<>();
     Path2D path2D;
+    int timeCount = -1;
     double scaleFactor;
     int environMentWidth ;
     int environMentHeigh ;
@@ -57,9 +58,18 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         this.grid2D = grid2D;
     }
 
-    public DecisionMaker(double sacleFactor ,float deltaTime,
+    public int getTimeCount() {
+        return timeCount;
+    }
+
+    public void setTimeCount(int timeCount) {
+        this.timeCount = timeCount;
+    }
+
+    public DecisionMaker(double sacleFactor , float deltaTime,
                          int environMentWidth,
                          int environMentHeigh,
+                         Grid2D grid2D,
                          Provider<List<Obstacle>> obstacleProvider,
                          Provider<Attacker> aircraftProvider,
                          Provider<WayPoint2D> targetProvider,
@@ -69,7 +79,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         this.scaleFactor = sacleFactor;
         this.environMentWidth = environMentWidth;
         this.environMentHeigh = environMentHeigh;
-        this.grid2D = new Grid2D(this.environMentWidth ,this.environMentHeigh,this.environMentWidth,this.environMentHeigh,null);
+        this.grid2D = grid2D;
     }
 
 
@@ -79,19 +89,21 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         path2D = new Path2D();
         //get the grid
         List<CircleObstacle> obstacleSpace = obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
-        this.grid2D.generateNewGrid(obstacleSpace,environMentWidth,environMentHeigh,scaleFactor);
         feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid(),scaleFactor);
+        //get the currentPosition and targetPosition
         WayPoint2D currentPosition = new WayPoint2D(this.aircraft.position());
         currentPosition = new WayPoint2D(new Vector2(currentPosition.origin.x ,currentPosition.origin.y ));
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(this.target.origin.x ,this.target.origin.y));
-        int w = (int)(this.environMentWidth);
-        int h = (int)(this.environMentHeigh);
+        int w = this.environMentWidth;
+        int h = this.environMentHeigh;
         //add the currentPosition into treeList
         treeList.setCurrentPoint(new WayPoint2D(new Vector2(currentPosition.origin.x ,currentPosition.origin.y )));
         double stepLength = aircraft.velocity().len() * scaleFactor;
         int step = 0;
-        double randDouble = 0.1d;
-        while(step < w * h * scaleFactor ) {
+        double randDouble = 0.2d;
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis();
+        while(end - start < deltaTime * 1000) {
             //generate a random point
             WayPoint2D randomPoint = generateRandomPoint(randDouble, targetPosition);
             //get a closed point
@@ -99,14 +111,15 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
             WayPoint2D nearPoint = tree.getCurrentPoint();
             //arrive target
             if (isArriveTarget(nearPoint, targetPosition, stepLength)) {
-                while (tree.getParent() != null) {
+                while (tree != null) {
                     path2D.add(tree.getCurrentPoint());//add the point into path
                     tree = tree.getParent();
                 }
+                timeCount = (int)(System.currentTimeMillis() - start);
                 return path2D;
             }
             currentPosition = produceNewTemp(nearPoint,randomPoint,stepLength);
-
+            //if it is a rational point
             if(isAdjustWayPoint(currentPosition,obstacleSpace,w,h,scaleFactor)){
                 currentPosition = rotationPlot(currentPosition,scaleFactor);
                 MultiTree curTree = new MultiTree(currentPosition);
@@ -116,7 +129,9 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
                 tree.getChild().add(curTree);
             }
             step++;
+            end = System.currentTimeMillis();
         }
+        System.out.println("there is no path");
         return path2D;
     }
 
