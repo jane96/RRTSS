@@ -33,40 +33,35 @@ public class Grid2D {
 
     private int height;
 
-    private double widthScalar;
-
-    private double heightScalar;
+    private int cellEdgeLength;
 
     /**
      * provides current position of left bottom corner of the grid
      */
     private Provider<Vector2> gridOriginProvider;
 
-    public Vector2 transform(Vector2 position) {
+    public GridCell transform(Vector2 position) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 delta = position.subtract(origin);
-        double xGrad = widthScalar;
-        double yGrad = heightScalar;
-        int row = (int) (delta.x / xGrad);
-        int column = (int) (delta.y / yGrad);
-        return new Vector2(row, column);
+        int column = (int) (delta.x / cellEdgeLength);
+        int row = (int) (delta.y / cellEdgeLength);
+        return new GridCell(row, column);
     }
 
-    public Vector2 cellSize() {
-        return new Vector2(widthScalar, heightScalar);
+    public int cellSize() {
+        return cellEdgeLength;
     }
 
     public Vector2 transformToCellCenter(Vector2 position) {
-        Vector2 transformed = transform(position);
-        transformed.add(0.5, 0.5);
-        return transformed.scale(widthScalar, heightScalar);
+        GridCell transformed = transform(position);
+        return new Vector2(transformed.getColumn() + 0.5, transformed.getRow() + 0.5).scale(cellEdgeLength);
     }
 
     public void scan(List<Obstacle> obstacles) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 cursor = origin.cpy();
-        double cursorXStep = widthScalar;
-        double cursorYStep = heightScalar;
+        double cursorXStep = cellEdgeLength;
+        double cursorYStep = cellEdgeLength;
         double deltaX = cursorXStep / 10.0;
         double deltaY = cursorYStep / 10.0;
         Vector2 moved = new Vector2(0, 0);
@@ -89,16 +84,16 @@ public class Grid2D {
                     break;
                 }
             }
-            Vector2 transformed = transform(cursor);
-            if ((int) transformed.x == columnCount - 1 && (int) transformed.y == rowCount - 1) {
+            GridCell transformed = transform(cursor);
+            if (transformed.getColumn() == columnCount - 1 && transformed.getRow() == rowCount - 1) {
                 break;
             }
-            if ((int) transformed.x == columnCount - 1) {
+            if (transformed.getColumn() == columnCount - 1) {
                 cursor.x = origin.x;
-                cursor.y = (transformed.y + 1) * cursorYStep;
+                cursor.y = (transformed.getRow() + 1) * cursorYStep;
             } else {
-                cursor.x = (transformed.x + 1) * cursorXStep;
-                cursor.y = (transformed.y) * cursorYStep;
+                cursor.x = (transformed.getColumn() + 1) * cursorXStep;
+                cursor.y = (transformed.getRow()) * cursorYStep;
             }
         }
     }
@@ -109,8 +104,8 @@ public class Grid2D {
      * @param position a position in the original coordinate system
      */
     public void record(Vector2 position) {
-        Vector2 transformed = transform(position);
-        grid[((int) transformed.x)][((int) transformed.y)] = true;
+        GridCell transformed = transform(position);
+        grid[transformed.getColumn()][transformed.getRow()] = true;
     }
 
     /**
@@ -120,8 +115,8 @@ public class Grid2D {
      * @return position's childVisited time divided by the current position
      */
     public boolean check(Vector2 position) {
-        Vector2 transformed = transform(position);
-        return grid[((int) transformed.x)][((int) transformed.y)];
+        GridCell transformed = transform(position);
+        return grid[transformed.getColumn()][transformed.getRow()];
     }
 
     /**
@@ -132,7 +127,7 @@ public class Grid2D {
             int x = (int) MathUtil.random(0, columnCount);
             int y = (int) MathUtil.random(0, rowCount);
             if (!grid[x][y]) {
-                return new Vector2((x + 0.5) * widthScalar, (y + 0.5) * heightScalar);
+                return new Vector2((x + 0.5) * cellEdgeLength, (y + 0.5) * cellEdgeLength);
             }
         }
     }
@@ -149,13 +144,12 @@ public class Grid2D {
      * @param scaledBase        row count
      */
     public Grid2D(int width, int height, int scaledBase, Provider<Vector2> gridOriginProvider) {
+        this.cellEdgeLength = scaledBase;
         this.rowCount = width  / scaledBase;
         this.columnCount = height / scaledBase;
         this.width = width;
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;
         this.grid = new boolean[columnCount][rowCount];
-        this.widthScalar = width / columnCount;
-        this.heightScalar = height / rowCount;
     }
 }

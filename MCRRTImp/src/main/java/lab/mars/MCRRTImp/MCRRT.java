@@ -1,4 +1,5 @@
 package lab.mars.MCRRTImp;
+
 import lab.mars.RRTBase.*;
 
 import java.util.ArrayList;
@@ -23,18 +24,22 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
     private Path2D<Cell2D> firstLevelRRT() {
         double R = aircraft.viewDistance();
         Vector2 aircraftPosition = aircraft.position();
-        Grid2D gridWorld = new Grid2D((int)R, (int)R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
+        Grid2D gridWorld = new Grid2D((int) R, (int) R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
         obstacles.add(new EyeSight(() -> aircraftPosition, () -> R));
         gridWorld.scan(obstacles);
         Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
-        Vector2 gridCellSize = gridWorld.cellSize();
-        NTreeNode<Cell2D> root = new NTreeNode<>(new Cell2D(gridAircraft, gridCellSize.x, gridCellSize.y));
+        double gridCellEdgeLength = gridWorld.cellSize();
+        NTreeNode<Cell2D> root = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
         while (true) {
-             Cell2D sampledCell = new Cell2D(gridWorld.sample(), gridCellSize.x, gridCellSize.y);
-             NTreeNode<Cell2D> nearestNode = root.findNearest(sampledCell, (c1, c2) -> c1.centroid.distance2(c2.centroid));
-             Vector2 direction = sampledCell.centroid.cpy().subtract(nearestNode.getElement().centroid);
-             Vector2 stepped = sampledCell.centroid.add(direction.normalize().scale(gridCellSize.x));
-//             nearestNode.createChild();
+            Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
+            NTreeNode<Cell2D> nearestNode = root.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
+            Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
+            Vector2 stepped = sampled.centroid.add(direction.normalize().scale(gridCellEdgeLength));
+            if (gridWorld.check(stepped)) {
+                continue;
+            }
+            sampled.centroid.set(gridWorld.transformToCellCenter(stepped));
+            nearestNode.createChild(sampled);
             return null;
         }
         //TODO : need to complete grid world scan
