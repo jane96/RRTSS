@@ -22,20 +22,38 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
     }
 
     private Path2D<Cell2D> firstLevelRRT() {
-        double R = aircraft.viewDistance();
+        double aircraftViewRange = aircraft.viewDistance();
+        double aircraftViewAngle = aircraft.viewAngle();
         Vector2 aircraftPosition = aircraft.position();
-        Grid2D gridWorld = new Grid2D((int) R, (int) R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
-        EyeSight eyeSight = new EyeSight(() -> aircraftPosition, () -> R);
+        Vector2 aircraftDirection = aircraft.velocity();
+        Grid2D gridWorld;
+        int scaleBase = 100;
+        EyeSight eyeSight = new EyeSight(aircraftPosition, aircraftDirection, aircraftViewRange, aircraftViewAngle);
+        NTreeNode<Cell2D> pathRoot;
+        double gridCellEdgeLength;
+        Vector2 targetPositionInGridWorld;
         obstacles.add(eyeSight);
-        gridWorld.scan(obstacles);
-        Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
-        double gridCellEdgeLength = gridWorld.cellSize();
-        NTreeNode<Cell2D> root = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
-        Vector2 gridCenter = gridWorld.gridCenter();
-
+        while (true) {
+            gridWorld = new Grid2D((int) aircraftViewRange, (int) aircraftViewRange, scaleBase, () -> aircraftPosition.cpy().add(new Vector2(-aircraftViewRange, -aircraftViewRange)));
+            gridWorld.scan(obstacles);
+            Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
+            gridCellEdgeLength = gridWorld.cellSize();
+            pathRoot = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
+            targetPositionInGridWorld = gridWorld.findNearestGridCenter(target.origin);
+            if (targetPositionInGridWorld != null) {
+                break;
+            }
+            if (scaleBase == 1) {
+                throw new RuntimeException("cannot solve the map");
+            }
+            scaleBase -= 10;
+            if (scaleBase == 0) {
+                scaleBase = 1;
+            }
+        }
         while (true) {
             Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
-            NTreeNode<Cell2D> nearestNode = root.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
+            NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
             Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
             Vector2 stepped = sampled.centroid.add(direction.normalize().scale(gridCellEdgeLength));
             if (gridWorld.check(stepped)) {
@@ -43,10 +61,16 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
             }
             sampled.centroid.set(gridWorld.transformToCellCenter(stepped));
             nearestNode.createChild(sampled);
-            return null;
+            if (sampled.centroid.epsilonEquals(targetPositionInGridWorld, 0.001)) {
+                List<Cell2D> path = nearestNode.findTrace(sampled);
+                Path2D<Cell2D> cellPath = new Path2D<>();
+                path.forEach(cellPath::add);
+                return cellPath;
+            }
         }
-        //TODO : need to complete grid world scan
     }
+
+
 
     @Override
     public Path2D<WayPoint2D> algorithm() {

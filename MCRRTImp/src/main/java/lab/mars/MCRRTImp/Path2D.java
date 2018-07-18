@@ -3,6 +3,7 @@ package lab.mars.MCRRTImp;
 import lab.mars.RRTBase.Path;
 import lab.mars.RRTBase.WayPoint;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
@@ -67,5 +68,10 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
     @Override
     public W end() {
         return pathStorage.peekLast();
+    }
+
+    @Override
+    public Iterator<W> iterator() {
+        return pathStorage.iterator();
     }
 }

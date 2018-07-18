@@ -4,27 +4,23 @@ import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
 
 public class EyeSight implements Obstacle<Vector2> {
+    private Vector2 origin;
 
-    private Provider<Vector2> eyeCenterProvider;
+    private Vector2 direction;
 
-    private Provider<Double> eyeSightRadiusProvider;
+    private double radius;
 
-    public EyeSight(Provider<Vector2> eyeCenterProvider, Provider<Double> eyeSightRadiusProvider) {
-        this.eyeCenterProvider = eyeCenterProvider;
-        this.eyeSightRadiusProvider = eyeSightRadiusProvider;
-    }
+    private double angle;
 
-    public Vector2 centroid() {
-        return eyeCenterProvider.provide();
-    }
-
-    public Double radius() {
-        return eyeSightRadiusProvider.provide();
+    public EyeSight(Vector2 origin, Vector2 direction, double radius, double angle) {
+        this.origin = origin;
+        this.direction = direction;
+        this.radius = radius;
+        this.angle = angle;
     }
 
     @Override
     public boolean contains(Vector2 o) {
-        double r = radius();
-        return o.distance2(centroid()) > r * r;
+        return (this.origin.distance2(o) <= this.radius * this.radius) && direction.angle(o.subtract(origin)) <= this.angle;
     }
 }

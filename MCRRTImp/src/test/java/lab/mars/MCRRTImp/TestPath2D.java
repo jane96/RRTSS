@@ -8,18 +8,18 @@ public class TestPath2D {
     public void testAddRemove() {
         Path2D<WayPoint2D> path = new Path2D<>();
 
-        path.add(new WayPoint2D(0, 0, 1, 1));
+        path.add(new WayPoint2D(0, 0, 1));
         assert path.end().equals(path.start());
-        assert path.start().equals(new WayPoint2D(0, 0, 1, 1));
+        assert path.start().equals(new WayPoint2D(0, 0, 1));
 
-        path.remove(new WayPoint2D(0, 0, 1, 1));
+        path.remove(new WayPoint2D(0, 0, 1));
         assert path.size() == 0 && path.empty();
     }
 
     @Test
     public void testIdenticalElementAdd() {
         Path2D<WayPoint2D> path = new Path2D<>();
-        WayPoint2D wayPoint = new WayPoint2D(0, 0, 1, 1);
+        WayPoint2D wayPoint = new WayPoint2D(0, 0, 1);
         for (int i = 0; i < 100; i++) {
             path.add(wayPoint);
         }
@@ -35,7 +35,7 @@ public class TestPath2D {
         long time = System.currentTimeMillis();
         Path2D<WayPoint2D> path = new Path2D<>();
         for (int i = 0; i < 100000; i++) {
-            path.add(new WayPoint2D(100, 100, 100, 100));
+            path.add(new WayPoint2D(100, 100, 100));
         }
         long addFinish = System.currentTimeMillis();
         assert path.size() == 100000;

@@ -7,14 +7,12 @@ public class CircleObstacle implements Obstacle<Vector2> {
 
     private double radius;
 
-    private double escapeRadius;
 
     private Vector2 origin;
 
-    public CircleObstacle(double x, double y, double radius, double escapeRadius) {
+    public CircleObstacle(double x, double y, double radius) {
         this.radius = radius;
         this.origin = new Vector2(x, y);
-        this.escapeRadius = escapeRadius;
     }
 
     @Override

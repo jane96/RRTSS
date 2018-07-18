@@ -15,13 +15,19 @@ public class Attacker implements Aircraft<Vector2> {
 
     private double viewDistance;
 
+    private double viewAngle;
+
     private int graduation;
 
-    public Attacker(Vector2 position, Vector2 velocity, double rotationLimits, double viewDistance, int graduation) {
+    private double safeDistance;
+
+    public Attacker(Vector2 position, Vector2 velocity, double rotationLimits, double viewAngle, double viewDistance, double safeDistance, int graduation) {
         this.position = position;
         this.velocity = velocity;
+        this.viewAngle = viewAngle;
         this.rotationLimits = rotationLimits;
         this.viewDistance = viewDistance;
+        this.safeDistance = safeDistance;
         this.graduation = graduation;
     }
 
@@ -39,6 +45,14 @@ public class Attacker implements Aircraft<Vector2> {
 
     public double rotationLimits() {
         return rotationLimits;
+    }
+
+    public double safeDistance() {
+        return safeDistance;
+    }
+
+    public double viewAngle() {
+        return viewAngle;
     }
 
     @Override
