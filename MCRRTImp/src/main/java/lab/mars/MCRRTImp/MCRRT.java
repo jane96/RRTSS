@@ -25,11 +25,14 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         double R = aircraft.viewDistance();
         Vector2 aircraftPosition = aircraft.position();
         Grid2D gridWorld = new Grid2D((int) R, (int) R, 100, () -> aircraftPosition.cpy().add(new Vector2(-R, -R)));
-        obstacles.add(new EyeSight(() -> aircraftPosition, () -> R));
+        EyeSight eyeSight = new EyeSight(() -> aircraftPosition, () -> R);
+        obstacles.add(eyeSight);
         gridWorld.scan(obstacles);
         Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
         double gridCellEdgeLength = gridWorld.cellSize();
         NTreeNode<Cell2D> root = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
+        Vector2 gridCenter = gridWorld.gridCenter();
+
         while (true) {
             Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
             NTreeNode<Cell2D> nearestNode = root.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));

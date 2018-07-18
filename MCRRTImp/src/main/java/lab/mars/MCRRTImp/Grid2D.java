@@ -57,6 +57,10 @@ public class Grid2D {
         return new Vector2(transformed.getColumn() + 0.5, transformed.getRow() + 0.5).scale(cellEdgeLength);
     }
 
+    public Vector2 gridCenter() {
+        return new Vector2(columnCount / 2.0 * cellEdgeLength, rowCount / 2.0 * cellEdgeLength);
+    }
+
     public void scan(List<Obstacle> obstacles) {
         Vector2 origin = gridOriginProvider.provide();
         Vector2 cursor = origin.cpy();
