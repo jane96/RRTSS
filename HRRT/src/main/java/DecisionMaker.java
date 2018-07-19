@@ -87,6 +87,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
     @Override
     public Path2D algorithm() {
         path2D = new Path2D();
+        ArrayList<WayPoint2D> listExist = new ArrayList<>();
         //get the grid
         List<CircleObstacle> obstacleSpace = obstacles.stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
         feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid(),scaleFactor);
@@ -122,11 +123,14 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
             //if it is a rational point
             if(isAdjustWayPoint(currentPosition,obstacleSpace,w,h,scaleFactor)){
                 currentPosition = rotationPlot(currentPosition,scaleFactor);
-                MultiTree curTree = new MultiTree(currentPosition);
-                curTree.setParent(tree);
-                curTree.setChild(new ArrayList<MultiTree>());
-                listTree.add(currentPosition);
-                tree.getChild().add(curTree);
+                if(!isExist(currentPosition,listExist)){
+                    MultiTree curTree = new MultiTree(currentPosition);
+                    curTree.setParent(tree);
+                    curTree.setChild(new ArrayList<MultiTree>());
+                    listTree.add(currentPosition);
+                    listExist.add(currentPosition);
+                    tree.getChild().add(curTree);
+                }
             }
             step++;
             end = System.currentTimeMillis();
@@ -135,7 +139,14 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         return path2D;
     }
 
-
+    public boolean isExist(WayPoint2D currentPostion,ArrayList<WayPoint2D> list){
+        for (WayPoint2D wayPoint2d : list) {
+            if(wayPoint2d.origin.x == currentPostion.origin.x && wayPoint2d.origin.y == currentPostion.origin.y){
+                return true;
+            }
+        }
+        return false;
+    }
     public WayPoint2D rotationPlot(WayPoint2D wayPoint2D,double scaleFactor){
         int minX = (int)(((int)Math.floor(wayPoint2D.origin.x / scaleFactor) - 1) * scaleFactor);
         int minY = (int)(((int)Math.floor(wayPoint2D.origin.y / scaleFactor) - 1) * scaleFactor);
@@ -158,6 +169,7 @@ public class DecisionMaker  extends RRT<Attacker, Vector2, WayPoint2D, Path2D>{
         if(isConflictWithPoint(obstacleSpace,x,y,scaleFactor) || x <= 0 || x >= h * scaleFactor || y <= 0 || y >= w * scaleFactor){
             return false;
         }
+
         return true;
     }
     public WayPoint2D generateNewPoint(int w,int h,WayPoint2D currentPosition,WayPoint2D targetPosition,double stepLength,double closeToTargetProb,List<CircleObstacle> obstacleSpace){
