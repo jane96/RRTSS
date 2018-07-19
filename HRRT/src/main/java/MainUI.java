@@ -34,7 +34,7 @@ public class MainUI extends Application {
         double times = 3;
         double ratationLimits = 360;
         double viewDistance = 100f;
-        double scaleFactor = 15;
+        double scaleFactor = 10;
         int gradation = 1000;
         int w = 400;
         int h = 450;
