@@ -18,7 +18,7 @@ public class WayPoint2D implements WayPoint<Vector2> {
         this.utility = utility;
     }
 
-    public WayPoint2D(Vector2 origin, double radius, double utility) {
+    public WayPoint2D(double radius, double utility) {
         this.origin = origin;
         this.radius = radius;
         this.utility = utility;

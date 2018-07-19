@@ -10,8 +10,8 @@ public class TestDirectionCalculator {
 
     private static List<AvailableDirectionPoint> testCaseAnswers = new ArrayList<>();
 
-    Vector2 startPos = new Vector2(100,100);
-    Vector2 velocity = new Vector2(10,0);
+    Vector2 startPos = new Vector2(100, 100);
+    Vector2 velocity = new Vector2(10, 0);
     double rotationLimits = 10;
     double viewDistance = 100;
     int graduation = 5;
@@ -31,14 +31,14 @@ public class TestDirectionCalculator {
     }
 
     @Test
-    public void test(){
+    public void test() {
         Attacker attacker = new Attacker(startPos, velocity, rotationLimits, viewDistance, graduation);
-        List <AvailableDirectionPoint> listNext = DirectionCalculator.getNextPosList(attacker, 1, (v, theta) -> v /(1 + theta));
-        for (AvailableDirectionPoint pos: listNext) {
+        List<AvailableDirectionPoint> listNext = DirectionCalculator.getNextPosList(attacker, 1, (v, theta) -> v / (1 + theta));
+        for (AvailableDirectionPoint pos : listNext) {
             assert testCaseAnswers.get(listNext.indexOf(pos)).equals(pos);
-            System.out.println("X="+pos.x);
-            System.out.println("Y="+pos.y);
-            System.out.println("Direction="+pos.direction);
+            System.out.println("X=" + pos.x);
+            System.out.println("Y=" + pos.y);
+            System.out.println("Direction=" + pos.direction);
             System.out.println("len=" + pos.len);
             System.out.println("-----------------------------");
         }
