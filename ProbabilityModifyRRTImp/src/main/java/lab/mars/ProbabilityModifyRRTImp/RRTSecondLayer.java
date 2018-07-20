@@ -153,11 +153,13 @@ public class RRTSecondLayer {
     public List<AvailableDirectionPoint> getWaypointSequence() {
         List waypointSequence = new ArrayList();
         double targetDegree;
+        double vx, vy;
         List<AvailableDirectionPoint> nextPosList;
 
         while (targetPos != null && waypointSequence.size() < N) {
-            Vector2 o = new Vector2(1.0, 0.0);
-            mainDegree = attacker.velocity().angle(o);
+            vx = attacker.velocity().x;
+            vy = attacker.velocity().y;
+            mainDegree = Math.toDegrees(Math.atan(vy / vx));
             attacker.position().x = currentPos.origin.x;
             attacker.position().y = currentPos.origin.y;
             /**Need To Implement the velocity interface*/

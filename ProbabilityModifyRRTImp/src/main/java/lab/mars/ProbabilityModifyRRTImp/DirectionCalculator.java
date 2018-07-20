@@ -14,7 +14,9 @@ public class DirectionCalculator {
         Vector2 o = new Vector2(1.0, 0.0);
         double curX = attacker.position().x;
         double curY = attacker.position().y;
-        double mainDegree = attacker.velocity().angle(o);
+        double vx = attacker.velocity().x;
+        double vy = attacker.velocity().y;
+        double mainDegree = Math.toDegrees(Math.atan(vy / vx));
         double velocity = attacker.velocity().len();
         int directionNum = attacker.rotationGraduation();
         double thetaGap = attacker.rotationLimits() / (directionNum - 1);
