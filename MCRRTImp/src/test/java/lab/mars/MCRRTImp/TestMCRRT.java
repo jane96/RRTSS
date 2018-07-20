@@ -1,8 +1,11 @@
 package lab.mars.MCRRTImp;
 
+import javafx.application.Application;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.stage.Stage;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.RRT;
+import lab.mars.RRTBase.Vector;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,86 +29,12 @@ public class TestMCRRT {
     }
 
 
-    class TestWorld {
 
-        Attacker attacker;
 
-        Bound bound;
 
-        List<CircleObstacle> obstacles;
-
-        WayPoint2D target ;
-
-        Path2D<WayPoint2D> path;
-
-        public TestWorld(Attacker attacker, Bound bound, List<CircleObstacle> obstacles, WayPoint2D target) {
-            this.attacker = attacker;
-            this.bound = bound;
-            this.obstacles = obstacles;
-            this.target = target;
-        }
-
-        public List<Obstacle> allObstacles() {
-            List<Obstacle> ret = new ArrayList<>(obstacles);
-            ret.add(bound);
-            return ret;
-        }
-
-        public Attacker attacker() {
-            return attacker;
-        }
-
-        public WayPoint2D target() {
-            return target;
-        }
-
-        public void applyPath(Path2D<WayPoint2D> path) {
-            this.path = path;
-            
-        }
-
-        public void draw(GraphicsContext pencil) {
-
-        }
-    }
-
-    TestWorld world;
-
-    @Before
-    public void buildWorld() {
-        double worldHeight = 400;
-        double worldWidth = 500;
-        Vector2 attackerPosition = new Vector2(5,5);
-        Vector2 targetPosition = new Vector2(300, 300);
-        Attacker attacker = new Attacker(attackerPosition, new Vector2(1, 1).normalize().scale(5), 10, 30, 200, 50, 2);
-        Bound bound = new Bound(worldWidth, worldHeight);
-        WayPoint2D target = new WayPoint2D(targetPosition, 5);
-        List<CircleObstacle> circleObstacles = new ArrayList<>();
-        for (int i = 0; i < 100; ) {
-            double x = MathUtil.random(0, 500);
-            double y = MathUtil.random(0, 400);
-            Vector2 centroid = new Vector2(x, y);
-            double radius = MathUtil.random(0, 10);
-            double distance2 = centroid.distance2(attackerPosition);
-            if (distance2 + radius < attacker.safeDistance()) {
-                continue;
-            }
-            distance2 = centroid.distance2(targetPosition);
-            if (distance2 + radius < target.radius) {
-                continue;
-            }
-            i ++;
-            CircleObstacle obstacle = new CircleObstacle(x, y, radius);
-            System.out.println("circleObstacles.add(new CircleObstacle(" + x + "," + y + "," + radius + "));");
-            circleObstacles.add(obstacle);
-
-        }
-        world = new TestWorld(attacker, bound, circleObstacles, target);
-    }
 
     @Test
     public void testFirstLevelRRT() {
-        RRT rrt = new MCRRT(1 / 30.0f, world::allObstacles, world::attacker, world::target, world::applyPath);
-        rrt.solve(true);
+
     }
 }

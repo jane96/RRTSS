@@ -21,6 +21,6 @@ public class EyeSight implements Obstacle<Vector2> {
 
     @Override
     public boolean contains(Vector2 o) {
-        return (this.origin.distance2(o) <= this.radius * this.radius) && direction.angle(o.subtract(origin)) <= this.angle;
+        return !((this.origin.distance2(o) <= this.radius * this.radius) && direction.angle(o.cpy().subtract(origin)) <= this.angle / 2.0);
     }
 }

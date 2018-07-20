@@ -14,7 +14,7 @@ import java.util.List;
  */
 public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends WayPoint<V>, P extends Path<W>> {
 
-    private Provider<List<Obstacle>> obstacleProvider;
+    private Provider<List<Obstacle<V>>> obstacleProvider;
 
     private Provider<A> aircraftProvider;
 
@@ -22,7 +22,7 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
 
     private Applier<P> pathApplier;
 
-    protected List<Obstacle> obstacles;
+    protected List<Obstacle<V>> obstacles;
 
     protected A aircraft;
 
@@ -54,7 +54,7 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
     }
 
     public RRT(float deltaTime,
-               Provider<List<Obstacle>> obstacleProvider,
+               Provider<List<Obstacle<V>>> obstacleProvider,
                Provider<A> aircraftProvider,
                Provider<W> targetProvider,
                Applier<P> pathApplier) {

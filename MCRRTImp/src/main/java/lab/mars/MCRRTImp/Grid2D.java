@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the position's y should be (0 + offset, height + offset) <br>
  * offset is determined by the delta between origin and this position
  */
-public class Grid2D {
+public class Grid2D implements Iterable<Vector2> {
 
     /**
      * column first, row second grid
@@ -38,18 +38,12 @@ public class Grid2D {
 
     private int cellEdgeLength;
 
-    /**
-     * provides current position of left bottom corner of the grid
-     */
-    private Provider<Vector2> gridOriginProvider;
 
     public GridCell transform(Vector2 position) throws IndexOutOfBoundsException{
-        Vector2 origin = gridOriginProvider.provide();
-        Vector2 delta = position.subtract(origin);
-        int column = (int) (delta.x / cellEdgeLength);
-        int row = (int) (delta.y / cellEdgeLength);
+        int column = (int) (position.x / cellEdgeLength);
+        int row = (int) (position.y / cellEdgeLength);
         if (column >= columnCount || row >= rowCount) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException(String.format("trying to get (%d, %d) while grid is (%d, %d), origin position is (%f, %f)", column, row, columnCount, rowCount, position.x, position.y));
         }
         return new GridCell(row, column);
     }
@@ -60,15 +54,15 @@ public class Grid2D {
 
     public Vector2 transformToCellCenter(Vector2 position) throws IndexOutOfBoundsException{
         GridCell transformed = transform(position);
-        return new Vector2(transformed.getColumn() + 0.5, transformed.getRow() + 0.5).scale(cellEdgeLength).add(gridOriginProvider.provide());
+        return new Vector2(transformed.column + 0.5, transformed.row + 0.5).scale(cellEdgeLength);
     }
 
     public Vector2 transformToCellCenter(GridCell cell) throws IndexOutOfBoundsException{
-        return new Vector2(cell.getColumn() + 0.5, cell.getRow() + 0.5).scale(cellEdgeLength).add(gridOriginProvider.provide());
+        return new Vector2(cell.column + 0.5, cell.row + 0.5).scale(cellEdgeLength);
     }
 
     public Vector2 transformToCellCenter(int row, int column) throws IndexOutOfBoundsException{
-        return new Vector2(column + 0.5,row + 0.5).scale(cellEdgeLength).add(gridOriginProvider.provide());
+        return new Vector2(column + 0.5,row + 0.5).scale(cellEdgeLength);
     }
 
     public List<Vector2> gridAvailableBound() {
@@ -92,29 +86,26 @@ public class Grid2D {
         return bound;
     }
 
-    public Vector2 findNearestGridCenter(Vector2 position) {
-        Vector2 origin = gridOriginProvider.provide();
-        Vector2 delta = position.cpy().subtract(origin);
-        if ((delta.x >= 0 && delta.x <= width) && (delta.y >= 0 && delta.y <= height)) {
-            if (check(position)) {
+    public Vector2 findNearestGridCenter(Vector2 positionToCheck) {
+        if ((positionToCheck.x >= 0 && positionToCheck.x <= width) && (positionToCheck.y >= 0 && positionToCheck.y <= height)) {
+            if (check(positionToCheck)) {
                 return null;
             }
-            return transformToCellCenter(position);
+            return transformToCellCenter(positionToCheck);
         }
         List<Vector2> availableBoundCell = gridAvailableBound();
         if (availableBoundCell.size() == 0) {
             return null;
         }
-        return availableBoundCell.stream().min(Comparator.comparingDouble(o -> o.distance2(position))).get();
+        return availableBoundCell.stream().min(Comparator.comparingDouble(o -> o.distance2(positionToCheck))).get();
     }
 
     public Vector2 gridCenter() {
         return new Vector2(columnCount / 2.0 * cellEdgeLength, rowCount / 2.0 * cellEdgeLength);
     }
 
-    public void scan(List<Obstacle> obstacles) {
-        Vector2 origin = gridOriginProvider.provide();
-        Vector2 cursor = origin.cpy();
+    public void scan(List<Obstacle<Vector2>> obstacles) {
+        Vector2 cursor = new Vector2();
         double cursorXStep = cellEdgeLength;
         double cursorYStep = cellEdgeLength;
         double deltaX = cursorXStep / 10.0;
@@ -129,26 +120,28 @@ public class Grid2D {
                         flag = true;
                         break;
                     }
-                    obstacles.forEach(obs -> {
+                    for (Obstacle<Vector2> obs : obstacles) {
                         if (obs.contains(moved)) {
                             record(moved);
+                            flag = true;
+                            break;
                         }
-                    });
+                    }
                 }
                 if (flag) {
                     break;
                 }
             }
             GridCell transformed = transform(cursor);
-            if (transformed.getColumn() == columnCount - 1 && transformed.getRow() == rowCount - 1) {
+            if (transformed.column == columnCount - 1 && transformed.row == rowCount - 1) {
                 break;
             }
-            if (transformed.getColumn() == columnCount - 1) {
-                cursor.x = origin.x;
-                cursor.y = (transformed.getRow() + 1) * cursorYStep;
+            if (transformed.column == columnCount - 1) {
+                cursor.x = 0;
+                cursor.y = (transformed.row + 1) * cursorYStep;
             } else {
-                cursor.x = (transformed.getColumn() + 1) * cursorXStep;
-                cursor.y = (transformed.getRow()) * cursorYStep;
+                cursor.x = (transformed.column + 1) * cursorXStep;
+                cursor.y = (transformed.row) * cursorYStep;
             }
         }
     }
@@ -160,7 +153,7 @@ public class Grid2D {
      */
     public void record(Vector2 position) {
         GridCell transformed = transform(position);
-        grid[transformed.getColumn()][transformed.getRow()] = true;
+        grid[transformed.column][transformed.row] = true;
     }
 
     /**
@@ -171,7 +164,7 @@ public class Grid2D {
      */
     public boolean check(Vector2 position) {
         GridCell transformed = transform(position);
-        return grid[transformed.getColumn()][transformed.getRow()];
+        return grid[transformed.column][transformed.row];
     }
 
     /**
@@ -194,17 +187,15 @@ public class Grid2D {
      * the position's y should be (0 + offset, height + offset) <br>
      * offset is determined by the delta between origin and this position
      *
-     * @param gridOriginProvider provide current left bottom corner of the grid
      *
      * @param scaledBase        row count
      */
-    public Grid2D(int width, int height, int scaledBase, Provider<Vector2> gridOriginProvider) {
+    public Grid2D(int width, int height, int scaledBase) {
         this.cellEdgeLength = scaledBase;
         this.rowCount = height  / scaledBase;
         this.columnCount = width / scaledBase;
         this.width = width;
         this.height = height;
-        this.gridOriginProvider = gridOriginProvider;
         this.grid = new boolean[columnCount][rowCount];
     }
 
@@ -222,5 +213,36 @@ public class Grid2D {
             result.append("\n");
         }
         return result.toString();
+    }
+
+    @Override
+    public Iterator<Vector2> iterator() {
+        return new GridCellIterator();
+    }
+
+    private class GridCellIterator implements Iterator<Vector2> {
+
+        GridCell cell = null;
+
+        public GridCellIterator() {
+            this.cell = new GridCell(0, 0);
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.cell.column < columnCount;
+        }
+
+        @Override
+        public Vector2 next() {
+            Vector2 ret = transformToCellCenter(cell);
+            if (cell.row == rowCount - 1) {
+                cell.row = 0;
+                cell.column ++;
+            } else {
+                cell.row ++;
+            }
+            return ret;
+        }
     }
 }

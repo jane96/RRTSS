@@ -11,14 +11,24 @@ import java.util.stream.Stream;
 
 public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>> {
 
+    private float width;
+
+    private float height;
+
+    private Applier<Grid2D> grid2DApplier;
 
     public MCRRT(float deltaTime,
-                 Provider<List<Obstacle>> obstacleProvider,
+                 float w, float h,
+                 Provider<List<Obstacle<Vector2>>> obstacleProvider,
                  Provider<Attacker> aircraftProvider,
                  Provider<WayPoint2D> targetProvider,
-                 Applier<Path2D<WayPoint2D>> pathApplier
+                 Applier<Path2D<WayPoint2D>> pathApplier,
+                 Applier<Grid2D> grid2DApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
+        this.width = w;
+        this.height = h;
+        this.grid2DApplier = grid2DApplier;
     }
 
     private Path2D<Cell2D> firstLevelRRT() {
@@ -27,42 +37,41 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         Vector2 aircraftPosition = aircraft.position();
         Vector2 aircraftDirection = aircraft.velocity();
         Grid2D gridWorld;
-        int scaleBase = 100;
-        EyeSight eyeSight = new EyeSight(aircraftPosition, aircraftDirection, aircraftViewRange, aircraftViewAngle);
+        int scaleBase = 30;
         NTreeNode<Cell2D> pathRoot;
         double gridCellEdgeLength;
         Vector2 targetPositionInGridWorld;
-        obstacles.add(eyeSight);
         while (true) {
-            gridWorld = new Grid2D((int) aircraftViewRange, (int) aircraftViewRange, scaleBase, () -> aircraftPosition.cpy().add(new Vector2(-aircraftViewRange, -aircraftViewRange)));
+            gridWorld = new Grid2D((int) width, (int) height, scaleBase);
             gridWorld.scan(obstacles);
             Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
             gridCellEdgeLength = gridWorld.cellSize();
             pathRoot = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
             targetPositionInGridWorld = gridWorld.findNearestGridCenter(target.origin);
+            grid2DApplier.apply(gridWorld);
             if (targetPositionInGridWorld != null) {
                 break;
             }
-            if (scaleBase == 1) {
+            if (scaleBase == 5) {
                 throw new RuntimeException("cannot solve the map");
             }
-            scaleBase -= 10;
-            if (scaleBase == 0) {
-                scaleBase = 1;
+            scaleBase -= 1;
+            if (scaleBase == 4) {
+                scaleBase = 5;
             }
         }
         while (true) {
             Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
             NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
             Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
-            Vector2 stepped = sampled.centroid.add(direction.normalize().scale(gridCellEdgeLength));
+            Vector2 stepped = nearestNode.getElement().centroid.cpy().add(direction.normalize().scale(gridCellEdgeLength));
             if (gridWorld.check(stepped)) {
                 continue;
             }
             sampled.centroid.set(gridWorld.transformToCellCenter(stepped));
             nearestNode.createChild(sampled);
             if (sampled.centroid.epsilonEquals(targetPositionInGridWorld, 0.001)) {
-                List<Cell2D> path = nearestNode.findTrace(sampled);
+                List<Cell2D> path = pathRoot.findTrace(sampled);
                 Path2D<Cell2D> cellPath = new Path2D<>();
                 path.forEach(cellPath::add);
                 return cellPath;
@@ -74,39 +83,9 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
 
     @Override
     public Path2D<WayPoint2D> algorithm() {
-        Path2D<WayPoint2D> path = new Path2D<>();
-        double R = aircraft.viewDistance();
-        double totalRotationAngle = aircraft.rotationLimits();
-        double alpha = totalRotationAngle / 2.0;
-        double n = aircraft.rotationGraduation();
-        Vector2 position = aircraft.position();
-        Vector2 direction = aircraft.velocity().cpy().normalize();
-        List<Vector2> availableDirections = new ArrayList<>();
-        for (double a = -alpha; a < alpha; alpha += totalRotationAngle / n) {
-            Vector2 rotation = direction.cpy().rotate(a);
-            availableDirections.add(rotation);
-        }
-        List<Vector2> Way = new ArrayList<>();
-        do {
-            double randomR = MathUtil.random(0, R);
-            double randomTheta = MathUtil.random(-alpha, alpha);
-            Vector2 SA = direction.cpy().rotate(randomTheta).normalize().scale(randomR);
-            Vector2 A = SA.cpy().add(position);
-            boolean collide = false;
-            for (Obstacle obs : obstacles) {
-                if (obs.contains(A)) {
-                    collide = true;
-                    break;
-                }
-            }
-            if (collide) {
-                continue;
-            }
-            Stream<Map.Entry<Vector2, Double>> sorted =
-                    availableDirections.stream().collect(Collectors.toMap(dir -> dir, SA::angle))
-                            .entrySet().stream().sorted(Comparator.comparingDouble(Map.Entry::getValue));
-
-        } while (Way.size() != n);
-        return null;
+        Path2D<Cell2D> areaPath = firstLevelRRT();
+        Path2D<WayPoint2D> ret = new Path2D<>();
+        areaPath.forEach(e -> ret.add(new WayPoint2D(e.centroid, e.edgeLength)));
+        return ret;
     }
 }

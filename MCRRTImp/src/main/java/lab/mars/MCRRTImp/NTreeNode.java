@@ -33,7 +33,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
     public void createChild(E element,  E... elements) {
         NTreeNode<E> single = new NTreeNode<>(element);
         single.parent = this;
-        single.children.add(single);
+        children.add(single);
         for (E e : elements) {
             NTreeNode<E> c = new NTreeNode<>(e);
             c.parent = this;
@@ -86,11 +86,11 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
             VisitRecorder now = stack.peek();
             if (now.node.children.size() == 0) {
                 stack.pop();
-                now = stack.peek();
+                continue;
             }
             if (now.childVisited == now.node.children.size()) {
                 stack.pop();
-                now = stack.peek();
+                continue;
             }
             stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
             if (stack.peek().node.element.equals(element)) {

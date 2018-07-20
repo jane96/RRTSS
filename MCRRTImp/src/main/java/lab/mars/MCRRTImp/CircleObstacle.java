@@ -5,10 +5,10 @@ import lab.mars.RRTBase.Obstacle;
 
 public class CircleObstacle implements Obstacle<Vector2> {
 
-    private double radius;
+    public double radius;
 
 
-    private Vector2 origin;
+    public Vector2 origin;
 
     public CircleObstacle(double x, double y, double radius) {
         this.radius = radius;

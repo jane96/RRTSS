@@ -1,5 +1,13 @@
 package lab.mars.MCRRTImp;
 
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.stage.Stage;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
 
@@ -8,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class TestGrid2D {
@@ -17,6 +26,7 @@ public class TestGrid2D {
     private List<Vector2> testGridAvailableBoundResult = new ArrayList<>();
 
     private Grid2D commonTestGrid;
+    private List<Obstacle<Vector2>> commonTestObstacles = new ArrayList<>();
     @Before
     public void scanResult() {
         scanResult =
@@ -71,21 +81,19 @@ public class TestGrid2D {
                 "**************************************************\n" +
                 "**************************************************\n";
 
-        commonTestGrid = new Grid2D(100, 100, 2, Vector2::new);
-        EyeSight eyeSight = new EyeSight(new Vector2(0, 50), new Vector2(0, 1), 40, 10);
+        commonTestGrid = new Grid2D(100, 100, 2);
+        CircleBound bound = new CircleBound(50, 50, 40);
         CircleObstacle obstacle = new CircleObstacle(50, 50, 10);
         CircleObstacle obstacle2 = new CircleObstacle(30, 25, 2);
         CircleObstacle obstacle3 = new CircleObstacle(65, 65, 5);
         CircleObstacle obstacle4 = new CircleObstacle(200, 200, 5);
-
-        List<Obstacle> obstacles = new ArrayList<>();
-        obstacles.add(eyeSight);
-        obstacles.add(obstacle);
-        obstacles.add(obstacle2);
-        obstacles.add(obstacle3);
-        obstacles.add(obstacle4);
+        commonTestObstacles.add(bound);
+        commonTestObstacles.add(obstacle);
+        commonTestObstacles.add(obstacle2);
+        commonTestObstacles.add(obstacle3);
+        commonTestObstacles.add(obstacle4);
         long start = System.currentTimeMillis();
-        commonTestGrid.scan(obstacles);
+        commonTestGrid.scan(commonTestObstacles);
         System.out.println("common test grid 2d scan used : " + (System.currentTimeMillis() - start) + "ms");
         testGridAvailableBoundResult.add(new Vector2(5.5,0.5));
         testGridAvailableBoundResult.add(new Vector2(5.5,19.5));
@@ -109,27 +117,16 @@ public class TestGrid2D {
     }
 
 
-    private class DummyOriginProvider implements Provider<Vector2> {
-
-        Vector2 origin = new Vector2();
-
-        @Override
-        public Vector2 provide() {
-            return origin;
-        }
-    }
-
-
     @Test
     public void testCreate() {
-        Grid2D grid = new Grid2D(10, 5, 1, new DummyOriginProvider());
+        Grid2D grid = new Grid2D(10, 5, 1);
         assert grid.grid.length == 10;
         assert grid.grid[0].length == 5;
     }
 
     @Test
     public void testRecordAndCheck() {
-        Grid2D grid = new Grid2D(10, 10, 1, new DummyOriginProvider());
+        Grid2D grid = new Grid2D(10, 10, 1);
         assert !grid.check(new Vector2(0, 0));
         grid.record(new Vector2(0, 0));
         assert grid.check(new Vector2(0, 0));
@@ -153,10 +150,10 @@ public class TestGrid2D {
     public void testGetGridAvailableBound() {
         List<Vector2> availableBound = commonTestGrid.gridAvailableBound();
         assert availableBound.size() == 0;
-        Grid2D testGrid = new Grid2D(10, 20, 1, Vector2::new);
-        List<Obstacle> obstacles = new ArrayList<>();
-        obstacles.add(new CircleObstacle(0, 10, 10));
-        testGrid.scan(obstacles);
+        Grid2D testGrid = new Grid2D(10, 20, 1);
+        List<Obstacle<Vector2>> commonTestObstacles = new ArrayList<>();
+        commonTestObstacles.add(new CircleObstacle(0, 10, 10));
+        testGrid.scan(commonTestObstacles);
         String stringed = testGrid.toString();
         System.out.println(stringed);
         availableBound = testGrid.gridAvailableBound();
@@ -169,10 +166,10 @@ public class TestGrid2D {
 
     @Test
     public void testFindNearestGridCenter() {
-        Grid2D testGrid = new Grid2D(10, 20, 1, Vector2::new);
-        List<Obstacle> obstacles = new ArrayList<>();
-        obstacles.add(new CircleObstacle(0, 10, 10));
-        testGrid.scan(obstacles);
+        Grid2D testGrid = new Grid2D(10, 20, 1);
+        List<Obstacle<Vector2>> commonTestObstacles = new ArrayList<>();
+        commonTestObstacles.add(new CircleObstacle(0, 10, 10));
+        testGrid.scan(commonTestObstacles);
         String stringed = testGrid.toString();
         System.out.println(stringed);
         Vector2 nearest = testGrid.findNearestGridCenter(new Vector2(-1, 11));
@@ -212,42 +209,18 @@ public class TestGrid2D {
     public void testToCellCenter() {
         Vector2 test = new Vector2(50, 50);
         Vector2 centered = commonTestGrid.transformToCellCenter(test);
+        System.out.println(centered);
         assert MathUtil.epsilonEquals(centered.x, 51);
         assert MathUtil.epsilonEquals(centered.y, 51);
     }
 
     @Test
-    public void testScanGUI() {
-//        Application gui = new Application() {
-//            @Override
-//            public void start(Stage primaryStage) throws Exception {
-//                HBox root = new HBox();
-//                Canvas canvas = new Canvas(1024, 768);
-//                root.getChildren().add(canvas);
-//                Scene scene = new Scene(root, 1024, 768);
-//                primaryStage.setScene(scene);
-//                GraphicsContext pencil = canvas.getGraphicsContext2D();
-//                Grid2D grid = new Grid2D(100, 100, 50, 100, () -> new Vector2(0, 0));
-//                EyeSight eyeSight = new EyeSight(() -> new Vector2(50, 50), () -> 40.0);
-//                CircleObstacle obstacle = new CircleObstacle(50, 50, 10, 10);
-//                CircleObstacle obstacle2 = new CircleObstacle(30, 25, 2, 1);
-//                CircleObstacle obstacle3 = new CircleObstacle(65, 65, 5, 1);
-//                CircleObstacle obstacle4 = new CircleObstacle(200, 200, 5, 1);
-//
-//                List<Obstacle> obstacles = new ArrayList<>();
-//                obstacles.add(eyeSight);
-//                obstacles.add(obstacle);
-//                obstacles.add(obstacle2);
-//                obstacles.add(obstacle3);
-//                obstacles.add(obstacle4);
-//                long start = System.currentTimeMillis();
-//                grid.scan(obstacles);
-//                System.out.println("grid 2d scan used : " + (System.currentTimeMillis() - start) + "ms");
-//
-//                primaryStage.show();
-//            }
-//        }
+    public void testIterator() {
+        List<Vector2> foreach = new ArrayList<>();
+        commonTestGrid.forEach(foreach::add);
+        assert foreach.size() == 2500;
     }
+
 
 
 }
