@@ -1,6 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.*;
+import org.apache.commons.math3.distribution.NormalDistribution;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         Vector2 aircraftPosition = aircraft.position();
         Vector2 aircraftDirection = aircraft.velocity();
         Grid2D gridWorld;
-        int scaleBase = 50;
+        int scaleBase = 100;
         NTreeNode<Cell2D> pathRoot;
         double gridCellEdgeLength;
         Vector2 targetPositionInGridWorld;
@@ -51,8 +52,8 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
             targetPositionInGridWorld = gridWorld.findNearestGridCenter(target.origin);
             grid2DApplier.apply(gridWorld);
             if (targetPositionInGridWorld == null) {
-                scaleBase -= 1;
-                if (scaleBase == 4) {
+                scaleBase -= 5;
+                if (scaleBase <= 5) {
                     scaleBase = 5;
                 }
                 continue;
@@ -61,8 +62,11 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                 throw new RuntimeException("cannot solve the map");
             }
             int step_count = 0;
-            while (step_count < 1000) {
+            while (step_count < gridWorld.rowCount * gridWorld.columnCount / 2) {
                 Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
+                if (MathUtil.random(0, 1) < 0.3) {
+                    sampled = new Cell2D(target.origin.cpy(), gridCellEdgeLength);
+                }
                 NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
                 Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
                 Vector2 stepped = nearestNode.getElement().centroid.cpy().add(direction.normalize().scale(gridCellEdgeLength));
@@ -79,23 +83,27 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                 }
                 step_count++;
             }
-            scaleBase -= 1;
-            if (scaleBase == 4) {
+            scaleBase -= 5;
+            if (scaleBase <= 5) {
                 scaleBase = 5;
             }
         }
 
     }
 
-    private Path2D<WayPoint2D> secondLevelRRT() {
-        throw  new NotImplementedException();
+    private Path2D<WayPoint2D> secondLevelRRT(Path2D<Cell2D> areaPath) {
+        Path2D<WayPoint2D> ret = new Path2D<>();
+        NormalDistribution distribution = new NormalDistribution();
+        Vector2 start = aircraft.position();
+        for (Cell2D area : areaPath) {
+            ret.add(new WayPoint2D(area.centroid, area.edgeLength));
+        }
+        return ret;
     }
 
     @Override
     public Path2D<WayPoint2D> algorithm() {
         Path2D<Cell2D> areaPath = firstLevelRRT();
-        Path2D<WayPoint2D> ret = new Path2D<>();
-        areaPath.forEach(e -> ret.add(new WayPoint2D(e.centroid, e.edgeLength)));
-        return ret;
+        return secondLevelRRT(areaPath);
     }
 }

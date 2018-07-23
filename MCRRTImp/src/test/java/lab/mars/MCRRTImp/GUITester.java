@@ -1,13 +1,9 @@
 package lab.mars.MCRRTImp;
 
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import lab.mars.RRTBase.Obstacle;
@@ -16,7 +12,7 @@ import lab.mars.RRTBase.RRT;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GUITester extends Application {
+public class GUITester extends GUIBase {
 
     private double scaleBase = 1;
     private Stage stage;
@@ -185,17 +181,15 @@ public class GUITester extends Application {
         public void applyPath(Path2D<WayPoint2D> path) {
             this.path = path;
             path.forEach(System.out::println);
-            redraw();
 
         }
 
         public void applyGrid(Grid2D grid) {
             this.gridWorld = grid;
-            redraw();
         }
 
-        public void draw(GraphicsContext pencil) {
-            pencil.clearRect(0, 0, stage.getWidth(), stage.getHeight());
+        public void draw(Pencil pencil) {
+            pencil.scale(scaleBase);
             drawGrid(pencil);
             drawObstacles(pencil);
             drawPath(pencil);
@@ -203,50 +197,32 @@ public class GUITester extends Application {
             drawUAV(pencil);
         }
 
-        public void drawTarget(GraphicsContext pencil) {
-            pencil.setFill(Color.YELLOWGREEN);
-            double x = (target.origin.x - target.radius) * scaleBase;
-            double y = (target.origin.y - target.radius) * scaleBase;
-            double w = target.radius * 2 * scaleBase;
-            double h = target.radius * 2 * scaleBase;
-            pencil.fillOval(x, y, w, h);
+        public void drawTarget(Pencil pencil) {
+            pencil.filled().color(Color.YELLOWGREEN).circle(target.origin, target.radius);
         }
 
-        public void drawUAV(GraphicsContext pencil) {
-            pencil.setFill(Color.ORANGERED);
-            Vector2 position = attacker.position().cpy().scale(scaleBase);
-            pencil.fillRoundRect(position.x - 10 * scaleBase, position.y - 10 * scaleBase, scaleBase * 20, scaleBase * 20, 1, 1);
+        public void drawUAV(Pencil pencil) {
+            pencil.filled().color(Color.ORANGERED).box(attacker.position(), scaleBase);
         }
 
-        public void drawObstacles(GraphicsContext pencil) {
-            pencil.setFill(Color.LIGHTBLUE);
-            pencil.setStroke(Color.DARKBLUE);
-            for (CircleObstacle obs : this.obstacles) {
-                if (obs != null) {
-                    double x = (obs.origin.x - obs.radius) * scaleBase;
-                    double y = (obs.origin.y - obs.radius) * scaleBase;
-                    double w = obs.radius * 2 * scaleBase;
-                    double h = obs.radius * 2 * scaleBase;
-                    pencil.fillOval(x, y, w, h);
-                    pencil.strokeOval(x, y, w, h);
-                }
-            }
+        public void drawObstacles(Pencil pencil) {
+            this.obstacles.forEach(obs -> {
+                pencil.filled().color(Color.LIGHTBLUE).circle(obs.origin, obs.radius);
+                pencil.stroked(1).color(Color.DARKBLUE).circle(obs.origin, obs.radius);
+            });
         }
 
-        public void drawPath(GraphicsContext pencil) {
+        public void drawPath(Pencil pencil) {
             if (path != null && path.size() != 0) {
                 Vector2 last = attacker.position();
-                pencil.setStroke(Color.BLACK);
-                pencil.setLineWidth(5);
                 for (WayPoint2D wayPoint2D : path) {
-                    Vector2 current = wayPoint2D.origin.cpy().scale(scaleBase);
-                    pencil.strokeLine(current.x , current.y, last.x, last.y);
-                    last = current;
+                    pencil.stroked(5).color(Color.BLACK).line(wayPoint2D.origin, last);
+                    last = wayPoint2D.origin;
                 }
             }
         }
 
-        public void drawGrid(GraphicsContext pencil) {
+        public void drawGrid(Pencil pencil) {
             if (gridWorld != null) {
                 double cellSize = gridWorld.cellSize() * scaleBase;
                 for (Vector2 cellCenter : gridWorld) {
@@ -254,12 +230,7 @@ public class GUITester extends Application {
                     if (gridWorld.check(cellCenter)) {
                         color = new Color(1, 0, 0, 1);
                     }
-                    cellCenter.scale(scaleBase);
-                    pencil.setFill(color);
-                    pencil.fillRect(cellCenter.x - cellSize / 2, cellCenter.y - cellSize / 2, cellSize, cellSize);
-                    pencil.setStroke(Color.BLUE);
-                    pencil.setLineWidth(1);
-                    pencil.strokeRect(cellCenter.x - cellSize / 2, cellCenter.y - cellSize / 2, cellSize, cellSize);
+                    pencil.filled().color(color).box(cellCenter, cellSize).stroked(1).color(Color.BLUE).box(cellCenter, cellSize);
                 }
             }
         }
@@ -277,47 +248,27 @@ public class GUITester extends Application {
 
     public GUITester() {
         buildWorld();
-        rrt = new MCRRT(1 / 30.0f, 1920, 1080, world::allObstacles, world::attacker, world::target, world::applyPath, world::applyGrid);
+        rrt = new MCRRT(1 / 30.0f, width, height, world::allObstacles, world::attacker, world::target, world::applyPath, world::applyGrid);
 
-    }
-
-    private GraphicsContext pencil;
-
-    private void redraw() {
-        Platform.runLater(() -> world.draw(pencil));
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        stage = primaryStage;
+    void draw(Pencil pencil) {
+        world.draw(pencil);
+    }
+
+    @Override
+    void initializeComponents(Stage primaryStage, Pane root, Canvas canvas) {
+        super.initializeComponents(primaryStage, root, canvas);
         primaryStage.setTitle("Test Grid 2D Draw");
-        HBox root = new HBox();
-        Canvas canvas = new Canvas(1920, 1080);
-        root.getChildren().add(canvas);
-        Scene scene = new Scene(root, 1920, 1080);
+        stage = primaryStage;
         ContextMenu menu = new ContextMenu();
         MenuItem solve = new MenuItem("Solve");
         solve.setOnAction(event -> rrt.solve(false));
         menu.getItems().add(solve);
         canvas.setOnContextMenuRequested(event -> menu.show(canvas, event.getScreenX(), event.getScreenY()));
-        pencil = canvas.getGraphicsContext2D();
-        redraw();
-        primaryStage.widthProperty().addListener((ob, ov, nv) -> {
-            scaleBase = (double) nv / 1920;
-            canvas.setWidth((double) nv);
-            redraw();
-        });
-        primaryStage.heightProperty().addListener((ob, ov, nv) -> {
-            canvas.setHeight((double) nv);
-            redraw();
-        });
-        primaryStage.setScene(scene);
-        primaryStage.show();
-
-    }
-
-    public static void main(String[] args) {
-        launch(args);
+        primaryStage.widthProperty().addListener((ob, ov, nv) -> scaleBase = (double) nv / 1920);
+        primaryStage.heightProperty().addListener((ob, ov, nv) -> scaleBase = (double) nv / 1080);
     }
 
 }

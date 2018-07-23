@@ -4,5 +4,10 @@ public class Transform {
 
     Vector2 position;
 
-    double direction;
+    Vector2 velocity;
+
+    public Transform(Vector2 position, Vector2 velocity) {
+        this.position = position;
+        this.velocity = velocity;
+    }
 }

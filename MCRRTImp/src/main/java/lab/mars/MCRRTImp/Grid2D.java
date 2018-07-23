@@ -25,12 +25,12 @@ public class Grid2D implements Iterable<Vector2> {
     /**
      * represents y dimension
      */
-    private int rowCount;
+    int rowCount;
 
     /**
      * represents x dimension
      */
-    private int columnCount;
+    int columnCount;
 
     private int width;
 
