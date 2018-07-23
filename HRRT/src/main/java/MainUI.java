@@ -141,6 +141,10 @@ public class MainUI extends Application {
         for (int i = 0; i < pathList.size() - 1; i++) {
             root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK));
         }
+        //draw real path
+
+
+
         //draw the path of way
         ArrayList<WayPoint2D> treeList = decisoner.getListTree();
         for (int i = 0; i < treeList.size(); i++) {
