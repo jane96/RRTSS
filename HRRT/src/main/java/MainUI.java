@@ -28,41 +28,39 @@ public class MainUI extends Application {
     public Parent createContent() {
         Pane root = new Pane();
         root.setMinSize(1000, 1000);
-        root.setMaxSize(1800, 1230);
+        root.setMaxSize(2600, 1330);
         float delTime = 1f;
-
-        double times = 3;
+        double times = 2;
         double ratationLimits = 360;
         double viewDistance = 100f;
-        double scaleFactor = 10;
+        double scaleFactor = 6;
         int gradation = 1000;
-        int w = 400;
-        int h = 450;
+        int w = 660;
+        int h = 960;
         int baseW = w;
         int baseH = h;
-        int obstacleNumber = 250;
+        int obstacleNumber = 960;
         Vector2 velocity = new Vector2(0, 1);
         WayPoint2D currentPosition = new WayPoint2D(new Vector2(70, 3));
-        WayPoint2D targetPosition = new WayPoint2D(new Vector2(300, 350));
+        WayPoint2D targetPosition = new WayPoint2D(new Vector2(h * 0.8, w * 0.8));
         //draw the line of x,y plot
         int we = (int) Math.ceil(w / scaleFactor);
         int he = (int) Math.ceil(h / scaleFactor);
         for (int i = 0; i <= we; i++) {
             Line line2 = createLine(new WayPoint2D(new Vector2(0, i * scaleFactor * times)), new WayPoint2D(new Vector2(he * scaleFactor * times, i * scaleFactor * times)), Color.BLUE);
             root.getChildren().add(line2);
-            Label label2 = new Label("" + 50 * i / (int) times);
+            Label label2 = new Label("" + (int)(i * scaleFactor));
             label2.setMinWidth(5);
             label2.setLayoutX(0);
-            label2.setLayoutY(50 * i);
+            label2.setLayoutY(i * scaleFactor * times);
             root.getChildren().add(label2);
         }
         for (int i = 0; i <= he; i++) {
             Line line = createLine(new WayPoint2D(new Vector2(i * scaleFactor * times, 0)), new WayPoint2D(new Vector2(i * scaleFactor * times, we * scaleFactor * times)), Color.BLUE);
-            ;
             root.getChildren().add(line);
-            Label label1 = new Label("" + 50 * i / (int) times);
+            Label label1 = new Label("" + (int)(i * scaleFactor));
             label1.setMinWidth(5);
-            label1.setLayoutX(50 * i);
+            label1.setLayoutX(i * scaleFactor * times);
             label1.setLayoutY(0);
             root.getChildren().add(label1);
 
