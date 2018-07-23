@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.ProbabilityModifyRRTImp;
 
 import lab.mars.RRTBase.Vector;
 
@@ -71,12 +71,6 @@ public class Vector2 implements Vector<Vector2> {
         return this;
     }
 
-    public Vector2 add(double x, double y) {
-        this.x += x;
-        this.y += y;
-        return this;
-    }
-
     public double dot(Vector2 v) {
         return x * v.x + y * v.y;
     }
@@ -84,12 +78,6 @@ public class Vector2 implements Vector<Vector2> {
     public Vector2 scale(double scalar) {
         this.x = x * scalar;
         this.y = y * scalar;
-        return this;
-    }
-
-    public Vector2 scale(double x, double y) {
-        this.x *= x;
-        this.y *= y;
         return this;
     }
 
@@ -154,11 +142,5 @@ public class Vector2 implements Vector<Vector2> {
     public int hashCode() {
 
         return Objects.hash(x, y);
-    }
-
-    public Vector2 set(double x, double y) {
-        this.x = x;
-        this.y = y;
-        return this;
     }
 }

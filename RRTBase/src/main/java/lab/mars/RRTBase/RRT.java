@@ -1,7 +1,5 @@
 package lab.mars.RRTBase;
 
-
-
 import java.util.List;
 
 /**
@@ -16,7 +14,7 @@ import java.util.List;
  */
 public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends WayPoint<V>, P extends Path<W>> {
 
-    private Provider<List<Obstacle>> obstacleProvider;
+    private Provider<List<Obstacle<V>>> obstacleProvider;
 
     private Provider<A> aircraftProvider;
 
@@ -24,14 +22,11 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
 
     private Applier<P> pathApplier;
 
-
-    protected List<Obstacle> obstacles;
+    protected List<Obstacle<V>> obstacles;
 
     protected A aircraft;
 
     protected W target;
-
-
 
     /**
      * this is the delta time to calculate how long the aircraft will go between each way point
@@ -46,7 +41,6 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
         this.obstacles = obstacleProvider.provide();
         this.aircraft = aircraftProvider.provide();
         this.target = targetProvider.provide();
-
     }
 
     /**
@@ -60,17 +54,15 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
     }
 
     public RRT(float deltaTime,
-               Provider<List<Obstacle>> obstacleProvider,
+               Provider<List<Obstacle<V>>> obstacleProvider,
                Provider<A> aircraftProvider,
                Provider<W> targetProvider,
-               Applier<P> pathApplier
-             ) {
+               Applier<P> pathApplier) {
         this.deltaTime = deltaTime;
         this.obstacleProvider = obstacleProvider;
         this.aircraftProvider = aircraftProvider;
         this.targetProvider = targetProvider;
         this.pathApplier = pathApplier;
-
     }
 
     /**

@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.ProbabilityModifyRRTImp;
 
 import lab.mars.RRTBase.WayPoint;
 
@@ -10,15 +10,18 @@ public class WayPoint2D implements WayPoint<Vector2> {
 
     public double radius;
 
+    public double utility;
 
-    public WayPoint2D(double x, double y, double radius) {
+    public WayPoint2D(double x, double y, double radius, double utility) {
         this.origin = new Vector2(x, y);
         this.radius = radius;
+        this.utility = utility;
     }
 
-    public WayPoint2D(Vector2 origin, double radius) {
+    public WayPoint2D(Vector2 origin, double radius, double utility) {
         this.origin = origin;
         this.radius = radius;
+        this.utility = utility;
     }
 
     @Override
@@ -27,12 +30,14 @@ public class WayPoint2D implements WayPoint<Vector2> {
         if (o == null || getClass() != o.getClass()) return false;
         WayPoint2D that = (WayPoint2D) o;
         return MathUtil.epsilonEquals(that.radius, radius) &&
+                MathUtil.epsilonEquals(that.utility, utility) &&
                 Objects.equals(origin, that.origin);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(origin, radius);
+
+        return Objects.hash(origin, radius, utility);
     }
 
     public String toString() {
