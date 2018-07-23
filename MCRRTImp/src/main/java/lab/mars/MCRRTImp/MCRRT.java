@@ -95,7 +95,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
     public Path2D<WayPoint2D> algorithm() {
         Path2D<Cell2D> areaPath = firstLevelRRT();
         Path2D<WayPoint2D> ret = new Path2D<>();
-
+        areaPath.forEach(e -> ret.add(new WayPoint2D(e.centroid, e.edgeLength)));
         return ret;
     }
 }
