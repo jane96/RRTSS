@@ -14,7 +14,7 @@ import java.util.Random;
  **/
 public class World {
 
-    public List<Obstacle> obstacles;
+    public List<Obstacle<Vector2>> obstacles;
     public Attacker attacker;
     public WayPoint2D target;
 
@@ -40,8 +40,8 @@ public class World {
      * @return: java.util.ArrayList<lab.mars.HRRTImp.CircleObstacle>
      * @Date: 2018/7/12
      */
-    public List<Obstacle> produceObstacle(int w, int h, int number, WayPoint2D currentPosition, WayPoint2D targetPosition,double scaleFactor){
-        List<Obstacle> list = new ArrayList<>();
+    public List<Obstacle<Vector2>> produceObstacle(int w, int h, int number, WayPoint2D currentPosition, WayPoint2D targetPosition,double scaleFactor){
+        List<Obstacle<Vector2>> list = new ArrayList<>();
         int i = 0;
 
         while(i < number){

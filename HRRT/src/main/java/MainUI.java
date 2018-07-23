@@ -72,12 +72,7 @@ public class MainUI extends Application {
         //deal with obstacle for adapt to the scaleFactor
         //world.obstacles = dealWithObstacle(world.getObstacles(),scaleFactor).stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
 
-        Provider<List<Obstacle>> obstacleProvider = new Provider<List<Obstacle>>() {
-            @Override
-            public List<Obstacle> provide() {
-                return world.obstacles;
-            }
-        };
+        Provider<List<Obstacle<Vector2>>> obstacleProvider = (Provider<List<Obstacle<Vector2>>>) () -> world.obstacles;
         Provider<Attacker> providerAttacker = new Provider<Attacker>() {
             @Override
             public Attacker provide() {
@@ -283,30 +278,10 @@ public class MainUI extends Application {
             //deal with obstacle for adapt to the scaleFactor
             //world.obstacles = dealWithObstacle(world.getObstacles(),scaleFactor).stream().map(e -> (CircleObstacle)e).collect(Collectors.toList());
 
-            Provider<List<Obstacle>> obstacleProvider = new Provider<List<Obstacle>>() {
-                @Override
-                public List<Obstacle> provide() {
-                    return world.obstacles;
-                }
-            };
-            Provider<Attacker> providerAttacker = new Provider<Attacker>() {
-                @Override
-                public Attacker provide() {
-                    return world.attacker;
-                }
-            };
-            Provider<WayPoint2D> wayPoint2DProvider = new Provider<WayPoint2D>() {
-                @Override
-                public WayPoint2D provide() {
-                    return world.target;
-                }
-            };
-            Applier<Path2D> path2DApplier = new Applier<Path2D>() {
-                @Override
-                public void apply(Path2D path2D) {
-
-                }
-            };
+            Provider<List<Obstacle<Vector2>>> obstacleProvider = () -> world.obstacles;
+            Provider<Attacker> providerAttacker = () -> world.attacker;
+            Provider<WayPoint2D> wayPoint2DProvider = () -> world.target;
+            Applier<Path2D> path2DApplier = path2D -> {};
             w = (int) (w / scaleFactor);
             h = (int) (h / scaleFactor);
             Grid2D grid2D = new Grid2D(w, h, w, h, null);

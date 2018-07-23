@@ -2,6 +2,7 @@ package lab.mars.HRRTImp;
 
 import lab.mars.RRTBase.Path;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Path2D implements Path<WayPoint2D> {
@@ -66,5 +67,10 @@ public class Path2D implements Path<WayPoint2D> {
     @Override
     public WayPoint2D end() {
         return pathStorage.peekLast();
+    }
+
+    @Override
+    public Iterator<WayPoint2D> iterator() {
+        return pathStorage.iterator();
     }
 }

@@ -68,7 +68,7 @@ public class DecisionMaker extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
                          int environMentWidth,
                          int environMentHeigh,
                          Grid2D grid2D,
-                         Provider<List<Obstacle>> obstacleProvider,
+                         Provider<List<Obstacle<Vector2>>> obstacleProvider,
                          Provider<Attacker> aircraftProvider,
                          Provider<WayPoint2D> targetProvider,
                          Applier<Path2D> pathApplier
