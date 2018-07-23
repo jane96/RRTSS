@@ -6,10 +6,9 @@ import java.util.stream.Collectors;
 
 public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
 
-    E element;
-
-    NTreeNode<E> parent;
-    LinkedList<NTreeNode<E>> children;
+    private E element;
+    private NTreeNode<E> parent;
+    private LinkedList<NTreeNode<E>> children;
 
     public NTreeNode(E element, NTreeNode<E> parent) {
         this.element = element;
@@ -24,32 +23,34 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         this.parent = null;
     }
 
-    public void replaceChild(int idx, NTreeNode<E> child) {
-        this.children.set(idx, child);
+    public void concatChild(NTreeNode<E>... child) {
+        for (NTreeNode<E> c : child) {
+            c.parent = this;
+            this.children.add(c);
+        }
     }
 
-    public void concatChild(NTreeNode<E> child) {
-        this.children.add(child);
+    public void createChild(E element,  E... elements) {
+        NTreeNode<E> single = new NTreeNode<>(element);
+        single.parent = this;
+        children.add(single);
+        for (E e : elements) {
+            NTreeNode<E> c = new NTreeNode<>(e);
+            c.parent = this;
+            this.children.add(c);
+        }
+    }
+
+    public NTreeNode<E> getChild(int idx) {
+        return children.get(idx);
+    }
+
+    public E getElement() {
+        return element;
     }
 
     public NTreeNode<E> getParent() {
         return parent;
-    }
-
-    public List<NTreeNode<E>> getChildren() {
-        return children;
-    }
-
-    public List<NTreeNode<E>> find(E element) {
-        Iterator<NTreeNode<E>> it = this.iterator();
-        List<NTreeNode<E>> ret = new ArrayList<>();
-        while (it.hasNext()) {
-            NTreeNode<E> node = it.next();
-            if (element.equals(node.element)) {
-                ret.add(node);
-            }
-        }
-        return ret;
     }
 
     private class VisitRecorder {
@@ -61,41 +62,43 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         }
     }
 
-    public NTreeNode<E> findTrace(E element) {
+    public interface DistanceFunc<E> {
+        double distance(E from, E to);
+    }
+
+    public NTreeNode<E> findNearest(E element, DistanceFunc<E> func) {
+        NTreeNode<E> minimum = null;
+        double minDistance = Double.POSITIVE_INFINITY;
+        for (NTreeNode<E> node : this) {
+            double dis = func.distance(node.element, element);
+            if (dis < minDistance) {
+                minDistance = dis;
+                minimum = node;
+            }
+        }
+        return minimum;
+    }
+
+    public List<E> findTrace(E element) {
         Stack<VisitRecorder> stack = new Stack<>();
-        VisitRecorder now = stack.peek();
+        stack.push(new VisitRecorder(this));
         while (true) {
-            VisitRecorder poped = null;
+            VisitRecorder now = stack.peek();
             if (now.node.children.size() == 0) {
-                poped = stack.pop();
-                if (stack.size() != 0) {
-                    VisitRecorder parent = stack.peek();
-                    parent.childVisited++;
-                }
+                stack.pop();
+                continue;
             }
             if (now.childVisited == now.node.children.size()) {
-                poped = stack.pop();
+                stack.pop();
+                continue;
             }
-            for (NTreeNode<E> aChildren : children) {
-                stack.push(new VisitRecorder(aChildren));
-            }
-            if (poped != null) {
-                if (poped.node.element.equals(element)) {
-                    stack.push(poped);
-                    break;
-                }
+            stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
+            if (stack.peek().node.element.equals(element)) {
+                break;
             }
         }
-        List<NTreeNode<E>> trace = stack.stream().map(e -> e.node).collect(Collectors.toList());
-        Collections.reverse(trace);
-        NTreeNode<E> start = trace.get(0);
-        NTreeNode<E> traverser = start;
-        for (int i = 1; i < trace.size(); i++) {
-            NTreeNode<E> cur = trace.get(i);
-            traverser.concatChild(cur);
-            traverser = cur;
-        }
-        return start;
+        List<E> trace = stack.stream().map(e -> e.node.element).collect(Collectors.toList());
+        return trace;
     }
 
     private NTreeNode<E> self() {
@@ -119,26 +122,20 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
 
         @Override
         public boolean hasNext() {
-            return stack.empty();
+            return !stack.empty();
         }
 
         @Override
         public NTreeNode<E> next() {
-            VisitRecorder now = stack.peek();
-            if (now.node.children.size() == 0) {
-                stack.pop();
-                if (stack.size() != 0) {
-                    VisitRecorder parent = stack.peek();
-                    parent.childVisited++;
+            while (!stack.empty()) {
+                VisitRecorder now = stack.peek();
+                if (now.node.children.size() == 0) {
+                    return stack.pop().node;
                 }
-                return now.node;
-            }
-            if (now.childVisited == now.node.children.size()) {
-                stack.pop();
-                return now.node;
-            }
-            for (NTreeNode<E> aChildren : children) {
-                stack.push(new VisitRecorder(aChildren));
+                if (now.childVisited == now.node.children.size()) {
+                    return stack.pop().node;
+                }
+                stack.push(new VisitRecorder(now.node.children.get(now.childVisited++)));
             }
             throw new RuntimeException("NTreeNode bug");
         }

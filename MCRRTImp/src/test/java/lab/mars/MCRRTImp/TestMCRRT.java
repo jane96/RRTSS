@@ -1,6 +1,12 @@
 package lab.mars.MCRRTImp;
 
+import javafx.application.Application;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.stage.Stage;
+import lab.mars.RRTBase.Obstacle;
+import lab.mars.RRTBase.RRT;
 import lab.mars.RRTBase.Vector;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
@@ -20,5 +26,15 @@ public class TestMCRRT {
                 collect(Collectors.toMap(dir -> dir, dir -> dir.angle(comparator))).
                 entrySet().stream().sorted(Comparator.comparingDouble(Map.Entry::getValue));
         map.forEach(e -> System.out.println(e.getKey() + ", " + e.getValue()));
+    }
+
+
+
+
+
+
+    @Test
+    public void testFirstLevelRRT() {
+
     }
 }

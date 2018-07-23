@@ -5,7 +5,7 @@ package lab.mars.RRTBase;
  *
  * @param <W> Type of way point stored in this path
  */
-public interface Path<W extends WayPoint> {
+public interface Path<W extends WayPoint> extends Iterable<W> {
 
     /**
      * @return the actual count of way points in the path

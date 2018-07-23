@@ -6,11 +6,20 @@ import java.util.Stack;
 public class Node<N> {
     private N content;
     private LinkedList<Node<N>> childList = new LinkedList<>();
+    private LinkedList<Node>  parentList = new LinkedList<>();
     private int found = 0;
-    private int visited = 0;
+    private int visted = 0;
 
     public N getContent() {
         return content;
+    }
+
+    public LinkedList<Node<N>> getChildList() {
+        return childList;
+    }
+
+    public LinkedList<Node> getParentList() {
+        return parentList;
     }
 
     private Node<N> node;
@@ -25,6 +34,14 @@ public class Node<N> {
 
     void removeChild(Node<N> child){
         this.childList.remove(child);
+    }
+
+    void addParent(Node<N> parent){
+        this.childList.add(parent);
+    }
+
+    void removeParent(Node<N> parent){
+        this.childList.remove(parent);
     }
 
     public int getFound() {
@@ -42,11 +59,11 @@ public class Node<N> {
                 path.add(node);
             if(node.content == contentSearched)
                 found = 1;
-            if (!node.childList.isEmpty() && node.visited ==0){
+            if (!node.childList.isEmpty() && node.visted==0){
                 for(Node<N> child: node.childList)
                     nodeStack.push(child);
             }
-            node.visited = 1;
+            node.visted = 1;
 
             if (!nodeStack.empty())
                 node = nodeStack.pop();

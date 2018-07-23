@@ -1,17 +1,16 @@
-package lab.mars.MCRRTImp;
+package lab.mars.HRRTImp;
 
 import lab.mars.RRTBase.Path;
-import lab.mars.RRTBase.WayPoint;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
+public class Path2D implements Path<WayPoint2D> {
 
 
-    private LinkedList<W> pathStorage = new LinkedList<>();
+    private LinkedList<WayPoint2D> pathStorage = new LinkedList<>();
 
-    public W next(W current) {
+    public WayPoint2D next(WayPoint2D current) {
         int idx = pathStorage.indexOf(current);
         if (idx >= pathStorage.size() - 1) {
             return null;
@@ -19,7 +18,7 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
         return pathStorage.get(idx + 1);
     }
 
-    public W last(W current) {
+    public WayPoint2D last(WayPoint2D current) {
         int idx = pathStorage.indexOf(current);
         if (idx == 1) {
             return null;
@@ -33,16 +32,16 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
     }
 
     @Override
-    public void add(W W) {
-        pathStorage.addLast(W);
+    public void add(WayPoint2D wayPoint2D) {
+        pathStorage.addLast(wayPoint2D);
     }
 
 
-    public void add(int idx, W wayPoint) {
+    public void add(int idx, WayPoint2D wayPoint) {
         pathStorage.set(idx, wayPoint);
     }
 
-    public W get(int idx) {
+    public WayPoint2D get(int idx) {
         return pathStorage.get(idx);
     }
 
@@ -51,27 +50,27 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
         return pathStorage.isEmpty();
     }
 
-    public W removeAt(int idx) {
+    public WayPoint2D removeAt(int idx) {
         return pathStorage.remove(idx);
     }
 
     @Override
-    public void remove(W current) {
+    public void remove(WayPoint2D current) {
         pathStorage.removeFirstOccurrence(current);
     }
 
     @Override
-    public W start() {
+    public WayPoint2D start() {
         return pathStorage.peekFirst();
     }
 
     @Override
-    public W end() {
+    public WayPoint2D end() {
         return pathStorage.peekLast();
     }
 
     @Override
-    public Iterator<W> iterator() {
+    public Iterator<WayPoint2D> iterator() {
         return pathStorage.iterator();
     }
 }
