@@ -2,16 +2,11 @@ package lab.mars.MCRRTImp;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -28,7 +23,7 @@ public class GUITester extends Application {
     private TestWorld world;
     private RRT rrt;
 
-    private List<CircleObstacle> generateObstacles() {
+    private List<CircleObstacle> obstacleTestCase() {
         List<CircleObstacle> testObstacles = new ArrayList<>();
         testObstacles.add(new CircleObstacle(436.141216, 607.260931, 8.751112));
         testObstacles.add(new CircleObstacle(555.516890, 850.710910, 1.892969));
@@ -133,6 +128,30 @@ public class GUITester extends Application {
         return testObstacles;
     }
 
+    private List<CircleObstacle> randomObstacles(int count, double redZoneRadius, Vector2 ... redZoneOrigins) {
+        List<CircleObstacle> obstacles = new ArrayList<>();
+        for (int i = 0; i < count;) {
+            double x = MathUtil.random(0, 1920);
+            double y = MathUtil.random(0, 1080);
+            double radius = MathUtil.random(0, 30);
+            Vector2 origin = new Vector2(x, y);
+            boolean flag = false;
+            for (Vector2 redZone :
+                    redZoneOrigins) {
+                if (redZone.distance(origin) < radius + redZoneRadius) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag) {
+                continue;
+            }
+            i ++;
+            obstacles.add(new CircleObstacle(x, y, radius));
+        }
+        return obstacles;
+    }
+
     class TestWorld {
 
         Attacker attacker;
@@ -215,8 +234,15 @@ public class GUITester extends Application {
         }
 
         public void drawPath(GraphicsContext pencil) {
-            for (WayPoint2D wayPoint2D : path) {
-                
+            if (path != null && path.size() != 0) {
+                Vector2 last = attacker.position();
+                pencil.setStroke(Color.BLACK);
+                pencil.setLineWidth(5);
+                for (WayPoint2D wayPoint2D : path) {
+                    Vector2 current = wayPoint2D.origin.cpy().scale(scaleBase);
+                    pencil.strokeLine(current.x , current.y, last.x, last.y);
+                    last = current;
+                }
             }
         }
 
@@ -245,7 +271,7 @@ public class GUITester extends Application {
         Vector2 targetPosition = new Vector2(1700, 800);
         Attacker attacker = new Attacker(attackerPosition, new Vector2(1, 1).normalize().scale(5), 10, 30, 200, 50, 2);
         WayPoint2D target = new WayPoint2D(targetPosition, 5);
-        List<CircleObstacle> circleObstacles = new ArrayList<>();//generateObstacles();
+        List<CircleObstacle> circleObstacles = obstacleTestCase();//randomObstacles(50, 30, attackerPosition, targetPosition);
         world = new TestWorld(attacker, circleObstacles, target);
     }
 

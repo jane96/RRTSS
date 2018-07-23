@@ -1,6 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.*;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,7 +38,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         Vector2 aircraftPosition = aircraft.position();
         Vector2 aircraftDirection = aircraft.velocity();
         Grid2D gridWorld;
-        int scaleBase = 30;
+        int scaleBase = 50;
         NTreeNode<Cell2D> pathRoot;
         double gridCellEdgeLength;
         Vector2 targetPositionInGridWorld;
@@ -49,43 +50,52 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
             pathRoot = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
             targetPositionInGridWorld = gridWorld.findNearestGridCenter(target.origin);
             grid2DApplier.apply(gridWorld);
-            if (targetPositionInGridWorld != null) {
-                break;
+            if (targetPositionInGridWorld == null) {
+                scaleBase -= 1;
+                if (scaleBase == 4) {
+                    scaleBase = 5;
+                }
+                continue;
             }
             if (scaleBase == 5) {
                 throw new RuntimeException("cannot solve the map");
+            }
+            int step_count = 0;
+            while (step_count < 1000) {
+                Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
+                NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
+                Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
+                Vector2 stepped = nearestNode.getElement().centroid.cpy().add(direction.normalize().scale(gridCellEdgeLength));
+                if (gridWorld.check(stepped)) {
+                    continue;
+                }
+                sampled.centroid.set(gridWorld.transformToCellCenter(stepped));
+                nearestNode.createChild(sampled);
+                if (sampled.centroid.epsilonEquals(targetPositionInGridWorld, 0.001)) {
+                    List<Cell2D> path = pathRoot.findTrace(sampled);
+                    Path2D<Cell2D> cellPath = new Path2D<>();
+                    path.forEach(cellPath::add);
+                    return cellPath;
+                }
+                step_count++;
             }
             scaleBase -= 1;
             if (scaleBase == 4) {
                 scaleBase = 5;
             }
         }
-        while (true) {
-            Cell2D sampled = new Cell2D(gridWorld.sample(), gridCellEdgeLength);
-            NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
-            Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
-            Vector2 stepped = nearestNode.getElement().centroid.cpy().add(direction.normalize().scale(gridCellEdgeLength));
-            if (gridWorld.check(stepped)) {
-                continue;
-            }
-            sampled.centroid.set(gridWorld.transformToCellCenter(stepped));
-            nearestNode.createChild(sampled);
-            if (sampled.centroid.epsilonEquals(targetPositionInGridWorld, 0.001)) {
-                List<Cell2D> path = pathRoot.findTrace(sampled);
-                Path2D<Cell2D> cellPath = new Path2D<>();
-                path.forEach(cellPath::add);
-                return cellPath;
-            }
-        }
+
     }
 
-
+    private Path2D<WayPoint2D> secondLevelRRT() {
+        throw  new NotImplementedException();
+    }
 
     @Override
     public Path2D<WayPoint2D> algorithm() {
         Path2D<Cell2D> areaPath = firstLevelRRT();
         Path2D<WayPoint2D> ret = new Path2D<>();
-        areaPath.forEach(e -> ret.add(new WayPoint2D(e.centroid, e.edgeLength)));
+
         return ret;
     }
 }
