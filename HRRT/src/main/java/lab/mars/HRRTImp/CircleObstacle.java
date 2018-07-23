@@ -3,7 +3,9 @@ package lab.mars.HRRTImp;
 
 import lab.mars.RRTBase.Obstacle;
 
-public class CircleObstacle implements Obstacle<Vector2> {
+import java.io.Serializable;
+
+public class CircleObstacle implements Obstacle<Vector2> , Serializable {
 
     private double radius;
 
@@ -15,15 +17,7 @@ public class CircleObstacle implements Obstacle<Vector2> {
     private int maxX;
     private int maxY;
 
-    public CircleObstacle(double x, double y, double radius, double escapeRadius) {
-        this.radius = radius;
-        this.origin = new Vector2(x, y);
-        this.escapeRadius = escapeRadius;
-        this.minX = (int)Math.floor(x - radius);
-        this.minY = (int)Math.floor(y - radius);
-        this.maxX = (int)Math.ceil(x + radius);
-        this.maxY = (int)Math.ceil(y + radius);
-    }
+
     public CircleObstacle(double x, double y, double radius) {
         this.radius = radius;
         this.origin = new Vector2(x, y);
@@ -32,6 +26,15 @@ public class CircleObstacle implements Obstacle<Vector2> {
         this.minY = (int)Math.floor(y - radius);
         this.maxX = (int)Math.ceil(x + radius);
         this.maxY = (int)Math.ceil(y + radius);
+    }
+    public CircleObstacle(double x, double y, double radius,double scaleFactor) {
+        this.radius = radius;
+        this.origin = new Vector2(x, y);
+
+        this.minX = (int)Math.floor((x - radius)/scaleFactor);
+        this.minY = (int)Math.floor((y - radius) / scaleFactor);
+        this.maxX = (int)Math.ceil((x + radius) / scaleFactor);
+        this.maxY = (int)Math.ceil((y + radius)/ scaleFactor);
     }
     public CircleObstacle(int minX, int minY, int maxX, int maxY) {
         this.minX = minX;

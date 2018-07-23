@@ -1,6 +1,11 @@
 package lab.mars.HRRTImp;
 
+import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Provider;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * A rectangular grid with discretization <br>
@@ -84,13 +89,58 @@ public class Grid2D {
         this.height = height;
         this.gridOriginProvider = gridOriginProvider;
         this.grid = new boolean[columnCount][rowCount];
-        initialGirdMatrix(this.grid);
+        initialGirdMatrix();
     }
-    public void initialGirdMatrix(boolean[][] grid){
+    public void initialGirdMatrix(){
         for(int i = 0; i < grid.length;i++){
             for (int j = 0; j < grid[0].length; j++) {
                 grid[i][j] = true;
             }
         }
+    }
+    public ArrayList<CircleObstacle> produceObstacle( int number, WayPoint2D currentPosition, WayPoint2D targetPosition){
+        ArrayList<CircleObstacle> list = new ArrayList<>();
+        int i = 0;
+
+        while(i < number){
+            double radius = 5.0d;
+            double x = produceRandomNumber() * height;
+            double y = produceRandomNumber() * width;
+            radius = radius * produceRandomNumber();
+            if(x <= radius  || y <= radius || x > height - radius || y >= width - radius || currentPosition.origin.distance(new Vector2(x,y)) <= radius || targetPosition.origin.distance(new Vector2(x,y)) <= radius){
+                continue;
+            }
+            CircleObstacle obs = new CircleObstacle(x,y,radius);
+            list.add(obs);
+            i++;
+        }
+        return list;
+    }
+    public void generateNewGrid(List<CircleObstacle> circleObstacles,int w, int h,double scaleFactor){
+        recongniseCircleObstacle(circleObstacles,this,w,h,scaleFactor);
+    }
+    public void recongniseCircleObstacle(List<CircleObstacle> circleObstacle,Grid2D grid2D,int w,int h,double scaleFactor){
+        for(int k = 0; k < circleObstacle.size(); k++){
+            for (int i = circleObstacle.get(k).getMinX(); i <= circleObstacle.get(k).getMaxX() ; i++) {
+                for (int j = circleObstacle.get(k).getMinY(); j <= circleObstacle.get(k).getMaxY(); j++) {
+                    if(i >= h ){
+                        grid2D.getGrid()[(int)((h - 1) / scaleFactor)][(int)(j / scaleFactor)] = false;
+                    }
+                    else if(j >=  w ){
+                        grid2D.getGrid()[(int)(i / scaleFactor)][(int)((w - 1) / scaleFactor)] = false;
+                    }else{
+
+                        grid2D.getGrid()[(int)(i)][(int)(j)] = false;
+                    }
+
+                }
+            }
+        }
+    }
+    public Double produceRandomNumber(){
+        long seed = System.nanoTime();
+        Random seedRandom = new Random(seed);
+        Double randFloat = seedRandom.nextDouble();
+        return randFloat;
     }
 }

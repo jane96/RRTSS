@@ -9,10 +9,10 @@ public class Attacker implements Aircraft<Vector2> {
     private Vector2 velocity;
 
     private double rotationLimits;
-
     private double viewDistance;
 
     private int graduation;
+
 
     public Attacker(Vector2 position, Vector2 velocity, double rotationLimits, double viewDistance, int graduation) {
         this.position = position;
@@ -20,6 +20,8 @@ public class Attacker implements Aircraft<Vector2> {
         this.rotationLimits = rotationLimits;
         this.viewDistance = viewDistance;
         this.graduation = graduation;
+
+
     }
 
     public Vector2 position() {

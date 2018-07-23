@@ -12,6 +12,7 @@
         <module>ProbabilityModifyRRTImp</module>
         <module>RRTBase</module>
         <module>MCRRTImp</module>
+        <module>HRRT</module>
     </modules>
 
     <properties>
