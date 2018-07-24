@@ -1,6 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
@@ -11,6 +12,8 @@ import lab.mars.RRTBase.RRT;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GUITester extends GUIBase {
 
@@ -129,7 +132,7 @@ public class GUITester extends GUIBase {
         for (int i = 0; i < count;) {
             double x = MathUtil.random(0, 1920);
             double y = MathUtil.random(0, 1080);
-            double radius = MathUtil.random(0, 30);
+            double radius = MathUtil.random(0, 100);
             Vector2 origin = new Vector2(x, y);
             boolean flag = false;
             for (Vector2 redZone :
@@ -158,7 +161,11 @@ public class GUITester extends GUIBase {
 
         Path2D<WayPoint2D> path;
 
+        Path2D<Cell2D> areaPath;
+
         Grid2D gridWorld;
+
+        private Queue<Object> applierQueue = new ConcurrentLinkedQueue<>();
 
         public TestWorld(Attacker attacker, List<CircleObstacle> obstacles, WayPoint2D target) {
             this.attacker = attacker;
@@ -179,16 +186,30 @@ public class GUITester extends GUIBase {
         }
 
         public void applyPath(Path2D<WayPoint2D> path) {
-            this.path = path;
-            path.forEach(System.out::println);
+            applierQueue.offer(path);
+        }
 
+        public void applyAreaPath(Path2D<Cell2D> path) {
+            applierQueue.offer(path);
         }
 
         public void applyGrid(Grid2D grid) {
-            this.gridWorld = grid;
+            applierQueue.offer(grid);
         }
 
         public void draw(Pencil pencil) {
+            if (!applierQueue.isEmpty()) {
+                Object obj = applierQueue.poll();
+                if (obj instanceof Path2D) {
+                    if (((Path2D) obj).end() instanceof  WayPoint2D) {
+                        path = ((Path2D<WayPoint2D>) obj);
+                    } else {
+                        areaPath = ((Path2D<Cell2D>)obj);
+                    }
+                } else if (obj instanceof Grid2D) {
+                    this.gridWorld = ((Grid2D) obj);
+                }
+            }
             pencil.scale(scaleBase);
             drawGrid(pencil);
             drawObstacles(pencil);
@@ -216,7 +237,7 @@ public class GUITester extends GUIBase {
             if (path != null && path.size() != 0) {
                 Vector2 last = attacker.position();
                 for (WayPoint2D wayPoint2D : path) {
-                    pencil.stroked(5).color(Color.BLACK).line(wayPoint2D.origin, last);
+                    pencil.stroked(1).color(Color.BLACK).line(wayPoint2D.origin, last);
                     last = wayPoint2D.origin;
                 }
             }
@@ -224,11 +245,20 @@ public class GUITester extends GUIBase {
 
         public void drawGrid(Pencil pencil) {
             if (gridWorld != null) {
-                double cellSize = gridWorld.cellSize() * scaleBase;
+                double cellSize = gridWorld.cellSize();
                 for (Vector2 cellCenter : gridWorld) {
                     Color color = new Color(0, 0.8, 0, 1);
                     if (gridWorld.check(cellCenter)) {
                         color = new Color(1, 0, 0, 1);
+                    } else {
+                        if (areaPath != null) {
+                            for (Cell2D area : areaPath) {
+                                if (cellCenter.epsilonEquals(area.centroid, 0.01f)) {
+                                    color = Color.LIGHTBLUE;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     pencil.filled().color(color).box(cellCenter, cellSize).stroked(1).color(Color.BLUE).box(cellCenter, cellSize);
                 }
@@ -239,16 +269,16 @@ public class GUITester extends GUIBase {
 
     public void buildWorld() {
         Vector2 attackerPosition = new Vector2(5, 5);
-        Vector2 targetPosition = new Vector2(1700, 800);
-        Attacker attacker = new Attacker(attackerPosition, new Vector2(1, 1).normalize().scale(5), 10, 30, 200, 50, 2);
+        Vector2 targetPosition = new Vector2(1700, 900);
+        Attacker attacker = new Attacker(attackerPosition, new Vector2(1, 1).normalize().scale(3), 10, 30, 200, 50, 2);
         WayPoint2D target = new WayPoint2D(targetPosition, 5);
-        List<CircleObstacle> circleObstacles = obstacleTestCase();//randomObstacles(50, 30, attackerPosition, targetPosition);
+        List<CircleObstacle> circleObstacles = randomObstacles(50, 30, attackerPosition, targetPosition);
         world = new TestWorld(attacker, circleObstacles, target);
     }
 
     public GUITester() {
         buildWorld();
-        rrt = new MCRRT(1 / 30.0f, width, height, world::allObstacles, world::attacker, world::target, world::applyPath, world::applyGrid);
+        rrt = new MCRRT(1 / 30.0f, width, height, world::allObstacles, world::attacker, world::target, world::applyPath, world::applyAreaPath, world::applyGrid);
 
     }
 
@@ -263,6 +293,7 @@ public class GUITester extends GUIBase {
         primaryStage.setTitle("Test Grid 2D Draw");
         stage = primaryStage;
         ContextMenu menu = new ContextMenu();
+
         MenuItem solve = new MenuItem("Solve");
         solve.setOnAction(event -> rrt.solve(false));
         menu.getItems().add(solve);

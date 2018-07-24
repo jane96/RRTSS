@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
 
+    public boolean ended = false;
 
     private LinkedList<W> pathStorage = new LinkedList<>();
 

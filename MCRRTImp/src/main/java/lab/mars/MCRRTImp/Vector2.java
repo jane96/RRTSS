@@ -100,7 +100,15 @@ public class Vector2 implements Vector<Vector2> {
     }
 
     public double angle(Vector2 o) {
-        return Math.acos(this.dot(o) / (len() * o.len())) * R2D;
+        double value = this.dot(o) / (len() * o.len());
+        if (value < -1) {
+            value = -1;
+        } else {
+            if (value > 1) {
+                value = 1;
+            }
+        }
+        return Math.acos(value) * R2D;
     }
 
     public Vector2 rotate(double alpha) {

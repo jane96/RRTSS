@@ -14,13 +14,13 @@ import java.util.List;
  */
 public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends WayPoint<V>, P extends Path<W>> {
 
-    private Provider<List<Obstacle<V>>> obstacleProvider;
+    protected Provider<List<Obstacle<V>>> obstacleProvider;
 
-    private Provider<A> aircraftProvider;
+    protected Provider<A> aircraftProvider;
 
-    private Provider<W> targetProvider;
+    protected Provider<W> targetProvider;
 
-    private Applier<P> pathApplier;
+    protected Applier<P> pathApplier;
 
     protected List<Obstacle<V>> obstacles;
 
