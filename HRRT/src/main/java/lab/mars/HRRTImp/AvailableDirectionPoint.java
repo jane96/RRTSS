@@ -1,12 +1,13 @@
-package lab.mars.ProbabilityModifyRRTImp;
+package lab.mars.HRRTImp;
 
 import java.util.Objects;
 
 public class AvailableDirectionPoint {
 
-    double x = 0.0;
-    double y = 0.0;
-    double len = 0.0;
+    public double x;
+    public double y;
+    public double len;
+    public double direction;
 
     public AvailableDirectionPoint(double x, double y, double direction, double len) {
         this.x = x;
@@ -30,6 +31,4 @@ public class AvailableDirectionPoint {
 
         return Objects.hash(x, y, direction);
     }
-
-    double direction;
 }

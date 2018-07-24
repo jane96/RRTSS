@@ -1,6 +1,5 @@
-package lab.mars.ProbabilityModifyRRTImp;
+package lab.mars.HRRTImp;
 
-import lab.mars.RRTBase.WayPoint;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
@@ -12,15 +11,17 @@ public class RRTSecondLayer {
     WayPoint2D targetPos;
     WayPoint2D currentPos;
     Attacker attacker;
-    double equalR = 5;
+    double equalR = 5.0;
+    double targetDegree;
     ArrayList<Double> thetaGap = new ArrayList();
     ArrayList<Double> normalArea = new ArrayList();
     ArrayList<Double> transformedPro = new ArrayList();
     ArrayList<Double> normalizedPro = new ArrayList();
+    List<CircleObstacle> circleObstacleArrayList;
 
     double mainDegree;
 
-    public RRTSecondLayer(Attacker attacker, int N, ArrayList<WayPoint2D> AreaPath) {
+    public RRTSecondLayer(Attacker attacker, int N, ArrayList<WayPoint2D> AreaPath,  List<CircleObstacle> circleObstacleArrayList) {
         this.attacker = attacker;
         this.AreaPath = AreaPath;
         this.N = N;
@@ -28,6 +29,7 @@ public class RRTSecondLayer {
         AreaPath.remove(0);
         this.targetPos = AreaPath.get(0);
         AreaPath.remove(0);
+        this.circleObstacleArrayList = circleObstacleArrayList;
     }
 
     public ArrayList getThetaGap(double TargetDegree, List<AvailableDirectionPoint> nextPosList) {
@@ -41,7 +43,7 @@ public class RRTSecondLayer {
     }
 
     public double getThetaToX(WayPoint2D currentPos, WayPoint2D targetPos) {
-        return Math.toDegrees(Math.atan2((currentPos.origin.y - targetPos.origin.y) , (currentPos.origin.x - targetPos.origin.x)));
+        return Math.toDegrees(Math.atan2((targetPos.origin.y - currentPos.origin.y) , (targetPos.origin.x - currentPos.origin.x)));
     }
 
     public ArrayList toNormalArea(ArrayList<Double> thetaGap) {
@@ -94,38 +96,33 @@ public class RRTSecondLayer {
         return transformedPro;
     }
 
+    public boolean outObstacleOrNot(AvailableDirectionPoint adpNext){
+        for(CircleObstacle cob: circleObstacleArrayList)
+            if(Math.sqrt(Math.pow(adpNext.x - cob.getOrigin().x, 2) + Math.pow(adpNext.y - cob.getOrigin().y, 2)) <= cob.getRadius())
+                return false;
+        return true;
+    }
+
     public void chooseNextPose(List waypointSequence, List<Double> normalizedPro, List<AvailableDirectionPoint> nextPosList, double mainDegree) {
         double rand = Math.random();
         int size = normalizedPro.size();
-        int i;
+        int i = 0;
         double min = 0.0;
         double max = 0.0;
-        int max_index = 0;
-        for (i=0; i<normalizedPro.size(); i++){
-            if (normalizedPro.get(i) > max){
-                max = normalizedPro.get(i);
-                max_index = i;
-            }
-        }
 
-        waypointSequence.add(nextPosList.get(max_index));
-        double alpha = nextPosList.get(max_index).direction - mainDegree;
-        attacker.velocity().rotate(alpha);
-        currentPos.origin.x = nextPosList.get(max_index).x;
-        currentPos.origin.y = nextPosList.get(max_index).y;
-//        while (i < size) {
-//            max += normalizedPro.get(i);
-//            if (min < rand && rand <= max) {
-//                waypointSequence.add(nextPosList.get(i));
-//                double alpha = nextPosList.get(i).direction - mainDegree;
-//                attacker.velocity().rotate(alpha);
-//                currentPos.origin.x = nextPosList.get(i).x;
-//                currentPos.origin.y = nextPosList.get(i).y;
-//                break;
-//            }
-//            min = max;
-//            i += 1;
-//        }
+        while (i < size) {
+            max += normalizedPro.get(i);
+            if (min < rand && rand <= max && outObstacleOrNot(nextPosList.get(i))) {
+                waypointSequence.add(nextPosList.get(i));
+                double alpha = nextPosList.get(i).direction - mainDegree;
+                attacker.velocity().rotate(alpha);
+                currentPos.origin.x = nextPosList.get(i).x;
+                currentPos.origin.y = nextPosList.get(i).y;
+                break;
+            }
+            min = max;
+            i += 1;
+        }
     }
 
     public boolean outLimitDegree(double targetDegree) {
@@ -164,7 +161,6 @@ public class RRTSecondLayer {
 
     public List<AvailableDirectionPoint> getWaypointSequence() {
         List waypointSequence = new ArrayList();
-        double targetDegree;
         double vx, vy;
         List<AvailableDirectionPoint> nextPosList;
 
@@ -175,7 +171,7 @@ public class RRTSecondLayer {
             attacker.position().x = currentPos.origin.x;
             attacker.position().y = currentPos.origin.y;
             /**Need To Implement the velocity interface*/
-            nextPosList = DirectionCalculator.getNextPosList(attacker, 1, (v, theta) -> v / (1 + theta));
+            nextPosList = DirectionCalculator.getNextPosList(attacker, 0.1, (v, theta) -> v / (1 + theta));
             targetDegree = getThetaToX(currentPos, targetPos);
             thetaGap = getThetaGap(targetDegree, nextPosList);
             if (outLimitDegree(targetDegree))

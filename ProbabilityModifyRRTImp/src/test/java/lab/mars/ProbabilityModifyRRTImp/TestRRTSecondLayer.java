@@ -10,7 +10,7 @@ import java.util.List;
 
 public class TestRRTSecondLayer {
     Vector2 startPos = new Vector2(100, 100);
-    Vector2 velocity = new Vector2(-1, 1);
+    Vector2 velocity = new Vector2(5, 5);
     double rotationLimits = 10;
     double viewDistance = 100;
     int graduation = 5;
@@ -28,8 +28,8 @@ public class TestRRTSecondLayer {
     @Test
     public void test(){
         ArrayList<WayPoint2D> waypointList = new ArrayList<>();
-        WayPoint2D wp1 = new WayPoint2D(100.0, 100.0, 0, 0);
-        WayPoint2D wp2 = new WayPoint2D(200.0, 200.0, 0, 0);
+        WayPoint2D wp1 = new WayPoint2D(73.0, 3.0, 0, 0);
+        WayPoint2D wp2 = new WayPoint2D(356.0, 130.0, 0, 0);
 //        WayPoint2D wp3 = new WayPoint2D(300.0, 100.0, 0, 0);
 //        WayPoint2D wp4 = new WayPoint2D(400.0, 100.0, 0, 0);
         waypointList.add(wp1);
@@ -38,7 +38,7 @@ public class TestRRTSecondLayer {
 //        waypointList.add(wp4);
 
         Attacker attacker = new Attacker(startPos, velocity, rotationLimits, viewDistance, graduation);
-        RRTSecondLayer rrtSecondLayer = new RRTSecondLayer(attacker, 50, waypointList);
+        RRTSecondLayer rrtSecondLayer = new RRTSecondLayer(attacker, 200, waypointList);
         List <AvailableDirectionPoint> adpList =rrtSecondLayer.getWaypointSequence();
         ArrayList <Double> normalDistributionPro = rrtSecondLayer.transformedPro;
         System.out.println("normalizedPro: " + normalDistributionPro);

@@ -14,7 +14,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
 
 
     public MCRRT(float deltaTime,
-                 Provider<List<Obstacle>> obstacleProvider,
+                 Provider<List<Obstacle<Vector2>>> obstacleProvider,
                  Provider<Attacker> aircraftProvider,
                  Provider<WayPoint2D> targetProvider,
                  Applier<Path2D> pathApplier
