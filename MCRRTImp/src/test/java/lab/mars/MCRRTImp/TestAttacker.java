@@ -1,8 +1,11 @@
 package lab.mars.MCRRTImp;
 
-import javafx.application.Application;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import lab.mars.MCRRTImp.model.Attacker;
+import lab.mars.MCRRTImp.model.Transform;
+import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
+import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
+import lab.mars.MCRRTImp.model.Vector2;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.junit.Test;
 
@@ -34,32 +37,26 @@ public class TestAttacker {
             double rotationLimits = aircraft.rotationLimits();
             double graduation = aircraft.rotationGraduation();
             for (double i = 0; i < rotationLimits / 2; i += graduation) {
-
                 double totalAngleRotated = i * deltaTime;
                 double slicedAngleRotated = totalAngleRotated / sliceCount;
                 Vector2 rotated = velocity.cpy();
                 Vector2 translated = position.cpy();
-                double newV = 0;
+                double newV = simulateVelocity(v, i);
                 for (int c = 0; c < sliceCount; c++) {
-                    double alpha = c * slicedAngleRotated;
-                    newV = simulateVelocity(v, alpha);
-                    rotated.rotate(slicedAngleRotated).normalize().scale(newV);
-                    translated.add(rotated.normalize().scale(newV * deltaTime / sliceCount));
+                    rotated.rotate(slicedAngleRotated);
+                    translated.add(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
                 }
                 ret.add(new Transform(translated, rotated.normalize().scale(newV)));
             }
             for (double i = -graduation; i > -rotationLimits / 2; i -= graduation) {
-
                 double totalAngleRotated = i * deltaTime;
                 double slicedAngleRotated = totalAngleRotated / sliceCount;
                 Vector2 rotated = velocity.cpy();
                 Vector2 translated = position.cpy();
-                double newV = 0;
+                double newV = simulateVelocity(v, i);
                 for (int c = 0; c < sliceCount; c++) {
-                    double alpha = c * slicedAngleRotated;
-                    newV = simulateVelocity(v, alpha);
-                    rotated.rotate(slicedAngleRotated).normalize().scale(newV);
-                    translated.add(rotated.normalize().scale(newV * deltaTime / sliceCount));
+                    rotated.rotate(slicedAngleRotated);
+                    translated.add(rotated.normalize().cpy().scale(newV * deltaTime / sliceCount));
                 }
                 ret.add(new Transform(translated, rotated.normalize().scale(newV)));
             }
@@ -67,7 +64,7 @@ public class TestAttacker {
         }
 
         @Override
-        void draw(Pencil pencil) {
+        protected void draw(Pencil pencil) {
             List<Transform> transforms = simulateKinetic(aircraft.position(), aircraft.velocity(), 1);
             Vector2 targetPosition = new Vector2(10, 10);
             NormalDistribution N01 = new NormalDistribution(0, 1);

@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.infrastructure.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -11,16 +11,16 @@ import javafx.stage.Stage;
 
 public abstract class GUIBase extends Application {
 
-    int height = 1080;
-    int width = 1920;
-    double cycleSleepTime = 1 / 30.f;
+    protected int height = 1080;
+    protected int width = 1920;
+    protected double cycleSleepTime = 1 / 30.f;
     private Pencil userPencil;
     private GraphicsContext pencil;
 
-    abstract void draw(Pencil pencil);
+    protected abstract void draw(Pencil pencil);
 
 
-    void initializeComponents(Stage primaryStage, Pane root, Canvas canvas){
+    protected void initializeComponents(Stage primaryStage, Pane root, Canvas canvas){
         primaryStage.widthProperty().addListener((ob, ov, nv) -> {
             this.width = (int)(double) nv;
             canvas.setWidth((double) nv);

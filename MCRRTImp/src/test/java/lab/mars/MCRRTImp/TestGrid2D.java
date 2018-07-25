@@ -1,22 +1,17 @@
 package lab.mars.MCRRTImp;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.stage.Stage;
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.MCRRTImp.model.CircleBound;
+import lab.mars.MCRRTImp.model.CircleObstacle;
+import lab.mars.MCRRTImp.model.Grid2D;
+import lab.mars.MCRRTImp.model.GridCell;
+import lab.mars.MCRRTImp.model.Vector2;
 import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.Provider;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class TestGrid2D {

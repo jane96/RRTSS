@@ -1,25 +1,26 @@
 package lab.mars.MCRRTImp;
 
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import lab.mars.RRTBase.Obstacle;
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.MCRRTImp.model.*;
+import lab.mars.MCRRTImp.algorithm.MCRRT;
+import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
+import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
 import lab.mars.RRTBase.RRT;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GUITester extends GUIBase {
+public class MainUI extends GUIBase {
 
     private double scaleBase = 1;
     private Stage stage;
-    private TestWorld world;
+    private World world;
     private RRT rrt;
 
     private List<CircleObstacle> obstacleTestCase() {
@@ -127,7 +128,7 @@ public class GUITester extends GUIBase {
         return testObstacles;
     }
 
-    private List<CircleObstacle> randomObstacles(int count, double redZoneRadius, Vector2 ... redZoneOrigins) {
+    private List<CircleObstacle> randomObstacles(int count, double redZoneRadius, Vector2... redZoneOrigins) {
         List<CircleObstacle> obstacles = new ArrayList<>();
         for (int i = 0; i < count;) {
             double x = MathUtil.random(0, 1920);
@@ -151,146 +152,83 @@ public class GUITester extends GUIBase {
         return obstacles;
     }
 
-    class TestWorld {
 
-        Attacker attacker;
+    public void drawTarget(Pencil pencil) {
+        pencil.filled().color(Color.YELLOWGREEN).circle(world.target.origin, world.target.radius);
+    }
 
-        List<CircleObstacle> obstacles;
+    public void drawUAV(Pencil pencil) {
+        pencil.filled().color(Color.ORANGERED).box(world.attacker.position(), scaleBase);
+    }
 
-        WayPoint2D target;
+    public void drawObstacles(Pencil pencil) {
+        world.obstacles.forEach(obs -> {
+            pencil.filled().color(Color.LIGHTBLUE).circle(obs.origin, obs.radius);
+            pencil.stroked(1).color(Color.DARKBLUE).circle(obs.origin, obs.radius);
+        });
+    }
 
-        Path2D<WayPoint2D> path;
-
-        Path2D<Cell2D> areaPath;
-
-        Grid2D gridWorld;
-
-        private Queue<Object> applierQueue = new ConcurrentLinkedQueue<>();
-
-        public TestWorld(Attacker attacker, List<CircleObstacle> obstacles, WayPoint2D target) {
-            this.attacker = attacker;
-            this.obstacles = obstacles;
-            this.target = target;
-        }
-
-        public List<Obstacle<Vector2>> allObstacles() {
-            return new ArrayList<>(obstacles);
-        }
-
-        public Attacker attacker() {
-            return attacker;
-        }
-
-        public WayPoint2D target() {
-            return target;
-        }
-
-        public void applyPath(Path2D<WayPoint2D> path) {
-            applierQueue.offer(path);
-        }
-
-        public void applyAreaPath(Path2D<Cell2D> path) {
-            applierQueue.offer(path);
-        }
-
-        public void applyGrid(Grid2D grid) {
-            applierQueue.offer(grid);
-        }
-
-        public void draw(Pencil pencil) {
-            if (!applierQueue.isEmpty()) {
-                Object obj = applierQueue.poll();
-                if (obj instanceof Path2D) {
-                    if (((Path2D) obj).end() instanceof  WayPoint2D) {
-                        path = ((Path2D<WayPoint2D>) obj);
-                    } else {
-                        areaPath = ((Path2D<Cell2D>)obj);
-                    }
-                } else if (obj instanceof Grid2D) {
-                    this.gridWorld = ((Grid2D) obj);
-                }
-            }
-            pencil.scale(scaleBase);
-            drawGrid(pencil);
-            drawObstacles(pencil);
-            drawPath(pencil);
-            drawTarget(pencil);
-            drawUAV(pencil);
-        }
-
-        public void drawTarget(Pencil pencil) {
-            pencil.filled().color(Color.YELLOWGREEN).circle(target.origin, target.radius);
-        }
-
-        public void drawUAV(Pencil pencil) {
-            pencil.filled().color(Color.ORANGERED).box(attacker.position(), scaleBase);
-        }
-
-        public void drawObstacles(Pencil pencil) {
-            this.obstacles.forEach(obs -> {
-                pencil.filled().color(Color.LIGHTBLUE).circle(obs.origin, obs.radius);
-                pencil.stroked(1).color(Color.DARKBLUE).circle(obs.origin, obs.radius);
-            });
-        }
-
-        public void drawPath(Pencil pencil) {
-            if (path != null && path.size() != 0) {
-                Vector2 last = attacker.position();
-                for (WayPoint2D wayPoint2D : path) {
-                    pencil.stroked(1).color(Color.BLACK).line(wayPoint2D.origin, last);
-                    last = wayPoint2D.origin;
-                }
-            }
-        }
-
-        public void drawGrid(Pencil pencil) {
-            if (gridWorld != null) {
-                double cellSize = gridWorld.cellSize();
-                for (Vector2 cellCenter : gridWorld) {
-                    Color color = new Color(0, 0.8, 0, 1);
-                    if (gridWorld.check(cellCenter)) {
-                        color = new Color(1, 0, 0, 1);
-                    } else {
-                        if (areaPath != null) {
-                            for (Cell2D area : areaPath) {
-                                if (cellCenter.epsilonEquals(area.centroid, 0.01f)) {
-                                    color = Color.LIGHTBLUE;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    pencil.filled().color(color).box(cellCenter, cellSize).stroked(1).color(Color.BLUE).box(cellCenter, cellSize);
-                }
+    public void drawPath(Pencil pencil) {
+        if (world.path != null && world.path.size() != 0) {
+            Vector2 last = world.attacker.position();
+            for (WayPoint2D wayPoint2D : world.path) {
+                pencil.stroked(1).color(Color.BLACK).line(wayPoint2D.origin, last);
+                last = wayPoint2D.origin;
             }
         }
     }
 
+    public void drawGrid(Pencil pencil) {
+        if (world.gridWorld != null) {
+            double cellSize = world.gridWorld.cellSize();
+            for (Vector2 cellCenter : world.gridWorld) {
+                Color color = new Color(0, 0.8, 0, 1);
+                if (world.gridWorld.check(cellCenter)) {
+                    color = new Color(1, 0, 0, 1);
+                } else {
+                    if (world.areaPath != null) {
+                        for (Cell2D area : world.areaPath) {
+                            if (cellCenter.epsilonEquals(area.centroid, 0.01f)) {
+                                color = Color.LIGHTBLUE;
+                                break;
+                            }
+                        }
+                    }
+                }
+                pencil.filled().color(color).box(cellCenter, cellSize).stroked(1).color(Color.BLUE).box(cellCenter, cellSize);
+            }
+        }
+    }
 
     public void buildWorld() {
         Vector2 attackerPosition = new Vector2(5, 5);
         Vector2 targetPosition = new Vector2(1700, 900);
         Attacker attacker = new Attacker(attackerPosition, new Vector2(1, 1).normalize().scale(3), 10, 30, 200, 50, 2);
-        WayPoint2D target = new WayPoint2D(targetPosition, 5);
-        List<CircleObstacle> circleObstacles = randomObstacles(50, 30, attackerPosition, targetPosition);
-        world = new TestWorld(attacker, circleObstacles, target);
+        WayPoint2D target = new WayPoint2D(targetPosition, 5, new Vector2());
+        List<CircleObstacle> circleObstacles = obstacleTestCase();//randomObstacles(50, 30, attackerPosition, targetPosition);
+        world = new World(attacker, circleObstacles, target);
     }
 
-    public GUITester() {
+    public MainUI() {
         buildWorld();
         rrt = new MCRRT(1 / 30.0f, width, height, world::allObstacles, world::attacker, world::target, world::applyPath, world::applyAreaPath, world::applyGrid);
-
     }
 
     @Override
-    void draw(Pencil pencil) {
-        world.draw(pencil);
+    protected void draw(Pencil pencil) {
+        world.requestUpdate();
+        pencil.scale(scaleBase);
+        drawGrid(pencil);
+        drawObstacles(pencil);
+        drawPath(pencil);
+        drawTarget(pencil);
+        drawUAV(pencil);
     }
 
     @Override
-    void initializeComponents(Stage primaryStage, Pane root, Canvas canvas) {
+    protected void initializeComponents(Stage primaryStage, Pane root, Canvas canvas) {
         super.initializeComponents(primaryStage, root, canvas);
-        primaryStage.setTitle("Test Grid 2D Draw");
+        primaryStage.setTitle("Test Flight");
         stage = primaryStage;
         ContextMenu menu = new ContextMenu();
 

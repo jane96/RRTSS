@@ -1,5 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
 import lab.mars.RRTBase.WayPoint;
 
 import java.util.Objects;
@@ -10,15 +11,19 @@ public class WayPoint2D implements WayPoint<Vector2> {
 
     public double radius;
 
+    public Vector2 velocity;
 
-    public WayPoint2D(double x, double y, double radius) {
+
+    public WayPoint2D(double x, double y, double radius, double vx, double vy) {
         this.origin = new Vector2(x, y);
         this.radius = radius;
+        this.velocity = new Vector2(vx, vy);
     }
 
-    public WayPoint2D(Vector2 origin, double radius) {
+    public WayPoint2D(Vector2 origin, double radius, Vector2 velocity) {
         this.origin = origin;
         this.radius = radius;
+        this.velocity = velocity;
     }
 
     @Override

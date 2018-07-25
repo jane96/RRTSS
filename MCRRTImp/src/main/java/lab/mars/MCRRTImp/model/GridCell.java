@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 public class GridCell {
 

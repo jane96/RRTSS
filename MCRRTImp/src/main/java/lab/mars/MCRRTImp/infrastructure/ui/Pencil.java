@@ -1,7 +1,8 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.infrastructure.ui;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import lab.mars.MCRRTImp.model.Vector2;
 
 public class Pencil {
 

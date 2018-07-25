@@ -1,10 +1,10 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 public class Transform {
 
-    Vector2 position;
+    public Vector2 position;
 
-    Vector2 velocity;
+    public Vector2 velocity;
 
     public Transform(Vector2 position, Vector2 velocity) {
         this.position = position;

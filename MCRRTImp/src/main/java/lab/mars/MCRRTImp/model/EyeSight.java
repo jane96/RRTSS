@@ -1,7 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.Provider;
 
 public class EyeSight implements Obstacle<Vector2> {
     private Vector2 origin;

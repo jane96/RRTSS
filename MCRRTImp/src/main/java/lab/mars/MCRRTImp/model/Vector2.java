@@ -1,5 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
 import lab.mars.RRTBase.Vector;
 
 import java.util.Objects;

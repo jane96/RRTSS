@@ -1,14 +1,11 @@
 package lab.mars.MCRRTImp;
 
-import static org.junit.Assert.*;
-
+import lab.mars.MCRRTImp.model.NTreeNode;
+import lab.mars.MCRRTImp.model.Vector2;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 

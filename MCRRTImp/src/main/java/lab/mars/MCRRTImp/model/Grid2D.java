@@ -1,10 +1,9 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
 import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.Provider;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * A rectangular grid with discretization <br>
@@ -20,17 +19,17 @@ public class Grid2D implements Iterable<Vector2> {
     /**
      * column first, row second grid
      */
-    boolean[][] grid;
+    public boolean[][] grid;
 
     /**
      * represents y dimension
      */
-    int rowCount;
+    public int rowCount;
 
     /**
      * represents x dimension
      */
-    int columnCount;
+    public int columnCount;
 
     private int width;
 

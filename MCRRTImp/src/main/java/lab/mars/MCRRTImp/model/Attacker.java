@@ -1,10 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.RRTBase.Aircraft;
-import lab.mars.RRTBase.Vector;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Attacker implements Aircraft<Vector2> {
 

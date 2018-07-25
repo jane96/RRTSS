@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.RRTBase.Path;
 import lab.mars.RRTBase.WayPoint;
