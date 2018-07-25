@@ -17,8 +17,33 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
 
     private Applier<Path2D<Cell2D>> firstLevelApplier;
 
+    private Path2D<Cell2D> firstLevelPathCache = new Path2D<>();
+
+    private Path2D<WayPoint2D> immutablePathCache = new Path2D<>();
+
+    private Path2D<WayPoint2D> mutablePathCache = new Path2D<>();
+
+    private Path2D<WayPoint2D> secondLevelPathCache = new Path2D<>();
+
+    private PathGenerationConfiguration pathGenerationConfiguration;
+
+    public static class PathGenerationConfiguration {
+        public int immutablePathLength = 0;
+        public int mutablePathLength = 0;
+        public int thirdPathLength = 0;
+        public int replanWaitTime = 10;
+
+        public PathGenerationConfiguration(int immutablePathLength, int mutablePathLength, int thirdPathLength,  int replanWaitTime) {
+            this.immutablePathLength = immutablePathLength;
+            this.mutablePathLength = mutablePathLength;
+            this.thirdPathLength = thirdPathLength;
+            this.replanWaitTime = replanWaitTime;
+        }
+    }
+
     public MCRRT(float deltaTime,
                  float w, float h,
+                 PathGenerationConfiguration configuration,
                  Provider<List<Obstacle<Vector2>>> obstacleProvider,
                  Provider<Attacker> aircraftProvider,
                  Provider<WayPoint2D> targetProvider,
@@ -31,11 +56,10 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         this.height = h;
         this.grid2DApplier = grid2DApplier;
         this.firstLevelApplier = firstLevelApplier;
+        this.pathGenerationConfiguration = configuration;
     }
 
-    private Path2D<Cell2D> firstLevelRRT() {
-        Vector2 aircraftPosition = aircraft.position();
-        Vector2 aircraftVelocity = aircraft.velocity();
+    private Path2D<Cell2D> firstLevelRRT(Vector2 plannerStart, Vector2 plannerVelocity) {
         Grid2D gridWorld;
         int timeScalar = 50;
         NTreeNode<Cell2D> pathRoot;
@@ -43,19 +67,16 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
         Vector2 targetPositionInGridWorld;
         long startTime = System.currentTimeMillis();
         while (true) {
-            List<Transform> transforms = simulateKinetic(aircraftPosition, aircraftVelocity, timeScalar);
-            int scaleBase = (int) transforms.get(0).position.distance(aircraftPosition);
+            List<Transform> transforms = aircraft.simulateKinetic(plannerStart, plannerVelocity, timeScalar);
+            int scaleBase = (int) transforms.get(0).position.distance(plannerStart);
             gridWorld = new Grid2D((int) width, (int) height, scaleBase);
             gridWorld.scan(obstacles);
-            Vector2 gridAircraft = gridWorld.transformToCellCenter(aircraftPosition);
+            Vector2 gridAircraft = gridWorld.transformToCellCenter(plannerStart);
             gridCellEdgeLength = gridWorld.cellSize();
             pathRoot = new NTreeNode<>(new Cell2D(gridAircraft, gridCellEdgeLength));
             targetPositionInGridWorld = gridWorld.findNearestGridCenter(target.origin);
             grid2DApplier.apply(gridWorld);
-            if (timeScalar == 5) {
-                throw new RuntimeException("cannot solve the map");
-            }
-            if (targetPositionInGridWorld == null) {
+            if (targetPositionInGridWorld == null && timeScalar != 5) {
                 timeScalar -= 1;
                 if (timeScalar <= 5) {
                     timeScalar = 5;
@@ -89,7 +110,6 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                     Path2D<Cell2D> cellPath = new Path2D<>();
                     path.forEach(cellPath::add);
                     cellPath.ended = true;
-                    firstLevelApplier.apply(cellPath);
                     System.out.println(System.currentTimeMillis() - startTime + "ms");
                     return cellPath;
                 }
@@ -99,7 +119,6 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                 List<Cell2D> path = pathRoot.findTrace(nearest);
                 Path2D<Cell2D> ret = new Path2D<>();
                 path.forEach(e -> ret.add(new Cell2D(e.centroid, e.edgeLength)));
-                firstLevelApplier.apply(ret);
             }
             timeScalar -= 1;
             if (timeScalar <= 5) {
@@ -109,57 +128,22 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
 
     }
 
-
-    private double simulateVelocity(double velocity, double angle) {
-        return velocity * (1 - Math.abs(angle) / aircraft.rotationLimits());
-    }
-
-    private List<Transform> simulateKinetic(Vector2 position, Vector2 velocity, double deltaTime) {
-        List<Transform> ret = new ArrayList<>();
-        double v = velocity.len();
-        int sliceCount = 100;
-        double rotationLimits = aircraft.rotationLimits();
-        double graduation = aircraft.rotationGraduation();
-        for (double i = 0; i < rotationLimits / 2; i += graduation) {
-            double totalAngleRotated = i * deltaTime;
-            double slicedAngleRotated = totalAngleRotated / sliceCount;
-            Vector2 rotated = velocity.cpy();
-            Vector2 translated = position.cpy();
-            double newV = simulateVelocity(v, i);
-            for (int c = 0; c < sliceCount; c++) {
-                rotated.rotate(slicedAngleRotated);
-                translated.add(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
-            }
-            ret.add(new Transform(translated, rotated.normalize().scale(newV)));
-        }
-        for (double i = -graduation; i > -rotationLimits / 2; i -= graduation) {
-
-            double totalAngleRotated = i * deltaTime;
-            double slicedAngleRotated = totalAngleRotated / sliceCount;
-            Vector2 rotated = velocity.cpy();
-            Vector2 translated = position.cpy();
-            double newV = simulateVelocity(v, i);
-            for (int c = 0; c < sliceCount; c++) {
-                rotated.rotate(slicedAngleRotated);
-                translated.add(rotated.normalize().cpy().scale(newV * deltaTime / sliceCount));
-            }
-            ret.add(new Transform(translated, rotated.normalize().scale(newV)));
-        }
-        return ret;
-    }
-
-
-    private Path2D<WayPoint2D> secondLevelRRT(Path2D<Cell2D> areaPath) {
+    private Path2D<WayPoint2D> secondLevelRRT(Path2D<Cell2D> areaPath, Vector2 start, Vector2 v, int count) {
         Path2D<WayPoint2D> ret = new Path2D<>();
         NormalDistribution N01 = new NormalDistribution(0, 1);
-        Vector2 start = aircraft.position().cpy();
-        Vector2 v = aircraft.velocity().cpy();
         double rotationLimitsOnOneSide = aircraft.rotationLimits() / 2;
         int deadEndCount = 0;
+        int startIdx = 0;
         for (Cell2D area : areaPath) {
+            if (area.centroid.distance2(start) <= area.edgeLength * area.edgeLength) {
+                startIdx = areaPath.indexOf(area);
+            }
+        }
+        for (int s = startIdx; s < areaPath.size() ; s++) {
+            Cell2D area = areaPath.get(s);
             while (start.distance(area.centroid) >= area.edgeLength) {
                 Map<Integer, Double> comparableMap = new HashMap<>();
-                List<Transform> transforms = simulateKinetic(start, v, 1);
+                List<Transform> transforms = aircraft.simulateKinetic(start, v, deltaTime);
                 boolean outOfBound = false;
                 for (int i = 0; i < transforms.size(); i++) {
                     Transform t = transforms.get(i);
@@ -189,11 +173,13 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                     double sum = 0;
                     boolean safeTransform = true;
                     Transform selected = null;
+                    int selectedIndex = 0;
                     for (Map.Entry<Integer, Double> entry : comparableMap.entrySet()) {
                         sum += entry.getValue();
                         if (sum >= probability) {
                             int idx = entry.getKey();
                             selected = transforms.get(idx);
+                            selectedIndex = idx;
                             accessedTransforms.add(idx);
                             for (Obstacle<Vector2> obs : obstacles) {
                                 if (obs.contains(selected.position)) {
@@ -204,17 +190,16 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                             break;
                         }
                     }
-                    if (selected == null) {
-                        throw new RuntimeException("error");
-                    }
                     if (safeTransform) {
-                        ret.add(new WayPoint2D(selected.position, selected.velocity.len(), selected.velocity));
+                        ret.add(new WayPoint2D(selected.position, selected.velocity.len(), selected.velocity, selectedIndex));
                         start = selected.position.cpy();
                         v = selected.velocity.cpy().normalize().scale(3);
+                        if (ret.size() == count) {
+                            return ret;
+                        }
                         break;
                     }
                     if (accessedTransforms.size() == transforms.size()) {
-                        pathApplier.apply(ret);
                         for (int i = 0; i < deadEndCount; i++) {
                             if (ret.size() != 0) {
                                 ret.removeAt(ret.size() - 1);
@@ -229,7 +214,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                             v = last.velocity;
                         }
                         accessedTransforms.clear();
-                        deadEndCount ++;
+                        deadEndCount++;
                         if (ret.size() == 0) {
                             deadEndCount = 0;
                         }
@@ -243,9 +228,40 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
 
     @Override
     public Path2D<WayPoint2D> algorithm() {
-        Path2D<Cell2D> areaPath = firstLevelRRT();
-        Path2D<WayPoint2D> ret = secondLevelRRT(areaPath);
-        System.out.println("finished");
-        return ret;
+        firstLevelPathCache = firstLevelRRT(aircraft.position(), aircraft.velocity());
+        firstLevelApplier.apply(firstLevelPathCache);
+        secondLevelPathCache = secondLevelRRT(firstLevelPathCache, aircraft.position(), aircraft.velocity(),
+                pathGenerationConfiguration.immutablePathLength + pathGenerationConfiguration.mutablePathLength + pathGenerationConfiguration.thirdPathLength);
+        pathApplier.apply(secondLevelPathCache);
+        int timeCounter = 0;
+        while (true) {
+            if (firstLevelPathCache.size() <= 2) {
+                if (firstLevelPathCache.size() == 0) {
+                    firstLevelPathCache = firstLevelRRT(aircraft.position(), aircraft.velocity());
+                } else {
+                    WayPoint2D currentLast = secondLevelPathCache.end();
+                    firstLevelPathCache = firstLevelRRT(currentLast.origin, currentLast.velocity);
+                }
+                firstLevelApplier.apply(firstLevelPathCache.cpy());
+            }
+            if (timeCounter >= pathGenerationConfiguration.replanWaitTime) {
+                WayPoint2D currentLast = secondLevelPathCache.end();
+                Path2D<WayPoint2D> newPart = secondLevelRRT(firstLevelPathCache, currentLast.origin, currentLast.velocity, timeCounter);
+                newPart.forEach(secondLevelPathCache::add);
+                pathApplier.apply(secondLevelPathCache.cpy());
+                timeCounter = 0;
+            }
+            for (int i = 0; i < secondLevelPathCache.size(); i++) {
+
+                WayPoint2D current = secondLevelPathCache.get(i);
+                Vector2 currentPosition = aircraft.position();
+                if (currentPosition.distance2(current.origin) <= current.radius * current.radius) {
+                    for (int c = 0; c <= i;c ++) {
+                        secondLevelPathCache.removeAt(0);
+                    }
+                    timeCounter += i + 1;
+                }
+            }
+        }
     }
 }

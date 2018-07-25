@@ -11,8 +11,8 @@ import javafx.stage.Stage;
 
 public abstract class GUIBase extends Application {
 
-    protected int height = 1080;
-    protected int width = 1920;
+    protected int height = 2000;
+    protected int width = 2000;
     protected double cycleSleepTime = 1 / 30.f;
     private Pencil userPencil;
     private GraphicsContext pencil;
@@ -20,7 +20,7 @@ public abstract class GUIBase extends Application {
     protected abstract void draw(Pencil pencil);
 
 
-    protected void initializeComponents(Stage primaryStage, Pane root, Canvas canvas){
+    protected void initializeComponents(Stage primaryStage, Scene scene, Pane root, Canvas canvas){
         primaryStage.widthProperty().addListener((ob, ov, nv) -> {
             this.width = (int)(double) nv;
             canvas.setWidth((double) nv);
@@ -56,7 +56,7 @@ public abstract class GUIBase extends Application {
         primaryStage.setScene(scene);
         pencil = canvas.getGraphicsContext2D();
         userPencil = new Pencil(pencil);
-        initializeComponents(primaryStage, root, canvas);
+        initializeComponents(primaryStage,scene , root, canvas);
         Thread redrawTrigger = new Thread(this::thread);
         redrawTrigger.start();
         primaryStage.show();

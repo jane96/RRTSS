@@ -28,6 +28,16 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
         return pathStorage.get(idx - 1);
     }
 
+    public int indexOf(W w) {
+        return pathStorage.indexOf(w);
+    }
+
+    public Path2D<W> cpy() {
+        Path2D<W> ret = new Path2D<>();
+        this.forEach(ret::add);
+        return ret;
+    }
+
     @Override
     public int size() {
         return pathStorage.size();

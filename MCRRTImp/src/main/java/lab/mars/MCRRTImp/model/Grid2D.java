@@ -10,9 +10,9 @@ import java.util.*;
  * It stores each position's childVisited time in the related cell in the grid.
  * the column of grid represents height or y in origin Vector2
  * the row of grid represents width or x in origin Vector2
- * the position's x should be (0 + offset, width + offset) <br>
- * the position's y should be (0 + offset, height + offset) <br>
- * offset is determined by the delta between origin and this position
+ * the position's x should be (0 + pixelOffset, width + pixelOffset) <br>
+ * the position's y should be (0 + pixelOffset, height + pixelOffset) <br>
+ * pixelOffset is determined by the delta between origin and this position
  */
 public class Grid2D implements Iterable<Vector2> {
 
@@ -182,17 +182,17 @@ public class Grid2D implements Iterable<Vector2> {
     /**
      * A rectangular grid with discretization <br>
      * It stores each position's childVisited time in the related cell in the grid.
-     * the position's x should be (0 + offset, width + offset) <br>
-     * the position's y should be (0 + offset, height + offset) <br>
-     * offset is determined by the delta between origin and this position
+     * the position's x should be (0 + pixelOffset, width + pixelOffset) <br>
+     * the position's y should be (0 + pixelOffset, height + pixelOffset) <br>
+     * pixelOffset is determined by the delta between origin and this position
      *
      *
      * @param scaledBase        row count
      */
     public Grid2D(int width, int height, int scaledBase) {
         this.cellEdgeLength = scaledBase;
-        this.rowCount = height  / scaledBase;
-        this.columnCount = width / scaledBase;
+        this.rowCount = (int) Math.ceil(height  / (double)scaledBase);
+        this.columnCount = (int)Math.ceil(width / (double)scaledBase);
         this.width = width;
         this.height = height;
         this.grid = new boolean[columnCount][rowCount];

@@ -1,78 +1,41 @@
 package lab.mars.MCRRTImp.model;
 
-import lab.mars.MCRRTImp.model.Attacker;
-import lab.mars.MCRRTImp.model.CircleObstacle;
-import lab.mars.MCRRTImp.model.Path2D;
-import lab.mars.MCRRTImp.model.WayPoint2D;
-import lab.mars.MCRRTImp.model.Cell2D;
-import lab.mars.MCRRTImp.model.Grid2D;
-import lab.mars.MCRRTImp.model.Vector2;
 import lab.mars.RRTBase.Obstacle;
+import lab.mars.RRTBase.Vector;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class World {
 
-    public Attacker attacker;
+    private static List<Attacker> _attacker;
 
-    public List<CircleObstacle> obstacles;
+    private static List<Obstacle<Vector2>> _obstacles;
 
-    public WayPoint2D target;
+    private static Set<Obstacle<Vector2>> _seenObstacles = new ConcurrentSkipListSet<>();
 
-    public Path2D<WayPoint2D> path;
-
-    public Path2D<Cell2D> areaPath;
-
-    public Grid2D gridWorld;
-
-    private Queue<Object> applierQueue = new ConcurrentLinkedQueue<>();
-
-    public World(Attacker attacker, List<CircleObstacle> obstacles, WayPoint2D target) {
-        this.attacker = attacker;
-        this.obstacles = obstacles;
-        this.target = target;
+    public static void initialize(List<Attacker> attacker, List<CircleObstacle> obstacles) {
+        _attacker = attacker;
+        _obstacles = new ArrayList<>(obstacles);
     }
 
-    public List<Obstacle<Vector2>> allObstacles() {
-        return new ArrayList<>(obstacles);
+    public static List<Obstacle<Vector2>> allObstacles() {
+        return _obstacles;
     }
 
-    public Attacker attacker() {
-        return attacker;
+    public static List<Obstacle<Vector2>> seenObstacles()  {
+        return new ArrayList<>(_seenObstacles);
     }
 
-    public WayPoint2D target() {
-        return target;
+    public static void recordSeenObstacle(List<Obstacle<Vector2>> obstacles) {
+        obstacles.forEach(_seenObstacles::add);
     }
 
-    public void applyPath(Path2D<WayPoint2D> path) {
-        applierQueue.offer(path);
+    public static List<Attacker> attacker() {
+        return _attacker;
     }
 
-    public void applyAreaPath(Path2D<Cell2D> path) {
-        applierQueue.offer(path);
-    }
-
-    public void applyGrid(Grid2D grid) {
-        applierQueue.offer(grid);
-    }
-
-    public void requestUpdate() {
-
-        if (!applierQueue.isEmpty()) {
-            Object obj = applierQueue.poll();
-            if (obj instanceof Path2D) {
-                if (((Path2D) obj).end() instanceof  WayPoint2D) {
-                    path = ((Path2D<WayPoint2D>) obj);
-                } else {
-                    areaPath = ((Path2D<Cell2D>)obj);
-                }
-            } else if (obj instanceof Grid2D) {
-                this.gridWorld = ((Grid2D) obj);
-            }
-        }
-    }
 }

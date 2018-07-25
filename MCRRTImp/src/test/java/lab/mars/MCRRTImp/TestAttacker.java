@@ -26,62 +26,42 @@ public class TestAttacker {
 
         private Attacker aircraft = new Attacker(new Vector2(5, 5), new Vector2(1, 1).normalize().scale(3), 10, 30, 200, 50, 2);
 
-        private double simulateVelocity(double velocity, double angle) {
-            return velocity * (1 - Math.abs(angle) / aircraft.rotationLimits());
-        }
-
-        private List<Transform> simulateKinetic(Vector2 position, Vector2 velocity, double deltaTime) {
-            List<Transform> ret = new ArrayList<>();
-            double v = velocity.len();
-            int sliceCount = 100;
-            double rotationLimits = aircraft.rotationLimits();
-            double graduation = aircraft.rotationGraduation();
-            for (double i = 0; i < rotationLimits / 2; i += graduation) {
-                double totalAngleRotated = i * deltaTime;
-                double slicedAngleRotated = totalAngleRotated / sliceCount;
-                Vector2 rotated = velocity.cpy();
-                Vector2 translated = position.cpy();
-                double newV = simulateVelocity(v, i);
-                for (int c = 0; c < sliceCount; c++) {
-                    rotated.rotate(slicedAngleRotated);
-                    translated.add(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
-                }
-                ret.add(new Transform(translated, rotated.normalize().scale(newV)));
-            }
-            for (double i = -graduation; i > -rotationLimits / 2; i -= graduation) {
-                double totalAngleRotated = i * deltaTime;
-                double slicedAngleRotated = totalAngleRotated / sliceCount;
-                Vector2 rotated = velocity.cpy();
-                Vector2 translated = position.cpy();
-                double newV = simulateVelocity(v, i);
-                for (int c = 0; c < sliceCount; c++) {
-                    rotated.rotate(slicedAngleRotated);
-                    translated.add(rotated.normalize().cpy().scale(newV * deltaTime / sliceCount));
-                }
-                ret.add(new Transform(translated, rotated.normalize().scale(newV)));
-            }
-            return ret;
-        }
 
         @Override
         protected void draw(Pencil pencil) {
-            List<Transform> transforms = simulateKinetic(aircraft.position(), aircraft.velocity(), 1);
+            List<Transform> transforms = aircraft.simulateKinetic(aircraft.position(), aircraft.velocity(), 1);
             Vector2 targetPosition = new Vector2(10, 10);
             NormalDistribution N01 = new NormalDistribution(0, 1);
             double halfRotation = aircraft.rotationLimits() / 2.0;
             transforms.forEach(t -> {
                 double angle = t.velocity.cpy().angle(targetPosition.cpy().subtract(aircraft.position()));
-
-                System.out.println(angle);
             });
             Vector2 origin = aircraft.position();
-            double scaleBase = 100;
+            double scaleBase = 150;
             pencil.scale(scaleBase).filled().color(Color.YELLOWGREEN).circle(origin, 1);
             for (Transform t : transforms) {
                 Vector2 position = t.position;
                 Vector2 direction = t.velocity;
                 Vector2 transformed = position.cpy().add(direction);
-                pencil.stroked(2).color(Color.BLACK).line(position, transformed).color(Color.RED).line(position, origin);
+                pencil.filled().color(Color.BLACK).circle(position, 5 / scaleBase);
+                pencil.stroked(2).color(Color.BLACK).line(position, transformed);
+            }
+            Transform next = transforms.get(4);
+            transforms = aircraft.simulateKinetic(next.position, next.velocity.cpy(), 2);
+            for (Transform t : transforms) {
+                Vector2 position = t.position;
+                Vector2 direction = t.velocity;
+                Vector2 transformed = position.cpy().add(direction);
+                pencil.filled().color(Color.DARKGREEN).circle(position, 5 / scaleBase);
+                pencil.stroked(2).color(Color.DARKGREEN).line(position, transformed);
+            }
+            transforms = aircraft.simulateKinetic(aircraft.position(), aircraft.velocity(), 2);
+            for (Transform t : transforms) {
+                Vector2 position = t.position;
+                Vector2 direction = t.velocity;
+                Vector2 transformed = position.cpy().add(direction);
+                pencil.filled().color(Color.RED).circle(position, 5 / scaleBase);
+                pencil.stroked(2).color(Color.RED).line(position, transformed);
             }
         }
     }

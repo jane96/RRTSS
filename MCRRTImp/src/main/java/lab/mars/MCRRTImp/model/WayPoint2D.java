@@ -13,17 +13,20 @@ public class WayPoint2D implements WayPoint<Vector2> {
 
     public Vector2 velocity;
 
+    public int actionIdx;
 
-    public WayPoint2D(double x, double y, double radius, double vx, double vy) {
+    public WayPoint2D(double x, double y, double radius, double vx, double vy, int actionIdx) {
         this.origin = new Vector2(x, y);
         this.radius = radius;
         this.velocity = new Vector2(vx, vy);
+        this.actionIdx = actionIdx;
     }
 
-    public WayPoint2D(Vector2 origin, double radius, Vector2 velocity) {
+    public WayPoint2D(Vector2 origin, double radius, Vector2 velocity, int actionIdx) {
         this.origin = origin;
         this.radius = radius;
         this.velocity = velocity;
+        this.actionIdx = actionIdx;
     }
 
     @Override
