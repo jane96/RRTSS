@@ -41,7 +41,7 @@ public class TestPath2D {
         }
         long addFinish = System.currentTimeMillis();
         assert path.size() == 100000;
-        System.out.println("add spends " + (addFinish - time) + " ms");
+        System.out.println("translate spends " + (addFinish - time) + " ms");
         time = System.currentTimeMillis();
         for (int i = 0; i < 100000; i++) {
             path.removeAt(0);

@@ -93,7 +93,7 @@ public class MCRRT extends RRT<Attacker, Vector2, WayPoint2D, Path2D<WayPoint2D>
                 }
                 NTreeNode<Cell2D> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.centroid.distance2(c2.centroid));
                 Vector2 direction = sampled.centroid.cpy().subtract(nearestNode.getElement().centroid);
-                Vector2 stepped = nearestNode.getElement().centroid.cpy().add(direction.normalize().scale(gridCellEdgeLength));
+                Vector2 stepped = nearestNode.getElement().centroid.cpy().translate(direction.normalize().scale(gridCellEdgeLength));
                 if (gridWorld.check(stepped)) {
                     step_count++;
                     continue;

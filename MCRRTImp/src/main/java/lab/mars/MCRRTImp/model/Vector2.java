@@ -66,7 +66,7 @@ public class Vector2 implements Vector<Vector2> {
         return this;
     }
 
-    public Vector2 add(Vector2 v) {
+    public Vector2 translate(Vector2 v) {
         x = x + v.x;
         y = y + v.y;
         return this;

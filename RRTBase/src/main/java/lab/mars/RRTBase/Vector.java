@@ -16,9 +16,7 @@ public interface Vector<T extends Vector<T>> {
 
     T set(T o);
 
-    T subtract(T v);
-
-    T add(T v);
+    T translate(T v);
 
     double dot(T v);
 
@@ -33,6 +31,8 @@ public interface Vector<T extends Vector<T>> {
     boolean epsilonEquals(T other, double epsilon);
 
     String toString();
+
+    T rotate(double angle);
 
     T zero();
 

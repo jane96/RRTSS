@@ -9,7 +9,6 @@ import lab.mars.MCRRTImp.model.Vector2;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TestAttacker {
@@ -42,7 +41,7 @@ public class TestAttacker {
             for (Transform t : transforms) {
                 Vector2 position = t.position;
                 Vector2 direction = t.velocity;
-                Vector2 transformed = position.cpy().add(direction);
+                Vector2 transformed = position.cpy().translate(direction);
                 pencil.filled().color(Color.BLACK).circle(position, 5 / scaleBase);
                 pencil.stroked(2).color(Color.BLACK).line(position, transformed);
             }
@@ -51,7 +50,7 @@ public class TestAttacker {
             for (Transform t : transforms) {
                 Vector2 position = t.position;
                 Vector2 direction = t.velocity;
-                Vector2 transformed = position.cpy().add(direction);
+                Vector2 transformed = position.cpy().translate(direction);
                 pencil.filled().color(Color.DARKGREEN).circle(position, 5 / scaleBase);
                 pencil.stroked(2).color(Color.DARKGREEN).line(position, transformed);
             }
@@ -59,7 +58,7 @@ public class TestAttacker {
             for (Transform t : transforms) {
                 Vector2 position = t.position;
                 Vector2 direction = t.velocity;
-                Vector2 transformed = position.cpy().add(direction);
+                Vector2 transformed = position.cpy().translate(direction);
                 pencil.filled().color(Color.RED).circle(position, 5 / scaleBase);
                 pencil.stroked(2).color(Color.RED).line(position, transformed);
             }

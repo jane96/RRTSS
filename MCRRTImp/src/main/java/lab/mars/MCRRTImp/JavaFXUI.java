@@ -250,7 +250,7 @@ public class JavaFXUI extends GUIBase {
             }
             i ++;
             obstacles.add(new CircleObstacle(x, y, radius));
-            System.out.println(String.format("obstacles.add(new CircleObstacle(%f, %f, %f));", x, y, radius));
+            System.out.println(String.format("obstacles.translate(new CircleObstacle(%f, %f, %f));", x, y, radius));
         }
         return obstacles;
     }
