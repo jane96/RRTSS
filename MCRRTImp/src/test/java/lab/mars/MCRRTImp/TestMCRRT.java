@@ -1,6 +1,6 @@
 package lab.mars.MCRRTImp;
 
-import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.RRTBase.MathUtil;
 import lab.mars.MCRRTImp.model.Vector2;
 import org.junit.Test;
 

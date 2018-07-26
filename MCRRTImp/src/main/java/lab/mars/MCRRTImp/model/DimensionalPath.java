@@ -6,7 +6,7 @@ import lab.mars.RRTBase.WayPoint;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
+public class DimensionalPath< W extends WayPoint> implements Path<W> {
 
     public boolean ended = false;
 
@@ -32,8 +32,8 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
         return pathStorage.indexOf(w);
     }
 
-    public Path2D<W> cpy() {
-        Path2D<W> ret = new Path2D<>();
+    public DimensionalPath<W> cpy() {
+        DimensionalPath<W> ret = new DimensionalPath<>();
         this.forEach(ret::add);
         return ret;
     }

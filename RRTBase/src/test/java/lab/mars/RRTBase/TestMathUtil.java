@@ -1,6 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.RRTBase;
 
-import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.RRTBase.MathUtil;
 import org.junit.Test;
 
 public class TestMathUtil {

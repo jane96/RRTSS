@@ -1,13 +1,12 @@
 package lab.mars.MCRRTImp.model;
 
-public class GridCell {
+import lab.mars.RRTBase.Vector;
 
-    public int row;
-    public int column;
+public class GridCell<V extends Vector<V>> {
 
+    V cellIdx;
 
-    public GridCell(int row, int column) {
-        this.row = row;
-        this.column = column;
+    public GridCell(V cellIdx) {
+        this.cellIdx = cellIdx;
     }
 }

@@ -1,40 +1,69 @@
 package lab.mars.RRTBase;
 
-public interface Vector<T extends Vector<T>> {
+import java.util.Iterator;
+import java.util.function.Consumer;
 
-    double distance(T o);
+public abstract class Vector<T extends Vector<T>> {
 
-    double distance2(T o);
+    protected Dimension[] dimensions;
 
-    T normalize();
+    protected int dimensionCount;
 
-    T cpy();
+    public Vector(double ... values) {
+        dimensions = new Dimension[values.length];
+        this.dimensionCount = values.length;
+        for (int i = 0; i < values.length;i ++) {
+            this.dimensions[i].value = values[i];
+        }
+    }
 
-    double len();
+    public abstract double distance(T o);
 
-    double len2();
+    public abstract double distance2(T o);
 
-    T set(T o);
+    public abstract T normalize();
 
-    T translate(T v);
+    public abstract T cpy();
 
-    double dot(T v);
+    public abstract double len();
 
-    T scale(double scalar);
+    public abstract double len2();
 
-    T scale(T v);
+    public abstract T set(T o);
 
-    T lerp(T target, double coefficient);
+    public abstract T translate(T v);
 
-    boolean equals(Object o);
+    public abstract double dot(T v);
 
-    boolean epsilonEquals(T other, double epsilon);
+    public abstract T scale(double scalar);
 
-    String toString();
+    public abstract T scale(T v);
 
-    T rotate(double angle);
+    public abstract T lerp(T target, double coefficient);
 
-    T zero();
+    public abstract boolean equals(Object o);
 
+    public abstract boolean epsilonEquals(T other, double epsilon);
+
+    public abstract String toString();
+
+    public abstract T rotate(double angle);
+
+    public abstract T zero();
+
+    public int dimensionCount() {
+        return dimensionCount;
+    }
+
+    public Dimension[] dimensions() {
+        return dimensions;
+    }
+
+    public T forEachDim(Consumer<Dimension> action) {
+        for (int i = 0; i < this.dimensions.length; i++) {
+            action.accept(dimensions[i]);
+        }
+        return (T) this;
+    }
 
 }

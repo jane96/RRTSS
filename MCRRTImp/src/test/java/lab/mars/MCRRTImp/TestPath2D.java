@@ -1,27 +1,27 @@
 package lab.mars.MCRRTImp;
 
-import lab.mars.MCRRTImp.model.Path2D;
-import lab.mars.MCRRTImp.model.WayPoint2D;
+import lab.mars.MCRRTImp.model.DimensionalPath;
+import lab.mars.MCRRTImp.model.DimensionalWayPoint;
 import org.junit.Test;
 
 public class TestPath2D {
 
     @Test
     public void testAddRemove() {
-        Path2D<WayPoint2D> path = new Path2D<>();
+        DimensionalPath<DimensionalWayPoint> path = new DimensionalPath<>();
 
-        path.add(new WayPoint2D(0, 0, 1, 0, 0, 0));
+        path.add(new DimensionalWayPoint(0, 0, 1, 0, 0, 0));
         assert path.end().equals(path.start());
-        assert path.start().equals(new WayPoint2D(0, 0, 1, 0, 0, 0));
+        assert path.start().equals(new DimensionalWayPoint(0, 0, 1, 0, 0, 0));
 
-        path.remove(new WayPoint2D(0, 0, 1, 0, 0, 0));
+        path.remove(new DimensionalWayPoint(0, 0, 1, 0, 0, 0));
         assert path.size() == 0 && path.empty();
     }
 
     @Test
     public void testIdenticalElementAdd() {
-        Path2D<WayPoint2D> path = new Path2D<>();
-        WayPoint2D wayPoint = new WayPoint2D(0, 0, 1, 0, 0, 0);
+        DimensionalPath<DimensionalWayPoint> path = new DimensionalPath<>();
+        DimensionalWayPoint wayPoint = new DimensionalWayPoint(0, 0, 1, 0, 0, 0);
         for (int i = 0; i < 100; i++) {
             path.add(wayPoint);
         }
@@ -35,9 +35,9 @@ public class TestPath2D {
     @Test
     public void testPerformance() {
         long time = System.currentTimeMillis();
-        Path2D<WayPoint2D> path = new Path2D<>();
+        DimensionalPath<DimensionalWayPoint> path = new DimensionalPath<>();
         for (int i = 0; i < 100000; i++) {
-            path.add(new WayPoint2D(100, 100, 100, 0, 0, 0));
+            path.add(new DimensionalWayPoint(100, 100, 100, 0, 0, 0));
         }
         long addFinish = System.currentTimeMillis();
         assert path.size() == 100000;

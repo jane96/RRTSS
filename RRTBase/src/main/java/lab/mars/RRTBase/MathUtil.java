@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.infrastructure;
+package lab.mars.RRTBase;
 
 public class MathUtil {
 

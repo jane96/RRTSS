@@ -31,7 +31,7 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
     /**
      * this is the delta time to calculate how long the aircraft will go between each way point
      */
-    protected float deltaTime = 0;
+    protected double deltaTime = 0;
 
     /**
      * this function is called on the very beginning of every step during RRT algorithm request{@link #solve(boolean)} <br>
@@ -53,7 +53,7 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
         pathApplier.apply(path);
     }
 
-    public RRT(float deltaTime,
+    public RRT(double deltaTime,
                Provider<List<Obstacle<V>>> obstacleProvider,
                Provider<A> aircraftProvider,
                Provider<W> targetProvider,

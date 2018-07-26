@@ -1,11 +1,11 @@
 package lab.mars.MCRRTImp.model;
 
-import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.RRTBase.MathUtil;
 import lab.mars.RRTBase.Vector;
 
 import java.util.Objects;
 
-public class Vector2 implements Vector<Vector2> {
+public class Vector2 extends Vector<Vector2> {
 
     public double x = 0.0;
 

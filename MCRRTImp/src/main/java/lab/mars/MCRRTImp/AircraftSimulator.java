@@ -2,7 +2,6 @@ package lab.mars.MCRRTImp;
 
 import lab.mars.MCRRTImp.model.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AircraftSimulator {
@@ -16,12 +15,12 @@ public class AircraftSimulator {
             long startTime = System.currentTimeMillis();
             for (Attacker attacker : attackers) {
                 int action = 0;
-                Path2D<WayPoint2D> path = attacker.actualPath();
+                DimensionalPath<DimensionalWayPoint> path = attacker.actualPath();
                 Vector2 position = attacker.position();
                 Vector2 velocity = attacker.velocity();
                 while (true) {
                     if (path != null && path.size() != 0) {
-                        WayPoint2D incomingWayPoint = path.start();
+                        DimensionalWayPoint incomingWayPoint = path.start();
                         action = incomingWayPoint.actionIdx;
                         if (incomingWayPoint.origin.distance2(position) <= incomingWayPoint.radius * incomingWayPoint.radius) {
                             path.removeAt(0);
