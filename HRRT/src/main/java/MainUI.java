@@ -1,6 +1,10 @@
+import javafx.animation.PathTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -8,10 +12,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
+import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lab.mars.HRRTImp.*;
 
 import lab.mars.RRTBase.*;
@@ -21,14 +25,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static javafx.scene.paint.Color.BLUE;
+import static javafx.scene.paint.Color.GREEN;
+import static javafx.scene.paint.Color.RED;
+
 
 public class MainUI extends Application {
 
-
     public Parent createContent() {
+        double maxWidth = 1800;
+        double maxHeight = 1080;
+        Canvas canvas = new Canvas(maxWidth, maxHeight);
+        GraphicsContext gc = canvas.getGraphicsContext2D();
         Pane root = new Pane();
         root.setMinSize(1000, 1000);
-        root.setMaxSize(1800, 1080);
+        root.setMaxSize(maxWidth, maxHeight);
         float delTime = 1f;
         double times = 2;
         double ratationLimits = 10;
@@ -65,6 +76,9 @@ public class MainUI extends Application {
 ////            root.getChildren().add(label1);
 ////        }
         Attacker attacker = new Attacker(currentPosition.origin, velocity, ratationLimits, viewDistance, gradation);
+        final Rectangle plane=new Rectangle(0, 0, 8, 8);
+        plane.setFill(RED);
+        root.getChildren().add(plane);
         World world = new World();
         world.initialWorld(scaleFactor, attacker, w, h, currentPosition, targetPosition, obstacleNumber);
         //world.writeFile(world.obstacles);
@@ -118,7 +132,6 @@ public class MainUI extends Application {
         //draw obstacle
         List<CircleObstacle> circleObstacleArrayList = world.obstacles.stream().map(e -> (CircleObstacle) e).collect(Collectors.toList());
         for (int i = 0; i < circleObstacleArrayList.size(); i++) {
-
             Circle c = new Circle(circleObstacleArrayList.get(i).getOrigin().x * times, circleObstacleArrayList.get(i).getOrigin().y * times, circleObstacleArrayList.get(i).getRadius() * times, Color.BLACK);
             Label label = new Label();
             label.setLayoutX(circleObstacleArrayList.get(i).getOrigin().x * times);
@@ -132,9 +145,9 @@ public class MainUI extends Application {
         root.getChildren().add(new Circle(currentPosition.origin.x * times, currentPosition.origin.y * times, 5, Color.YELLOW));
         root.getChildren().add(new Circle(targetPosition.origin.x * times, targetPosition.origin.y * times, 5, Color.YELLOW));
         Path2D pathList = decisoner.getPath2D();
-        for (int i = 0; i < pathList.size() - 1; i++) {
-            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK,2));
-        }
+//        for (int i = 0; i < pathList.size() - 1; i++) {
+//            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK,2));
+//        }
         /***********************draw real path********************************/
         ArrayList <WayPoint2D> AreaPath = new ArrayList<>();
         for(int i=pathList.size() - 1; i >= 0 ; i--)
@@ -142,6 +155,17 @@ public class MainUI extends Application {
 
         RRTSecondLayer rrtSecondLayer = new RRTSecondLayer(attacker, 10000, AreaPath, circleObstacleArrayList);
         List <AvailableDirectionPoint> adpList =rrtSecondLayer.getWaypointSequence();
+        javafx.scene.shape.Path path=new javafx.scene.shape.Path();
+        path.getElements().add(new MoveTo(adpList.get(0).x* times, adpList.get(0).y* times));
+        for(int i =1; i<adpList.size(); i++)
+            path.getElements().add(new LineTo(adpList.get(i).x* times, adpList.get(i).y* times));
+        double flightTime = adpList.size() * 0.1;
+        PathTransition pt=new PathTransition();
+        pt.setDuration(Duration.millis(30000));
+        pt.setPath(path);//设置路径
+        pt.setNode(plane);//设置物体
+        pt.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
+        pt.play();
         /////////////////////////////////////////////////
         for(AvailableDirectionPoint adp : adpList){
             System.out.println("-------------------------------------");
@@ -149,11 +173,11 @@ public class MainUI extends Application {
             System.out.println("Y: "+adp.y);
             System.out.println("Degree: "+adp.direction);
             System.out.println("Len: "+adp.len);
+            System.out.println("size:"+adpList.size());
         }
         /////////////////////////////////////////////////
-        for (int i = 0; i < adpList.size() - 1; i++)
-            root.getChildren().add(createLine(new WayPoint2D(new Vector2(adpList.get(i).x * times, adpList.get(i).y * times)), new WayPoint2D(new Vector2(adpList.get(i + 1).x * times, adpList.get(i + 1).y * times)), Color.GREEN,1));
-
+//        for (int i = 0; i < adpList.size() - 1; i++)
+//            root.getChildren().add(createLine(new WayPoint2D(new Vector2(adpList.get(i).x * times, adpList.get(i).y * times)), new WayPoint2D(new Vector2(adpList.get(i + 1).x * times, adpList.get(i + 1).y * times)), Color.GREEN,1));
         //draw the path of way
         ArrayList<WayPoint2D> treeList = decisoner.getListTree();
         for (int i = 0; i < treeList.size(); i++) {
@@ -246,6 +270,8 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Thread redrawTrigger = new Thread(this::thread);
+        redrawTrigger.start();
         primaryStage.setScene(new Scene(createContent()));
         primaryStage.show();
     }
@@ -336,6 +362,19 @@ public class MainUI extends Application {
         }
         lineChart.getData().add(series);
         return lineChart;
+    }
+
+    private void thread() {
+        while (true) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Platform.runLater(() -> {
+
+            });
+        }
     }
 
     public static void main(String[] args) {
