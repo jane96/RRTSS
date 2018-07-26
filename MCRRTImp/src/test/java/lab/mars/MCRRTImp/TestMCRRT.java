@@ -1,12 +1,7 @@
 package lab.mars.MCRRTImp;
 
-import javafx.application.Application;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.stage.Stage;
-import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.RRT;
-import lab.mars.RRTBase.Vector;
-import org.junit.Before;
+import lab.mars.MCRRTImp.infrastructure.MathUtil;
+import lab.mars.MCRRTImp.model.Vector2;
 import org.junit.Test;
 
 import java.util.*;

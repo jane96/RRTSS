@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.RRTBase.Path;
 import lab.mars.RRTBase.WayPoint;
@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
 
+    public boolean ended = false;
 
     private LinkedList<W> pathStorage = new LinkedList<>();
 
@@ -25,6 +26,16 @@ public class Path2D<W extends WayPoint<Vector2>> implements Path<W> {
             return null;
         }
         return pathStorage.get(idx - 1);
+    }
+
+    public int indexOf(W w) {
+        return pathStorage.indexOf(w);
+    }
+
+    public Path2D<W> cpy() {
+        Path2D<W> ret = new Path2D<>();
+        this.forEach(ret::add);
+        return ret;
     }
 
     @Override

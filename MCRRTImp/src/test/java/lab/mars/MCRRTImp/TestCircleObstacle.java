@@ -1,5 +1,7 @@
 package lab.mars.MCRRTImp;
 
+import lab.mars.MCRRTImp.model.CircleObstacle;
+import lab.mars.MCRRTImp.model.Vector2;
 import org.junit.Test;
 
 public class TestCircleObstacle {

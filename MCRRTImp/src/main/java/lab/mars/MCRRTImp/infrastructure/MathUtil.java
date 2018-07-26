@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.infrastructure;
 
 public class MathUtil {
 

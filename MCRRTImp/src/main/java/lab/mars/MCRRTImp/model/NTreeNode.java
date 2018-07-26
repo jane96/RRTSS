@@ -1,7 +1,6 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NTreeNode<E> implements Iterable<NTreeNode<E>> {

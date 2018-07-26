@@ -1,12 +1,12 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.RRTBase.WayPoint;
 
 public class Cell2D implements WayPoint<Vector2> {
 
-    Vector2 centroid;
+    public Vector2 centroid;
 
-    double edgeLength;
+    public double edgeLength;
 
 
     public Cell2D(Vector2 centroid, double edgeLength) {
