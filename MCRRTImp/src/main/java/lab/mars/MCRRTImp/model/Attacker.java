@@ -2,6 +2,7 @@ package lab.mars.MCRRTImp.model;
 
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.RRTBase.Aircraft;
+import lab.mars.RRTBase.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +89,8 @@ public class Attacker implements Aircraft<Vector2> {
         this.velocity = velocity;
     }
 
-    public List<Transform> simulateKinetic(Vector2 currentPosition, Vector2 currentVelocity, double deltaTime) {
+    public <V extends Vector<V>> List<Transform<V>> simulateKinetic(V currentPosition, V currentVelocity, double deltaTime) {
+        //TODO implements abstract simulateKinetic
         List<Transform> ret = new ArrayList<>();
         double v = currentVelocity.len();
         int sliceCount = 100;

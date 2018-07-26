@@ -1,6 +1,8 @@
 package lab.mars.MCRRTImp.model;
 
-public class Transform {
+import lab.mars.RRTBase.Vector;
+
+public class Transform<V extends Vector<V>> {
 
     public Vector2 position;
 
