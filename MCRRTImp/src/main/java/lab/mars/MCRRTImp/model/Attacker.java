@@ -3,6 +3,7 @@ package lab.mars.MCRRTImp.model;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.RRTBase.Aircraft;
 import lab.mars.RRTBase.Vector;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +30,9 @@ public class Attacker implements Aircraft<Vector2> {
 
     private Path2D<WayPoint2D> actualPath = new Path2D<>();
 
-    private Grid2D gridWorld ;
+    private Grid2D gridWorld;
 
-    private MCRRT algorithm ;
+    private MCRRT algorithm;
 
     public MCRRT.PathGenerationConfiguration configuration = new MCRRT.PathGenerationConfiguration(50, 250, 500, 20);
 
@@ -77,6 +78,7 @@ public class Attacker implements Aircraft<Vector2> {
     public void setGridWorld(Grid2D gridWorld) {
         this.gridWorld = gridWorld;
     }
+
     private double simulateVelocity(double currentVelocity, double angle) {
         return currentVelocity * (1 - Math.abs(angle) / this.rotationLimits);
     }
@@ -99,24 +101,25 @@ public class Attacker implements Aircraft<Vector2> {
         for (double i = 0; i < rotationLimits / 2; i += graduation) {
             double totalAngleRotated = i * deltaTime;
             double slicedAngleRotated = totalAngleRotated / sliceCount;
-            Vector2 rotated = currentVelocity.cpy();
-            Vector2 translated = currentPosition.cpy();
+            V rotated = currentVelocity.cpy();
+            V translated = currentPosition.cpy();
             double newV = simulateVelocity(v, i);
             for (int c = 0; c < sliceCount; c++) {
                 rotated.rotate(slicedAngleRotated);
-                translated.add(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
+                translated.translate(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
             }
             ret.add(new Transform(translated, rotated.normalize().scale(newV)));
         }
         for (double i = -graduation; i > -rotationLimits / 2; i -= graduation) {
             double totalAngleRotated = i * deltaTime;
-            double slicedAngleRotated = totalAngleRotated / sliceCount;
-            Vector2 rotated = currentVelocity.cpy();
-            Vector2 translated = currentPosition.cpy();
+            double VslicedAngleRotated = totalAngleRotated / sliceCount;
+            V rotated = currentVelocity.cpy();
+            V translated = currentPosition.cpy();
             double newV = simulateVelocity(v, i);
             for (int c = 0; c < sliceCount; c++) {
                 rotated.rotate(slicedAngleRotated);
-                translated.add(rotated.normalize().cpy().scale(newV * deltaTime / sliceCount));
+                V copied = rotated.cpy();
+                translated.translate(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
             }
             ret.add(new Transform(translated, rotated.normalize().scale(newV)));
         }

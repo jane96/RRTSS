@@ -13,7 +13,7 @@ public interface Path<W extends WayPoint> extends Iterable<W> {
     int size();
 
     /**
-     * add a new way point to the path, I do not restrict where to append this new point.
+     * translate a new way point to the path, I do not restrict where to append this new point.
      * This depends on your implementation
      *
      * @param wayPoint a new way point
