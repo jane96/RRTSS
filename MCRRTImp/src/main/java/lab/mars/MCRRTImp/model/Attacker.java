@@ -90,11 +90,11 @@ public class Attacker implements Aircraft<Vector2> {
         this.velocity = velocity;
     }
 
-    public <V extends Vector<V>> List<Transform> simulateKinetic( V currentVelocity, V currentPosition, double deltaTime) {
+    public <V extends Vector<V>> List<Transform <V>> simulateKinetic( V currentVelocity, V currentPosition, double deltaTime) {
         /** Return a RIGHT -> LEFT Point List */
-        List<Transform> ret = new ArrayList<>();
+        List<Transform<V>> ret = new ArrayList<>();
         double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
-        double sliceCount = 100 * deltaTime;
+        double sliceCount = 100;
         V rotated = currentVelocity.cpy();
         V translated = currentPosition.cpy();
         for(int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
@@ -108,7 +108,7 @@ public class Attacker implements Aircraft<Vector2> {
                 rotated.rotate(sliceThetaGap);
                 translated.translate(rotated.normalize().scale(newV * deltaTime / sliceCount));
             }
-            ret.add(new Transform(nextV, translated));
+            ret.add(new Transform<>(nextV, translated));
         }
         return ret;
     }
