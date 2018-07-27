@@ -95,9 +95,9 @@ public class Attacker implements Aircraft<Vector2> {
         List<Transform<V>> ret = new ArrayList<>();
         double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
         double sliceCount = 100;
-        V rotated = currentVelocity.cpy();
-        V translated = currentPosition.cpy();
         for(int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
+            V rotated = currentVelocity.cpy();
+            V translated = currentPosition.cpy();
             V nextV = currentVelocity.cpy();
             double totalAngleRotated = i * eachGap * deltaTime;
             double sliceThetaGap = totalAngleRotated / sliceCount;      // The delta for Integrating function
