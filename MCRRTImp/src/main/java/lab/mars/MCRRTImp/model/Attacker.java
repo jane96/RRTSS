@@ -4,6 +4,7 @@ import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.RRTBase.Aircraft;
 import lab.mars.RRTBase.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Attacker<V extends Vector<V>> implements Aircraft<V> {
@@ -41,7 +42,7 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
         this.rotationLimits = rotationLimits;
         this.viewDistance = viewDistance;
         this.safeDistance = safeDistance;
-        this.rotationGraduation = graduation;
+        this.numberOfDirection = graduation;
 //        this.algorithm = new MCRRT(1, 2000, 2000, configuration, World::allObstacles, () -> this, () -> this.designatedTargetPosition, this::setActualPath, this::setAreaPath, this::setGridWorld);
     }
 
@@ -89,21 +90,21 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
         this.velocity = velocity;
     }
 
-    public <V extends Vector<V>> List<Transform <V>> simulateKinetic( V currentVelocity, V currentPosition, double deltaTime) {
+    public <V extends Vector<V>> List<Transform<V>> simulateKinetic(V currentVelocity, double deltaTime) {
         /** Return a RIGHT -> LEFT Point List */
         List<Transform<V>> ret = new ArrayList<>();
         double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
         double sliceCount = 100;
-        for(int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
+        for (int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
             V rotated = currentVelocity.cpy();
-            V translated = currentPosition.cpy();
+            V translated = currentVelocity.cpy().zero();
             V nextV = currentVelocity.cpy();
             double totalAngleRotated = i * eachGap * deltaTime;
             double sliceThetaGap = totalAngleRotated / sliceCount;      // The delta for Integrating function
             nextV.rotate(totalAngleRotated);        // Set the Velocity angle
             nextV.normalize().scale(simulateVelocity(currentVelocity.len(), i * eachGap));      // Set the Velocity's len()
             double newV = nextV.len();          // Get the Velocity's len()
-            for(int c=0; c<sliceCount; c++){
+            for (int c = 0; c < sliceCount; c++) {
                 rotated.rotate(sliceThetaGap);
                 translated.translate(rotated.normalize().scale(newV * deltaTime / sliceCount));
             }

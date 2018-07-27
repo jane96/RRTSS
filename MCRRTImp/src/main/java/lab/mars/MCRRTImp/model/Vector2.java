@@ -5,15 +5,15 @@ import lab.mars.RRTBase.Vector;
 
 import java.util.Objects;
 
+import static lab.mars.RRTBase.MathUtil.D2R;
+import static lab.mars.RRTBase.MathUtil.R2D;
+
 public class Vector2 extends Vector<Vector2> {
 
     public double x = 0.0;
 
     public double y = 0.0;
 
-    public static final double D2R = Math.PI / 180.0;
-
-    public static final double R2D = 180.0 / Math.PI;
 
     public Vector2() {
     }
@@ -69,12 +69,6 @@ public class Vector2 extends Vector<Vector2> {
     public Vector2 translate(Vector2 v) {
         x = x + v.x;
         y = y + v.y;
-        return this;
-    }
-
-    public Vector2 add(double x, double y) {
-        this.x += x;
-        this.y += y;
         return this;
     }
 

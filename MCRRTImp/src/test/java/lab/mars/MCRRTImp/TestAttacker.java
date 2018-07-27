@@ -23,12 +23,12 @@ public class TestAttacker {
     public static class TestTransform extends GUIBase {
 
 
-        private Attacker aircraft = new Attacker(new Vector2(5, 5), new Vector2(1, 1).normalize().scale(3), 10, 30, 200, 50, 2);
+        private Attacker<Vector2> aircraft = new Attacker<>(new Vector2(5, 5), new Vector2(1, 1).normalize().scale(3), 10, 30, 200, 50, 2);
 
 
         @Override
         protected void draw(Pencil pencil) {
-            List<Transform> transforms = aircraft.simulateKinetic(aircraft.position(), aircraft.velocity(), 1);
+            List<Transform<Vector2>> transforms = aircraft.simulateKinetic(aircraft.position(), aircraft.velocity(), 1);
             Vector2 targetPosition = new Vector2(10, 10);
             NormalDistribution N01 = new NormalDistribution(0, 1);
             double halfRotation = aircraft.rotationLimits() / 2.0;
@@ -38,7 +38,7 @@ public class TestAttacker {
             Vector2 origin = aircraft.position();
             double scaleBase = 150;
             pencil.scale(scaleBase).filled().color(Color.YELLOWGREEN).circle(origin, 1);
-            for (Transform t : transforms) {
+            for (Transform<Vector2> t : transforms) {
                 Vector2 position = t.position;
                 Vector2 direction = t.velocity;
                 Vector2 transformed = position.cpy().translate(direction);

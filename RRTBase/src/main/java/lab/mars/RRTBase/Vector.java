@@ -51,6 +51,8 @@ public abstract class Vector<T extends Vector<T>> {
 
     public abstract T zero();
 
+    public abstract double angle(T o);
+
     public int dimensionCount() {
         return dimensionCount;
     }
