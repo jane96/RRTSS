@@ -60,15 +60,15 @@ public class Vector2 implements Vector<Vector2> {
         return this;
     }
 
-    public Vector2 subtract(Vector2 v) {
-        x = x - v.x;
-        y = y - v.y;
-        return this;
-    }
-
     public Vector2 translate(Vector2 v) {
         x = x + v.x;
         y = y + v.y;
+        return this;
+    }
+
+    public Vector2 subtract(Vector2 v) {
+        x = x - v.x;
+        y = y - v.y;
         return this;
     }
 
@@ -91,12 +91,6 @@ public class Vector2 implements Vector<Vector2> {
     public Vector2 scale(double x, double y) {
         this.x *= x;
         this.y *= y;
-        return this;
-    }
-
-    public Vector2 scale(Vector2 v) {
-        this.x = x * v.x;
-        this.y = y * v.y;
         return this;
     }
 

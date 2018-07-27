@@ -3,7 +3,6 @@ package lab.mars.MCRRTImp.model;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.RRTBase.Aircraft;
 import lab.mars.RRTBase.Vector;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,7 @@ public class Attacker implements Aircraft<Vector2> {
 
     private double viewAngle;
 
-    private int rotationGraduation;
+    private int numberOfDirection;
 
     private double safeDistance;
 
@@ -36,14 +35,14 @@ public class Attacker implements Aircraft<Vector2> {
 
     public MCRRT.PathGenerationConfiguration configuration = new MCRRT.PathGenerationConfiguration(50, 250, 500, 20);
 
-    public Attacker(Vector2 position, Vector2 velocity, double rotationLimits, double viewAngle, double viewDistance, double safeDistance, int graduation) {
+    public Attacker(Vector2 position, Vector2 velocity, double rotationLimits, double viewAngle, double viewDistance, double safeDistance, int numberOfDirection) {
         this.position = position;
         this.velocity = velocity;
         this.viewAngle = viewAngle;
         this.rotationLimits = rotationLimits;
         this.viewDistance = viewDistance;
         this.safeDistance = safeDistance;
-        this.rotationGraduation = graduation;
+        this.numberOfDirection = numberOfDirection;
         this.algorithm = new MCRRT(1, 2000, 2000, configuration, World::allObstacles, () -> this, () -> this.designatedTargetPosition, this::setActualPath, this::setAreaPath, this::setGridWorld);
     }
 
@@ -91,37 +90,25 @@ public class Attacker implements Aircraft<Vector2> {
         this.velocity = velocity;
     }
 
-    public <V extends Vector<V>> List<Transform<V>> simulateKinetic(V currentPosition, V currentVelocity, double deltaTime) {
-        //TODO implements abstract simulateKinetic
+    public <V extends Vector<V>> List<Transform> simulateKinetic( V currentVelocity, V currentPosition, double deltaTime) {
+        /** Return a RIGHT -> LEFT Point List */
         List<Transform> ret = new ArrayList<>();
-        double v = currentVelocity.len();
-        int sliceCount = 100;
-        double rotationLimits = this.rotationLimits;
-        double graduation = this.rotationGraduation;
-        for (double i = 0; i < rotationLimits / 2; i += graduation) {
-            double totalAngleRotated = i * deltaTime;
-            double slicedAngleRotated = totalAngleRotated / sliceCount;
-            V rotated = currentVelocity.cpy();
-            V translated = currentPosition.cpy();
-            double newV = simulateVelocity(v, i);
-            for (int c = 0; c < sliceCount; c++) {
-                rotated.rotate(slicedAngleRotated);
-                translated.translate(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
+        double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
+        double sliceCount = 100 * deltaTime;
+        V rotated = currentVelocity.cpy();
+        V translated = currentPosition.cpy();
+        for(int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
+            V nextV = currentVelocity.cpy();
+            double totalAngleRotated = i * eachGap * deltaTime;
+            double sliceThetaGap = totalAngleRotated / sliceCount;      // The delta for Integrating function
+            nextV.rotate(totalAngleRotated);        // Set the Velocity angle
+            nextV.normalize().scale(simulateVelocity(currentVelocity.len(), i * eachGap));      // Set the Velocity's len()
+            double newV = nextV.len();          // Get the Velocity's len()
+            for(int c=0; c<sliceCount; c++){
+                rotated.rotate(sliceThetaGap);
+                translated.translate(rotated.normalize().scale(newV * deltaTime / sliceCount));
             }
-            ret.add(new Transform(translated, rotated.normalize().scale(newV)));
-        }
-        for (double i = -graduation; i > -rotationLimits / 2; i -= graduation) {
-            double totalAngleRotated = i * deltaTime;
-            double VslicedAngleRotated = totalAngleRotated / sliceCount;
-            V rotated = currentVelocity.cpy();
-            V translated = currentPosition.cpy();
-            double newV = simulateVelocity(v, i);
-            for (int c = 0; c < sliceCount; c++) {
-                rotated.rotate(slicedAngleRotated);
-                V copied = rotated.cpy();
-                translated.translate(rotated.cpy().normalize().scale(newV * deltaTime / sliceCount));
-            }
-            ret.add(new Transform(translated, rotated.normalize().scale(newV)));
+            ret.add(new Transform(nextV, translated));
         }
         return ret;
     }
@@ -152,7 +139,7 @@ public class Attacker implements Aircraft<Vector2> {
 
     @Override
     public int rotationGraduation() {
-        return rotationGraduation;
+        return numberOfDirection;
     }
 
 

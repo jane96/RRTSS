@@ -2,9 +2,9 @@ package lab.mars.RRTBase;
 
 public interface Vector<T extends Vector<T>> {
 
-    double distance(T o);
+    double distance(T o) throws Exception;
 
-    double distance2(T o);
+    double distance2(T o) throws Exception;
 
     T normalize();
 
@@ -22,8 +22,6 @@ public interface Vector<T extends Vector<T>> {
 
     T scale(double scalar);
 
-    T scale(T v);
-
     T lerp(T target, double coefficient);
 
     boolean equals(Object o);
@@ -36,5 +34,6 @@ public interface Vector<T extends Vector<T>> {
 
     T zero();
 
+    T sample();
 
 }

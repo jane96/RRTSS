@@ -4,12 +4,11 @@ import lab.mars.RRTBase.Vector;
 
 public class Transform<V extends Vector<V>> {
 
-    public Vector2 position;
+    public V velocity;
+    public V postion;
 
-    public Vector2 velocity;
-
-    public Transform(Vector2 position, Vector2 velocity) {
-        this.position = position;
+    public Transform(V velocity, V position) {
         this.velocity = velocity;
+        this.postion = position;
     }
 }
