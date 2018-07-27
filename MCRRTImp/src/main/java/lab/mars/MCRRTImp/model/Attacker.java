@@ -3,7 +3,6 @@ package lab.mars.MCRRTImp.model;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.RRTBase.Aircraft;
 import lab.mars.RRTBase.Vector;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
 
     private double viewAngle;
 
-    private int rotationGraduation;
+    private int numberOfDirection;
 
     private double safeDistance;
 
@@ -90,9 +89,27 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
         this.velocity = velocity;
     }
 
-    public List<Transform<V>> simulateKinetic(V currentVelocity, double deltaTime) {
-        //TODO implements abstract simulateKinetic
-        throw new NotImplementedException();
+    public <V extends Vector<V>> List<Transform <V>> simulateKinetic( V currentVelocity, V currentPosition, double deltaTime) {
+        /** Return a RIGHT -> LEFT Point List */
+        List<Transform<V>> ret = new ArrayList<>();
+        double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
+        double sliceCount = 100;
+        for(int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
+            V rotated = currentVelocity.cpy();
+            V translated = currentPosition.cpy();
+            V nextV = currentVelocity.cpy();
+            double totalAngleRotated = i * eachGap * deltaTime;
+            double sliceThetaGap = totalAngleRotated / sliceCount;      // The delta for Integrating function
+            nextV.rotate(totalAngleRotated);        // Set the Velocity angle
+            nextV.normalize().scale(simulateVelocity(currentVelocity.len(), i * eachGap));      // Set the Velocity's len()
+            double newV = nextV.len();          // Get the Velocity's len()
+            for(int c=0; c<sliceCount; c++){
+                rotated.rotate(sliceThetaGap);
+                translated.translate(rotated.normalize().scale(newV * deltaTime / sliceCount));
+            }
+            ret.add(new Transform<>(nextV, translated));
+        }
+        return ret;
     }
 
     public V position() {
@@ -121,7 +138,7 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
 
     @Override
     public int rotationGraduation() {
-        return rotationGraduation;
+        return numberOfDirection;
     }
 
 

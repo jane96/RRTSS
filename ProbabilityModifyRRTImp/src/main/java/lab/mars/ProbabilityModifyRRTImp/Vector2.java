@@ -10,6 +10,8 @@ public class Vector2 implements Vector<Vector2> {
 
     public double y = 0.0;
 
+    public double degree = 0.0;
+
     public static final double D2R = Math.PI / 180.0;
 
     public static final double R2D = 180.0 / Math.PI;

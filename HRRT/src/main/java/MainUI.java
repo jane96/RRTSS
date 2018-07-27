@@ -1,6 +1,10 @@
+import javafx.animation.PathTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -8,10 +12,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
+import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lab.mars.HRRTImp.*;
 
 import lab.mars.RRTBase.*;
@@ -21,51 +25,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static javafx.scene.paint.Color.BLUE;
+import static javafx.scene.paint.Color.GREEN;
+import static javafx.scene.paint.Color.RED;
+
 
 public class MainUI extends Application {
 
-
     public Parent createContent() {
+        double maxWidth = 1800;
+        double maxHeight = 1080;
+        Canvas canvas = new Canvas(maxWidth, maxHeight);
+        GraphicsContext gc = canvas.getGraphicsContext2D();
         Pane root = new Pane();
         root.setMinSize(1000, 1000);
-        root.setMaxSize(2600, 1330);
+        root.setMaxSize(maxWidth, maxHeight);
         float delTime = 1f;
         double times = 2;
-        double ratationLimits = 360;
+        double ratationLimits = 10;
         double viewDistance = 100f;
         double scaleFactor = 6;
-        int gradation = 1000;
+        int gradation = 5;
         int w = 660;
         int h = 960;
         int baseW = w;
         int baseH = h;
         int obstacleNumber = 960;
-        Vector2 velocity = new Vector2(0, 1);
+        Vector2 velocity = new Vector2(-1, -1);
         WayPoint2D currentPosition = new WayPoint2D(new Vector2(70, 3));
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(h * 0.8, w * 0.8));
         //draw the line of x,y plot
         int we = (int) Math.ceil(w / scaleFactor);
         int he = (int) Math.ceil(h / scaleFactor);
-        for (int i = 0; i <= we; i++) {
-            Line line2 = createLine(new WayPoint2D(new Vector2(0, i * scaleFactor * times)), new WayPoint2D(new Vector2(he * scaleFactor * times, i * scaleFactor * times)), Color.BLUE);
-            root.getChildren().add(line2);
-            Label label2 = new Label("" + (int)(i * scaleFactor));
-            label2.setMinWidth(5);
-            label2.setLayoutX(0);
-            label2.setLayoutY(i * scaleFactor * times);
-            root.getChildren().add(label2);
-        }
-        for (int i = 0; i <= he; i++) {
-            Line line = createLine(new WayPoint2D(new Vector2(i * scaleFactor * times, 0)), new WayPoint2D(new Vector2(i * scaleFactor * times, we * scaleFactor * times)), Color.BLUE);
-            root.getChildren().add(line);
-            Label label1 = new Label("" + (int)(i * scaleFactor));
-            label1.setMinWidth(5);
-            label1.setLayoutX(i * scaleFactor * times);
-            label1.setLayoutY(0);
-            root.getChildren().add(label1);
-
-        }
+//        for (int i = 0; i <= we; i++) {
+////            Line line2 = createLine(new WayPoint2D(new Vector2(0, i * scaleFactor * times)), new WayPoint2D(new Vector2(he * scaleFactor * times, i * scaleFactor * times)), Color.BLUE,1);
+////            root.getChildren().add(line2);
+////            Label label2 = new Label("" + (int)(i * scaleFactor));
+////            label2.setMinWidth(5);
+////            label2.setLayoutX(0);
+////            label2.setLayoutY(i * scaleFactor * times);
+////            root.getChildren().add(label2);
+////        }
+////        for (int i = 0; i <= he; i++) {
+////            Line line = createLine(new WayPoint2D(new Vector2(i * scaleFactor * times, 0)), new WayPoint2D(new Vector2(i * scaleFactor * times, we * scaleFactor * times)), Color.BLUE,1);
+////            root.getChildren().add(line);
+////            Label label1 = new Label("" + (int)(i * scaleFactor));
+////            label1.setMinWidth(5);
+////            label1.setLayoutX(i * scaleFactor * times);
+////            label1.setLayoutY(0);
+////            root.getChildren().add(label1);
+////        }
         Attacker attacker = new Attacker(currentPosition.origin, velocity, ratationLimits, viewDistance, gradation);
+        final Rectangle plane=new Rectangle(0, 0, 8, 8);
+        plane.setFill(RED);
+        root.getChildren().add(plane);
         World world = new World();
         world.initialWorld(scaleFactor, attacker, w, h, currentPosition, targetPosition, obstacleNumber);
         //world.writeFile(world.obstacles);
@@ -105,41 +118,66 @@ public class MainUI extends Application {
 
         int timeCount = decisoner.getTimeCount();
         boolean[][] matrix = decisoner.getGrid2D().getGrid();
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                if (matrix[i][j] == true) {
-                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.BLUE);
-                    root.getChildren().add(circle);
-                } else {
-                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.RED);
-                    root.getChildren().add(circle);
-                }
-            }
-        }
+//        for (int i = 0; i < matrix.length; i++) {
+//            for (int j = 0; j < matrix[0].length; j++) {
+//                if (matrix[i][j] == true) {
+//                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.BLUE);
+//                    root.getChildren().add(circle);
+//                } else {
+//                    Circle circle = new Circle(i * times * scaleFactor, j * times * scaleFactor, 2, Color.RED);
+//                    root.getChildren().add(circle);
+//                }
+//            }
+//        }
         //draw obstacle
         List<CircleObstacle> circleObstacleArrayList = world.obstacles.stream().map(e -> (CircleObstacle) e).collect(Collectors.toList());
         for (int i = 0; i < circleObstacleArrayList.size(); i++) {
-
             Circle c = new Circle(circleObstacleArrayList.get(i).getOrigin().x * times, circleObstacleArrayList.get(i).getOrigin().y * times, circleObstacleArrayList.get(i).getRadius() * times, Color.BLACK);
             Label label = new Label();
             label.setLayoutX(circleObstacleArrayList.get(i).getOrigin().x * times);
             label.setLayoutY(circleObstacleArrayList.get(i).getOrigin().y * times);
             label.setText(i + "");
             root.getChildren().add(c);
-            root.getChildren().addAll(drawSquare((int) (circleObstacleArrayList.get(i).getMinX() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMinY() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMaxX() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMaxY() * times * scaleFactor), Color.RED));
+//            root.getChildren().addAll(drawSquare((int) (circleObstacleArrayList.get(i).getMinX() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMinY() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMaxX() * times * scaleFactor), (int) (circleObstacleArrayList.get(i).getMaxY() * times * scaleFactor), Color.RED));
             //root.getChildren().add(label);
         }
         //draw current position and target position
         root.getChildren().add(new Circle(currentPosition.origin.x * times, currentPosition.origin.y * times, 5, Color.YELLOW));
         root.getChildren().add(new Circle(targetPosition.origin.x * times, targetPosition.origin.y * times, 5, Color.YELLOW));
         Path2D pathList = decisoner.getPath2D();
-        for (int i = 0; i < pathList.size() - 1; i++) {
-            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK));
+//        for (int i = 0; i < pathList.size() - 1; i++) {
+//            root.getChildren().add(createLine(new WayPoint2D(new Vector2(pathList.get(i).origin.x * times, pathList.get(i).origin.y * times)), new WayPoint2D(new Vector2(pathList.get(i + 1).origin.x * times, pathList.get(i + 1).origin.y * times)), Color.BLACK,2));
+//        }
+        /***********************draw real path********************************/
+        ArrayList <WayPoint2D> AreaPath = new ArrayList<>();
+        for(int i=pathList.size() - 1; i >= 0 ; i--)
+            AreaPath.add(pathList.get(i));
+
+        RRTSecondLayer rrtSecondLayer = new RRTSecondLayer(attacker, 10000, AreaPath, circleObstacleArrayList);
+        List <AvailableDirectionPoint> adpList =rrtSecondLayer.getWaypointSequence();
+        javafx.scene.shape.Path path=new javafx.scene.shape.Path();
+        path.getElements().add(new MoveTo(adpList.get(0).x* times, adpList.get(0).y* times));
+        for(int i =1; i<adpList.size(); i++)
+            path.getElements().add(new LineTo(adpList.get(i).x* times, adpList.get(i).y* times));
+        double flightTime = adpList.size() * 0.1;
+        PathTransition pt=new PathTransition();
+        pt.setDuration(Duration.millis(30000));
+        pt.setPath(path);//设置路径
+        pt.setNode(plane);//设置物体
+        pt.setOrientation(PathTransition.OrientationType.ORTHOGONAL_TO_TANGENT);
+        pt.play();
+        /////////////////////////////////////////////////
+        for(AvailableDirectionPoint adp : adpList){
+            System.out.println("-------------------------------------");
+            System.out.println("X: "+adp.x);
+            System.out.println("Y: "+adp.y);
+            System.out.println("Degree: "+adp.direction);
+            System.out.println("Len: "+adp.len);
+            System.out.println("size:"+adpList.size());
         }
-        //draw real path
-
-
-
+        /////////////////////////////////////////////////
+//        for (int i = 0; i < adpList.size() - 1; i++)
+//            root.getChildren().add(createLine(new WayPoint2D(new Vector2(adpList.get(i).x * times, adpList.get(i).y * times)), new WayPoint2D(new Vector2(adpList.get(i + 1).x * times, adpList.get(i + 1).y * times)), Color.GREEN,1));
         //draw the path of way
         ArrayList<WayPoint2D> treeList = decisoner.getListTree();
         for (int i = 0; i < treeList.size(); i++) {
@@ -214,10 +252,10 @@ public class MainUI extends Application {
         return root;
     }
 
-    public Line createLine(WayPoint2D nodeA, WayPoint2D nodeB, Paint value) {
+    public Line createLine(WayPoint2D nodeA, WayPoint2D nodeB, Paint value,int widthValue) {
         Line line = new Line(nodeA.origin.x, nodeA.origin.y, nodeB.origin.x, nodeB.origin.y);
         line.setStroke(value);
-        line.setStrokeWidth(3);
+        line.setStrokeWidth(widthValue);
         return line;
     }
 
@@ -232,16 +270,18 @@ public class MainUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Thread redrawTrigger = new Thread(this::thread);
+        redrawTrigger.start();
         primaryStage.setScene(new Scene(createContent()));
         primaryStage.show();
     }
 
     public List<Line> drawSquare(int x1, int y1, int x2, int y2, Paint value) {
         List<Line> listLine = new ArrayList<>();
-        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y1)), new WayPoint2D(new Vector2(x2, y1)), value));
-        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y1)), new WayPoint2D(new Vector2(x1, y2)), value));
-        listLine.add(createLine(new WayPoint2D(new Vector2(x2, y1)), new WayPoint2D(new Vector2(x2, y2)), value));
-        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y2)), new WayPoint2D(new Vector2(x2, y2)), value));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y1)), new WayPoint2D(new Vector2(x2, y1)), value,1));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y1)), new WayPoint2D(new Vector2(x1, y2)), value,1));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x2, y1)), new WayPoint2D(new Vector2(x2, y2)), value,1));
+        listLine.add(createLine(new WayPoint2D(new Vector2(x1, y2)), new WayPoint2D(new Vector2(x2, y2)), value,1));
         return listLine;
     }
 
@@ -322,6 +362,19 @@ public class MainUI extends Application {
         }
         lineChart.getData().add(series);
         return lineChart;
+    }
+
+    private void thread() {
+        while (true) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Platform.runLater(() -> {
+
+            });
+        }
     }
 
     public static void main(String[] args) {

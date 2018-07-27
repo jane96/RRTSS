@@ -96,7 +96,7 @@ public class DecisionMaker extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
         int h = this.environMentHeigh;
         //add the currentPosition into treeList
         treeList.setCurrentPoint(new WayPoint2D(new Vector2(currentPosition.origin.x, currentPosition.origin.y)));
-        double stepLength = aircraft.velocity().len() * scaleFactor;
+        double stepLength =  scaleFactor;
         double randDouble = 0.2d;
         long start = System.currentTimeMillis();
         long end = System.currentTimeMillis();
