@@ -80,8 +80,9 @@ public class MCRRT<V extends Vector<V>> extends RRT<Attacker<V>, V, DimensionalW
         double scalar = 100;
         while (true) {
             ScaledGrid<V> scaledSpace = new ScaledGrid<>(spaceRestriction, scalar);
-            V sampled = scaledSpace.sample();
-            
+            V randomV = scaledSpace.sample();
+            DimensionalWayPoint<V> sampled = new DimensionalWayPoint<>(randomV, 0, randomV.cpy());
+//            root.findNearest(sampled,);
         }
 
     }
