@@ -45,7 +45,7 @@ public class TestAttacker {
                 pencil.filled().color(Color.BLACK).circle(position, 5 / scaleBase);
                 pencil.stroked(2).color(Color.BLACK).line(position, transformed);
             }
-            Transform next = transforms.get(4);
+            Transform<Vector2> next = transforms.get(4);
             transforms = aircraft.simulateKinetic(next.position, next.velocity.cpy(), 2);
             for (Transform t : transforms) {
                 Vector2 position = t.position;

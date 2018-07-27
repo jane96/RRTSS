@@ -1,5 +1,7 @@
 package lab.mars.MCRRTImp.model;
 
+import com.sun.istack.internal.NotNull;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         double distance(E from, E to);
     }
 
+    @NotNull
     public NTreeNode<E> findNearest(E element, DistanceFunc<E> func) {
         NTreeNode<E> minimum = null;
         double minDistance = Double.POSITIVE_INFINITY;
@@ -98,6 +101,10 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         }
         List<E> trace = stack.stream().map(e -> e.node.element).collect(Collectors.toList());
         return trace;
+    }
+
+    public List<E> findTrace(NTreeNode<E> child) {
+        return this.findTrace(child.getElement());
     }
 
     private NTreeNode<E> self() {

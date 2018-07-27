@@ -90,8 +90,8 @@ public class Attacker<V extends Vector<V>> implements Aircraft<V> {
         this.velocity = velocity;
     }
 
-    public <V extends Vector<V>> List<Transform<V>> simulateKinetic(V currentVelocity, double deltaTime) {
-        /** Return a RIGHT -> LEFT Point List */
+    /** Return a RIGHT -> LEFT Point List */
+    public List<Transform<V>> simulateKinetic(V currentVelocity, double deltaTime) {
         List<Transform<V>> ret = new ArrayList<>();
         double eachGap = this.rotationLimits / (this.numberOfDirection - 1);
         double sliceCount = 100;

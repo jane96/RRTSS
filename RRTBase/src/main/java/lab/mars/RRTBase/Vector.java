@@ -53,6 +53,8 @@ public abstract class Vector<T extends Vector<T>> {
 
     public abstract double angle(T o);
 
+    public abstract T reverse();
+
     public int dimensionCount() {
         return dimensionCount;
     }
