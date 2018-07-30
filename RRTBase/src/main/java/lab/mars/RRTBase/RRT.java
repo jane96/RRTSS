@@ -6,13 +6,13 @@ import java.util.List;
  * the base class for RRT, it defines a generally required parameters of similar RRT algorithm ,
  * it requires implementation of all the arguments and actual variation of RRT algorithm.
  *
- * @param <A> the implementation of an {@link Aircraft}, it provides info of aircraft's kinetic restrictions
+ * @param <A> the implementation of an {@link Vehicle}, it provides info of vehicle's kinetic restrictions
  * @param <V> the coordinate system the algorithm builds on
  * @param <W> the type of way point implemented
  * @param <P> the type of path implemented
  * @see Vector
  */
-public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends WayPoint<V>, P extends Path<W>> {
+public abstract class RRT<A extends Vehicle<V>, V extends Vector<V>, W extends WayPoint<V>, P extends Path<W>> {
 
     protected Provider<List<Obstacle<V>>> obstacleProvider;
 
@@ -24,22 +24,22 @@ public abstract class RRT<A extends Aircraft<V>, V extends Vector<V>, W extends 
 
     protected List<Obstacle<V>> obstacles;
 
-    protected A aircraft;
+    protected A vehicle;
 
     protected W target;
 
     /**
-     * this is the delta time to calculate how long the aircraft will go between each way point
+     * this is the delta time to calculate how long the vehicle will go between each way point
      */
     protected double deltaTime = 0;
 
     /**
      * this function is called on the very beginning of every step during RRT algorithm request{@link #solve(boolean)} <br>
-     * it calls all the {@link Provider} registered to retrieve and update obstacle, aircraft and target info
+     * it calls all the {@link Provider} registered to retrieve and update obstacle, vehicle and target info
      */
     private void updateInfo() {
         this.obstacles = obstacleProvider.provide();
-        this.aircraft = aircraftProvider.provide();
+        this.vehicle = aircraftProvider.provide();
         this.target = targetProvider.provide();
     }
 

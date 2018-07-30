@@ -22,11 +22,9 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
     /**
      * column first, row second grid
      */
-    public Set<V> grid = new HashSet<>();
+    public Set<GridCell<V>> grid = new HashSet<>();
 
     private Space<V> scaledSpace;
-
-    private V scalar;
 
     private V cellSize;
 
@@ -35,11 +33,11 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
         if (!scaledSpace.include(position)) {
             throw new IndexOutOfBoundsException("failed to transform out bound position " + position + " because grid is defined as " + scaledSpace);
         }
-        return new GridCell<>(position.cpy().scale(scalar));
+        return new GridCell<>(scaledSpace.formalize(position));
     }
 
     public V cellSize() {
-        return scalar.cpy();
+        return cellSize.cpy();
     }
 
     public V gridCenter() {
@@ -49,14 +47,25 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
 
     public void scan(List<Obstacle<V>> obstacles) {
         V cursorDelta = cellSize.cpy().scale(0.1);
-        Space<V> walkThroughSpace = scaledSpace.cpy().setStep(cursorDelta);
-        walkThroughSpace.forEach(v -> {
-            for (Obstacle<V> obs : obstacles) {
-                if (obs.contains(v)) {
-                    record(v);
+        for (V cell : scaledSpace) {
+            V upper = cell.cpy().translate(cellSize);
+            Space<V> walkThroughSpace = new Space<>(upper, cell, cursorDelta);
+            for (V step : walkThroughSpace) {
+                boolean flag = false;
+                for (Obstacle<V> obs : obstacles) {
+                    if (obs.contains(step)) {
+                        record(step);
+                        flag = true;
+                        break;
+                    }
+                }
+                if (flag) {
+                    break;
                 }
             }
-        });
+
+        }
+
     }
 
     /**
@@ -66,7 +75,7 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
      */
     public void record(V position) {
         GridCell<V> transformed = transform(position);
-        grid.add(transformed.cellIdx);
+        grid.add(transformed);
     }
 
     /**
@@ -77,7 +86,7 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
      */
     public boolean check(V position) {
         GridCell<V> transformed = transform(position);
-        return grid.contains(transformed.cellIdx);
+        return grid.contains(transformed);
     }
 
     /**
@@ -85,9 +94,9 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
      */
     public V sample() {
         while (true) {
-            V sampled = scaledSpace.sample();
+            GridCell<V> sampled = new GridCell<>(scaledSpace.sample());
             if (!grid.contains(sampled)) {
-                return sampled.cpy();
+                return sampled.cellIdx;
             }
         }
     }
@@ -100,23 +109,21 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
      * pixelOffset is determined by the delta between origin and this position
      *
      *
-     * @param scaledBase        row count
+     * @param cellSize        row count
      */
-    public ScaledGrid(V origin, V bound, V scaledBase) {
-        this.scaledSpace = new Space<>(origin, bound, scaledBase);
-        this.cellSize = scaledBase.cpy();
-        this.scalar = scaledBase.cpy().forEachDim(dimension -> dimension.value = 1.0 / dimension.value);
+    public ScaledGrid(V origin, V bound, V cellSize) {
+        this.scaledSpace = new Space<>(origin, bound, cellSize);
+        this.cellSize = cellSize.cpy();
     }
 
-    public ScaledGrid(Space<V> originalWorld, V scaledBase) {
-        this.scaledSpace = originalWorld.cpy().setStep(scaledBase);
-        this.cellSize = scaledBase.cpy();
-        this.scalar = scaledBase.cpy().forEachDim(dimension -> dimension.value = 1.0 / dimension.value);
+    public ScaledGrid(Space<V> originalWorld, V cellSize) {
+        this.scaledSpace = originalWorld.cpy().setStep(cellSize);
+        this.cellSize = cellSize.cpy();
     }
 
     public ScaledGrid(Space<V> originalWorld, double scalar) {
-        this.cellSize =  originalWorld.getStep().cpy().forEachDim(dim -> dim.value = scalar);
-        this.scalar = cellSize.cpy().forEachDim(dim -> dim.value = 1.0 / scalar);
+        this.cellSize = originalWorld.getStep().cpy().forEachDim(dim -> dim.value = scalar);
+        this.scaledSpace = originalWorld.cpy().setStep(cellSize);
     }
 
     @Override

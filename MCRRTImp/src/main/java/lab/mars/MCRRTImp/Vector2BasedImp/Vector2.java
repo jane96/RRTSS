@@ -1,5 +1,6 @@
-package lab.mars.MCRRTImp.model;
+package lab.mars.MCRRTImp.Vector2BasedImp;
 
+import lab.mars.RRTBase.Dimension;
 import lab.mars.RRTBase.MathUtil;
 import lab.mars.RRTBase.Vector;
 
@@ -10,87 +11,97 @@ import static lab.mars.RRTBase.MathUtil.R2D;
 
 public class Vector2 extends Vector<Vector2> {
 
-    public double x = 0.0;
+    private Dimension x;
 
-    public double y = 0.0;
+    private Dimension y;
 
+
+    public double x() {
+        return x.value;
+    }
+
+    public double y() {
+        return y.value;
+    }
 
     public Vector2() {
+        this(0, 0);
     }
 
     public Vector2(double x, double y) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
+        this.x = dimensions[0];
+        this.y = dimensions[1];
     }
 
     public double distance(Vector2 o) {
-        double dx = x - o.x;
-        double dy = y - o.y;
+        double dx = x.value - o.x.value;
+        double dy = y.value - o.y.value;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
     public double distance2(Vector2 o) {
-        double dx = x - o.x;
-        double dy = y - o.y;
+        double dx = x.value - o.x.value;
+        double dy = y.value - o.y.value;
         return dx * dx + dy * dy;
     }
 
     public Vector2 normalize() {
         double length = len();
-        x = x / length;
-        y = y / length;
+        x.value = x.value / length;
+        y.value = y.value / length;
         return this;
     }
 
     public Vector2 cpy() {
-        return new Vector2(x, y);
+        return new Vector2(x.value, y.value);
     }
 
     public double len() {
-        return Math.sqrt(x * x + y * y);
+        return Math.sqrt(x.value * x.value + y.value * y.value);
     }
 
     public double len2() {
-        return x * x + y * y;
+        return x.value * x.value + y.value * y.value;
     }
 
     public Vector2 set(Vector2 o) {
-        this.x = o.x;
-        this.y = o.y;
+        this.x.value = o.x.value;
+        this.y.value = o.y.value;
         return this;
     }
 
     public Vector2 subtract(Vector2 v) {
-        x = x - v.x;
-        y = y - v.y;
+        x.value = x.value - v.x.value;
+        y.value = y.value - v.y.value;
         return this;
     }
 
     public Vector2 translate(Vector2 v) {
-        x = x + v.x;
-        y = y + v.y;
+        x.value = x.value + v.x.value;
+        y.value = y.value + v.y.value;
         return this;
     }
 
     public double dot(Vector2 v) {
-        return x * v.x + y * v.y;
+        return x.value * v.x.value + y.value * v.y.value;
     }
 
     public Vector2 scale(double scalar) {
-        this.x = x * scalar;
-        this.y = y * scalar;
+        this.x.value = x.value * scalar;
+        this.y.value = y.value * scalar;
         return this;
     }
 
     public Vector2 scale(double x, double y) {
-        this.x *= x;
-        this.y *= y;
+        this.x.value *= x;
+        this.y.value *= y;
         return this;
     }
 
     public Vector2 scale(Vector2 v) {
-        this.x = x * v.x;
-        this.y = y * v.y;
+        this.x.value = x.value * v.x.value;
+        this.y.value = y.value * v.y.value;
         return this;
     }
 
@@ -106,41 +117,48 @@ public class Vector2 extends Vector<Vector2> {
         return Math.acos(value) * R2D;
     }
 
+    @Override
+    public Vector2 reverse() {
+        this.x.value = - this.x.value;
+        this.y.value = - this.y.value;
+        return this;
+    }
+
     public Vector2 rotate(double alpha) {
         double cos = Math.cos(alpha * D2R);
         double sin = Math.sin(alpha * D2R);
-        double x_n = x * cos - y * sin;
-        double y_n = x * sin + y * cos;
-        x = x_n;
-        y = y_n;
+        double x_n = x.value * cos - y.value * sin;
+        double y_n = x.value * sin + y.value * cos;
+        x.value = x_n;
+        y.value = y_n;
         return this;
     }
 
     public Vector2 lerp(Vector2 target, double coefficient) {
         double invert = 1.0f - coefficient;
-        this.x = (x * invert) + (target.x * coefficient);
-        this.y = (y * invert) + (target.y * coefficient);
+        this.x.value = (x.value * invert) + (target.x.value * coefficient);
+        this.y.value = (y.value * invert) + (target.y.value * coefficient);
         return this;
     }
 
     public boolean epsilonEquals(Vector2 other, double epsilon) {
         if (other == null) return false;
-        if (Math.abs(other.x - x) > epsilon) return false;
-        if (Math.abs(other.y - y) > epsilon) return false;
+        if (Math.abs(other.x.value - x.value) > epsilon) return false;
+        if (Math.abs(other.y.value - y.value) > epsilon) return false;
         return true;
     }
 
     public Vector2 zero() {
-        this.x = 0;
-        this.y = 0;
+        this.x.value = 0;
+        this.y.value = 0;
         return this;
     }
 
     @Override
     public String toString() {
         return "Vector2{" +
-                "x=" + x +
-                ", y=" + y +
+                "x.value=" + x.value +
+                ", y.value=" + y.value +
                 '}';
     }
 
@@ -149,19 +167,19 @@ public class Vector2 extends Vector<Vector2> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Vector2 vector2 = (Vector2) o;
-        return MathUtil.epsilonEquals(vector2.x, x) &&
-                MathUtil.epsilonEquals(vector2.y, y);
+        return MathUtil.epsilonEquals(vector2.x.value, x.value) &&
+                MathUtil.epsilonEquals(vector2.y.value, y.value);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(x, y);
+        return Objects.hash(x.value, y.value);
     }
 
     public Vector2 set(double x, double y) {
-        this.x = x;
-        this.y = y;
+        this.x.value = x;
+        this.y.value = y;
         return this;
     }
 }

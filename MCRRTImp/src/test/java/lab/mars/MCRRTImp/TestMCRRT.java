@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.MathUtil;
-import lab.mars.MCRRTImp.model.Vector2;
+import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
 import org.junit.Test;
 
 import java.util.*;

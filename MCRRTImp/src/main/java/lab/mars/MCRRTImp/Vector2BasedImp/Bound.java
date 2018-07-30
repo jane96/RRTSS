@@ -1,6 +1,7 @@
-package lab.mars.MCRRTImp.model;
+package lab.mars.MCRRTImp.Vector2BasedImp;
 
 
+import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
 import lab.mars.RRTBase.Obstacle;
 
 public class Bound implements Obstacle<Vector2> {
@@ -17,10 +18,10 @@ public class Bound implements Obstacle<Vector2> {
 
     @Override
     public boolean contains(Vector2 o) {
-        if (o.x < 0 || o.x > width) {
+        if (o.x() < 0 || o.x() > width) {
             return true;
         }
-        if (o.y < 0 || o.y > height) {
+        if (o.y() < 0 || o.y() > height) {
             return true;
         }
         return false;

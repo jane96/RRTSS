@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.MCRRTImp.model.NTreeNode;
-import lab.mars.MCRRTImp.model.Vector2;
+import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

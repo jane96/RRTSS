@@ -13,7 +13,7 @@ public abstract class Vector<T extends Vector<T>> {
         dimensions = new Dimension[values.length];
         this.dimensionCount = values.length;
         for (int i = 0; i < values.length;i ++) {
-            this.dimensions[i].value = values[i];
+            this.dimensions[i] = new Dimension(values[i]);
         }
     }
 

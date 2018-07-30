@@ -1,5 +1,6 @@
-package lab.mars.MCRRTImp.model;
+package lab.mars.MCRRTImp.Vector2BasedImp;
 
+import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
 import lab.mars.RRTBase.Obstacle;
 
 public class CircleBound implements Obstacle<Vector2> {

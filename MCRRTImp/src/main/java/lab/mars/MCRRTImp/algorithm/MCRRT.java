@@ -1,31 +1,21 @@
 package lab.mars.MCRRTImp.algorithm;
 
+import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.RRTBase.*;
 import lab.mars.RRTBase.Vector;
-
 import java.util.*;
 
-public class MCRRT<V extends Vector<V>> extends RRT<Attacker<V>, V, DimensionalWayPoint<V>, DimensionalPath<DimensionalWayPoint<V>>> {
+public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, DimensionalWayPoint<V>, DimensionalPath<DimensionalWayPoint<V>>> {
 
     private Space<V> spaceRestriction;
 
     private Applier<ScaledGrid> grid2DApplier;
 
-    private Applier<DimensionalPath<Cell2D>> firstLevelApplier;
-
-    private DimensionalPath<Cell2D> firstLevelPathCache = new DimensionalPath<>();
-
-    private DimensionalPath<DimensionalWayPoint<V>> immutablePathCache = new DimensionalPath<>();
-
-    private DimensionalPath<DimensionalWayPoint<V>> mutablePathCache = new DimensionalPath<>();
-
-    private DimensionalPath<DimensionalWayPoint<V>> secondLevelPathCache = new DimensionalPath<>();
-
     private PathGenerationConfiguration pathGenerationConfiguration;
 
-    private WayPointSampler<V> treeExpander;
+    private PathSampler<V> pathSampler;
 
     public static class PathGenerationConfiguration {
         public int immutablePathLength = 0;
@@ -41,50 +31,30 @@ public class MCRRT<V extends Vector<V>> extends RRT<Attacker<V>, V, DimensionalW
         }
     }
 
-    public interface WayPointSampler<V extends Vector<V>> {
+    public interface PathSampler<V extends Vector<V>> {
 
-        DimensionalWayPoint<V> sample(Attacker<V> attacker, Space<V> scaledSpace, @Nullable NTreeNode<DimensionalWayPoint<V>> expandingTree);
-
-        boolean simulate(DimensionalWayPoint<V> sampledWayPoint);
-
-        void expand(@Nullable NTreeNode<DimensionalWayPoint<V>> expandingTree);
-
-        DimensionalPath<DimensionalWayPoint<V>> backup(NTreeNode<DimensionalWayPoint<V>> expandedTree);
+        DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, PathGenerationConfiguration pathConfiguration,  ScaledGrid<V> scaledSpace, double timeScalar, @NotNull DimensionalPath<DimensionalWayPoint<V>> lastPath);
     }
 
-    public MCRRT(double deltaTime,
-                 Space<V> spaceRestriction,
-                 WayPointSampler<V> wayPointSampler,
-                 PathGenerationConfiguration configuration,
-                 Provider<List<Obstacle<V>>> obstacleProvider,
-                 Provider<Attacker<V>> aircraftProvider,
-                 Provider<DimensionalWayPoint<V>> targetProvider,
-                 Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
-                 Applier<DimensionalPath<Cell2D>> firstLevelApplier,
-                 Applier<ScaledGrid> grid2DApplier
-    ) {
-        super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
-        this.spaceRestriction = spaceRestriction;
-        this.grid2DApplier = grid2DApplier;
-        this.firstLevelApplier = firstLevelApplier;
-        this.pathGenerationConfiguration = configuration;
-        this.treeExpander = wayPointSampler;
-    }
-
-
-    private DimensionalPath<DimensionalWayPoint<V>> selfImprovingRRT() {
-        V plannerStartVelocity = aircraft.velocity();
-        NTreeNode<DimensionalWayPoint<V>> root = null;
-        DimensionalPath<DimensionalWayPoint<V>> lastGeneratedPath = new DimensionalPath<>();
-        double timeScalar = deltaTime * 10;
-        double rotationLimits = aircraft.rotationLimits();
-        double scalar = 100;
+    private DimensionalPath<DimensionalWayPoint<V>> defaultSampler(SimulatedVehicle<V> simulatedVehicle, PathGenerationConfiguration pathConfiguration,  ScaledGrid<V> scaledSpace, double timeScalar, @NotNull DimensionalPath<DimensionalWayPoint<V>> lastPath) {
+        V randomV;
+        double rotationLimits = simulatedVehicle.rotationLimits();
+        NTreeNode<DimensionalWayPoint<V>> expandingTree = new NTreeNode<>(new DimensionalWayPoint<>(simulatedVehicle.position(), simulatedVehicle.safeDistance(), simulatedVehicle.velocity()));
+        int count = 0;
         while (true) {
-            ScaledGrid<V> scaledSpace = new ScaledGrid<>(spaceRestriction, scalar);
-            V randomV = scaledSpace.sample();
+            if (MathUtil.random(0, 1) < 0.3) {
+                if (lastPath.size() == 0) {
+                    randomV = target.origin.cpy();
+                } else {
+                    int wayPointRandomIdx = (int) MathUtil.random(0, lastPath.size());
+                    randomV = lastPath.get(wayPointRandomIdx).origin;
+                }
+            } else {
+                randomV = scaledSpace.sample();
+            }
             DimensionalWayPoint<V> sampled = new DimensionalWayPoint<>(randomV, 0, randomV.cpy());
-            NTreeNode<DimensionalWayPoint<V>> nearestTreeNode = root.findNearest(sampled, (e, c) -> {
-                List<Transform<V>> transforms = aircraft.simulateKinetic(e.velocity, timeScalar);
+            NTreeNode<DimensionalWayPoint<V>> nearestTreeNode = expandingTree.findNearest(sampled, (e, c) -> {
+                List<Transform<V>> transforms = simulatedVehicle.simulateKinetic(e.velocity, timeScalar);
                 V translated = c.origin.cpy().translate(e.origin);
                 Transform<V> left = transforms.get(transforms.size() - 1);
                 Transform<V> right = transforms.get(0);
@@ -96,7 +66,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<Attacker<V>, V, DimensionalW
             DimensionalWayPoint<V> nearestWayPoint = nearestTreeNode.getElement();
             V nearestOrigin = nearestWayPoint.origin;
             V translated = randomV.translate(nearestOrigin.cpy().reverse());
-            List<Transform<V>> nearestSteps = aircraft.simulateKinetic(nearestWayPoint.velocity, timeScalar);
+            List<Transform<V>> nearestSteps = vehicle.simulateKinetic(nearestWayPoint.velocity, timeScalar);
             Transform<V> selectedStep = nearestSteps.stream().min((t1, t2) -> {
                 double t1Angle = translated.angle(t1.position);
                 double t2Angle = translated.angle(t2.position);
@@ -104,21 +74,63 @@ public class MCRRT<V extends Vector<V>> extends RRT<Attacker<V>, V, DimensionalW
             }).get();
             DimensionalWayPoint<V> steppedWayPoint =
                     new DimensionalWayPoint<>(selectedStep.position.translate(nearestOrigin), selectedStep.position.len(), selectedStep.velocity);
+
             nearestTreeNode.createChild(steppedWayPoint);
-            if (steppedWayPoint.origin.distance2(target.origin) <= target.radius * target.radius) {
-                List<DimensionalWayPoint<V>> wayPointList = root.findTrace(nearestTreeNode.getChild(0));
+            count++;
+            if (count == 1000 || steppedWayPoint.origin.distance2(target.origin) <= target.radius * target.radius) {
+                List<DimensionalWayPoint<V>> wayPointList = expandingTree.findTrace(nearestTreeNode.getChild(0));
+                int requiredSize = pathConfiguration.immutablePathLength + pathConfiguration.mutablePathLength + pathConfiguration.thirdPathLength;
+                int size = wayPointList.size() > requiredSize ? wayPointList.size() : requiredSize;
                 DimensionalPath<DimensionalWayPoint<V>> path = new DimensionalPath<>();
                 DimensionalWayPoint<V> firstOne = wayPointList.get(0);
-                firstOne.origin.translate(aircraft.position());
+                firstOne.origin.translate(vehicle.position());
                 path.add(firstOne);
-                for (int i = 1; i < wayPointList.size(); i++) {
+                for (int i = 1; i < size; i++) {
                     V positionOffset = wayPointList.get(i - 1).origin;
                     DimensionalWayPoint<V> thisPoint = wayPointList.get(i);
                     thisPoint.origin.translate(positionOffset);
                     path.add(thisPoint);
                 }
+                return path;
             }
+        }
+    }
 
+    public MCRRT(double deltaTime,
+                 @NotNull Space<V> spaceRestriction,
+                 @Nullable PathSampler<V> pathSampler,
+                 @NotNull PathGenerationConfiguration configuration,
+                 @NotNull Provider<List<Obstacle<V>>> obstacleProvider,
+                 @NotNull Provider<SimulatedVehicle<V>> aircraftProvider,
+                 @NotNull Provider<DimensionalWayPoint<V>> targetProvider,
+                 @NotNull Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
+                 @Nullable Applier<ScaledGrid> grid2DApplier
+    ) {
+        super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
+        this.spaceRestriction = spaceRestriction;
+        this.grid2DApplier = grid2DApplier;
+        this.pathGenerationConfiguration = configuration;
+        if (pathSampler != null) {
+            this.pathSampler = pathSampler;
+        } else {
+            this.pathSampler = this::defaultSampler;
+        }
+    }
+
+
+    private DimensionalPath<DimensionalWayPoint<V>> selfImprovingRRT() {
+        V plannerStartVelocity = vehicle.velocity();
+        DimensionalPath<DimensionalWayPoint<V>> lastGeneratedPath = new DimensionalPath<>();
+        double scaledTime = deltaTime * 10;
+        while (true) {
+            List<Transform<V>> initialTransforms = vehicle.simulateKinetic(plannerStartVelocity, scaledTime);
+            double scalar = initialTransforms.get(0).position.len();
+            ScaledGrid<V> scaledSpace = new ScaledGrid<>(spaceRestriction, scalar);
+            lastGeneratedPath = this.pathSampler.sample(vehicle, pathGenerationConfiguration, scaledSpace, scaledTime, lastGeneratedPath);
+            scaledTime /= 2;
+            if (scaledTime == deltaTime) {
+                return lastGeneratedPath;
+            }
         }
 
     }

@@ -1,8 +1,8 @@
 package lab.mars.ProbabilityModifyRRTImp;
 
-import lab.mars.RRTBase.Aircraft;
+import lab.mars.RRTBase.Vehicle;
 
-public class Attacker implements Aircraft<Vector2> {
+public class Attacker implements Vehicle<Vector2> {
 
     private Vector2 position;
 

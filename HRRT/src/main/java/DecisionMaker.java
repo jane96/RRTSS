@@ -89,7 +89,7 @@ public class DecisionMaker extends RRT<Attacker, Vector2, WayPoint2D, Path2D> {
         List<CircleObstacle> obstacleSpace = obstacles.stream().map(e -> (CircleObstacle) e).collect(Collectors.toList());
         feasiableWayPoint = getFeasibleWayPoint(grid2D.getGrid(), scaleFactor);
         //get the currentPosition and targetPosition
-        WayPoint2D currentPosition = new WayPoint2D(this.aircraft.position());
+        WayPoint2D currentPosition = new WayPoint2D(this.vehicle.position());
         currentPosition = new WayPoint2D(new Vector2(currentPosition.origin.x, currentPosition.origin.y));
         WayPoint2D targetPosition = new WayPoint2D(new Vector2(this.target.origin.x, this.target.origin.y));
         int w = this.environMentWidth;

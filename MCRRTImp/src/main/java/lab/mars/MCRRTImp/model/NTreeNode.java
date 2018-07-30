@@ -24,14 +24,16 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         this.parent = null;
     }
 
-    public void concatChild(NTreeNode<E>... child) {
+    @SafeVarargs
+    public final void concatChild(NTreeNode<E>... child) {
         for (NTreeNode<E> c : child) {
             c.parent = this;
             this.children.add(c);
         }
     }
 
-    public void createChild(E element,  E... elements) {
+    @SafeVarargs
+    public final void createChild(E element,E... elements) {
         NTreeNode<E> single = new NTreeNode<>(element);
         single.parent = this;
         children.add(single);
@@ -42,15 +44,15 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         }
     }
 
-    public NTreeNode<E> getChild(int idx) {
+    public final NTreeNode<E> getChild(int idx) {
         return children.get(idx);
     }
 
-    public E getElement() {
+    public final E getElement() {
         return element;
     }
 
-    public NTreeNode<E> getParent() {
+    public final NTreeNode<E> getParent() {
         return parent;
     }
 
@@ -73,7 +75,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         double minDistance = Double.POSITIVE_INFINITY;
         for (NTreeNode<E> node : this) {
             double dis = func.distance(node.element, element);
-            if (dis < minDistance) {
+            if (dis <= minDistance) {
                 minDistance = dis;
                 minimum = node;
             }
@@ -81,7 +83,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         return minimum;
     }
 
-    public List<E> findTrace(E element) {
+    public final List<E> findTrace(E element) {
         Stack<VisitRecorder> stack = new Stack<>();
         stack.push(new VisitRecorder(this));
         while (true) {
@@ -103,7 +105,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         return trace;
     }
 
-    public List<E> findTrace(NTreeNode<E> child) {
+    public final List<E> findTrace(NTreeNode<E> child) {
         return this.findTrace(child.getElement());
     }
 
@@ -112,7 +114,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
     }
 
     @Override
-    public Iterator<NTreeNode<E>> iterator() {
+    public final Iterator<NTreeNode<E>> iterator() {
         return new NTreeIterator();
     }
 

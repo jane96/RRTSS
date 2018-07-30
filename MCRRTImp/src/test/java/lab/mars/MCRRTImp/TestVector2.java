@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp;
 
 import lab.mars.RRTBase.MathUtil;
-import lab.mars.MCRRTImp.model.Vector2;
+import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
 import org.junit.Test;
 
 public class TestVector2 {
@@ -44,8 +44,8 @@ public class TestVector2 {
         Vector2 v1 = new Vector2(1, 0);
         Vector2 v2 = v1.cpy().rotate(30);
         System.out.println(v2);
-        assert MathUtil.epsilonEquals(v2.x, Math.cos(Math.PI / 6));
-        assert MathUtil.epsilonEquals(v2.y, Math.sin(Math.PI / 6));
+        assert MathUtil.epsilonEquals(v2.x(), Math.cos(Math.PI / 6));
+        assert MathUtil.epsilonEquals(v2.y(), Math.sin(Math.PI / 6));
     }
 
     @Test
@@ -55,6 +55,6 @@ public class TestVector2 {
         v1.lerp(v2, 0.5);
         System.out.println(v1);
         System.out.println(v2);
-        assert MathUtil.epsilonEquals(v1.x, 1) && MathUtil.epsilonEquals(v1.y, 1.5);
+        assert MathUtil.epsilonEquals(v1.x(), 1) && MathUtil.epsilonEquals(v1.y(), 1.5);
     }
 }
