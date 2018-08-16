@@ -34,9 +34,9 @@ public class TestAttacker {
 
         @Override
         protected void draw(Pencil pencil) {
-            List<Transform<Vector2>> transforms = aircraft.simulateKinetic(aircraft.velocity(), 1);
+            List<Transform<Vector2>> transforms = aircraft.simulateKinetic(aircraft.velocity(), 10);
             Vector2 origin = aircraft.position();
-            double scaleBase = 50;
+            double scaleBase = 1;
             pencil.scale(scaleBase).filled().color(Color.YELLOWGREEN).circle(origin, 1);
             for (Transform<Vector2> t : transforms) {
 //                System.out.println(t.position);

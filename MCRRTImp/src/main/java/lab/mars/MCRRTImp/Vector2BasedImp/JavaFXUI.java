@@ -278,6 +278,14 @@ public class JavaFXUI extends GUIBase {
         pencil.stroked(5).color(Color.BLUE).rect(new Vector2(mapWidth / 2, mapHeight / 2), new Vector2(mapWidth, mapHeight));
     }
 
+    public void drawLeaves(Attacker<Vector2> attacker, Pencil pencil) {
+        List<NTreeNode<DimensionalWayPoint<Vector2>>> leaves = attacker.getLeaves();
+        leaves.forEach(leaf -> {
+            DimensionalWayPoint<Vector2> wayPoint = leaf.getElement();
+            pencil.filled().color(Color.RED).circle(wayPoint.origin, 1);
+        });
+    }
+
     public void drawPath(Attacker<Vector2> attacker,  Pencil pencil) {
         DimensionalPath<DimensionalWayPoint<Vector2>> path = attacker.actualPath();
         MCRRT.PathGenerationConfiguration configuration = attacker.configuration;
@@ -305,7 +313,7 @@ public class JavaFXUI extends GUIBase {
         Vector2 attackerPosition = new Vector2(5, 5);
         Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 100, 5, 200, 50, 5, target, world.area(), world::allObstacles);
+        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 5, 200, 50, 5, target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
         return attackerLeftUp;
     }
@@ -338,7 +346,7 @@ public class JavaFXUI extends GUIBase {
     }
 
     public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
+        List<Obstacle<Vector2>> circleObstacles = new ArrayList<>();//randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
         List<Attacker<Vector2>> attackers = new ArrayList<>();
         world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(mapWidth, mapHeight), new Vector2()));
         attackers.add(leftUpAttacker());
@@ -359,6 +367,7 @@ public class JavaFXUI extends GUIBase {
             drawPath(attacker, pencil);
             drawTarget(attacker, pencil);
             drawUAV(attacker, pencil);
+            drawLeaves(attacker, pencil);
         }
     }
 

@@ -1,10 +1,8 @@
 package lab.mars.MCRRTImp.Vector2BasedImp;
 
 import lab.mars.MCRRTImp.algorithm.MCRRT;
-import lab.mars.MCRRTImp.model.DimensionalPath;
-import lab.mars.MCRRTImp.model.DimensionalWayPoint;
-import lab.mars.MCRRTImp.model.ScaledGrid;
-import lab.mars.MCRRTImp.model.SimulatedVehicle;
+import lab.mars.MCRRTImp.algorithm.MCTSSampler;
+import lab.mars.MCRRTImp.model.*;
 import lab.mars.RRTBase.*;
 
 import java.util.ArrayList;
@@ -24,7 +22,17 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     private ScaledGrid gridWorld;
 
-    private MCRRT algorithm;
+    private MCTSSampler<V> algorithm;
+
+    private List<NTreeNode<DimensionalWayPoint<V>>> leaves = new ArrayList<>();
+
+    public List<NTreeNode<DimensionalWayPoint<V>>> getLeaves() {
+        return leaves;
+    }
+
+    private void leafApplier(List<NTreeNode<DimensionalWayPoint<V>>> leaves) {
+        this.leaves = leaves;
+    }
 
     public MCRRT.PathGenerationConfiguration configuration = new MCRRT.PathGenerationConfiguration(50, 250, 500, 20);
 
@@ -35,7 +43,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
-        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, this::setGridWorld);
+        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
     }
 
     public void setDesignatedTarget(DimensionalWayPoint<V> target) {
@@ -77,7 +85,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
 
     public void startAlgorithm() {
-        this.algorithm.solve(true);
+        this.algorithm.solve(false);
     }
 
 }
