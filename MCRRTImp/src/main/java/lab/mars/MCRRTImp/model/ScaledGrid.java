@@ -85,8 +85,12 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
      * @return position's childVisited time divided by the current position
      */
     public boolean check(V position) {
-        GridCell<V> transformed = transform(position);
-        return grid.contains(transformed);
+        try {
+            GridCell<V> transformed = transform(position);
+            return grid.contains(transformed);
+        } catch (IndexOutOfBoundsException ex) {
+            return true;
+        }
     }
 
     /**

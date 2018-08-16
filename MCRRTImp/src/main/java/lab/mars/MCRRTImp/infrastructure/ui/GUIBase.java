@@ -13,7 +13,7 @@ public abstract class GUIBase extends Application {
 
     protected int height = 2000;
     protected int width = 2000;
-    protected double cycleSleepTime = 1 / 30.f;
+    protected double cycleSleepTime = 1 / 24.f;
     private Pencil userPencil;
     private GraphicsContext pencil;
 

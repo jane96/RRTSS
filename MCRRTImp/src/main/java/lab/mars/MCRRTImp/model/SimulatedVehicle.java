@@ -59,9 +59,8 @@ public abstract class SimulatedVehicle<V extends Vector<V>> implements Vehicle<V
 
     /** Return a RIGHT -> LEFT Point List */
     public final List<Transform<V>> simulateKinetic(V currentVelocity, double deltaTime) {
-
         List<Transform<V>> ret = new ArrayList<>();
-        double deltaTheta = this.rotationLimits / (this.numberOfDirection - 1);
+        double deltaTheta = this.rotationLimits / this.numberOfDirection;
         double sliceCount = 100;
         for (int i = -numberOfDirection / 2; i <= numberOfDirection / 2; i++) {
             V rotated = currentVelocity.cpy();

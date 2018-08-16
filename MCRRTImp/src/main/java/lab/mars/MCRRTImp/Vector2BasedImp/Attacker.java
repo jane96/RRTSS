@@ -16,6 +16,8 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     private double viewAngle;
 
+    private double topVelocity;
+
     private DimensionalWayPoint<V> designatedTargetPosition;
 
     private DimensionalPath<DimensionalWayPoint<V>> actualPath = new DimensionalPath<>();
@@ -29,6 +31,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
     public Attacker(V position, V velocity, double rotationLimits, int numberOfDirection, double safeDistance, double viewDistance, double viewAngle, DimensionalWayPoint<V> designatedTargetPosition,
                     Space<V> area, Provider<List<Obstacle<V>>> obstacleProvider) {
         super(position, velocity, rotationLimits, numberOfDirection, safeDistance);
+        this.topVelocity = velocity.len();
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
@@ -61,7 +64,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     @Override
     protected double simulateVelocity(double currentVelocity, double angle) {
-        return currentVelocity * (1 - Math.abs(angle) / this.rotationLimits);
+        return topVelocity * (1 - Math.abs(angle) / this.rotationLimits);
     }
 
     public double viewDistance() {
@@ -74,7 +77,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
 
     public void startAlgorithm() {
-        this.algorithm.solve(false);
+        this.algorithm.solve(true);
     }
 
 }

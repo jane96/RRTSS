@@ -7,14 +7,11 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import lab.mars.RRTBase.MathUtil;
+import lab.mars.RRTBase.*;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
 import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
-import lab.mars.RRTBase.Obstacle;
-import lab.mars.RRTBase.RRT;
-import lab.mars.RRTBase.Space;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +22,10 @@ public class JavaFXUI extends GUIBase {
     private Stage stage;
     private World<Vector2> world;
     private RRT rrt;
+
+    private int mapWidth = 1280;
+
+    private int mapHeight = 800;
 
     private List<Obstacle<Vector2>> obstacleTestCase() {
         List<Obstacle<Vector2>> obstacles = new ArrayList<>();
@@ -231,12 +232,12 @@ public class JavaFXUI extends GUIBase {
         return obstacles;
     }
 
-    private List<CircleObstacle> randomObstacles(int count, double redZoneRadius, Vector2... redZoneOrigins) {
-        List<CircleObstacle> obstacles = new ArrayList<>();
+    private List<Obstacle<Vector2>> randomObstacles(int count, double redZoneRadius, double maxRadius, Vector2... redZoneOrigins) {
+        List<Obstacle<Vector2>> obstacles = new ArrayList<>();
         for (int i = 0; i < count;) {
-            double x = MathUtil.random(0, 2000);
-            double y = MathUtil.random(0, 2000);
-            double radius = MathUtil.random(0, 100);
+            double x = MathUtil.random(0, mapWidth);
+            double y = MathUtil.random(0, mapHeight);
+            double radius = MathUtil.random(0, maxRadius);
             Vector2 origin = new Vector2(x, y);
             boolean flag = false;
             for (Vector2 redZone :
@@ -263,7 +264,7 @@ public class JavaFXUI extends GUIBase {
     }
 
     public void drawUAV(Attacker<Vector2> attacker, Pencil pencil) {
-        pencil.filled().color(new Color(1, 0, 0, 0.3)).circle(attacker.position(), 10 * scaleBase);
+        pencil.filled().color(new Color(1, 0, 0, 0.3)).circle(attacker.position(), 10);
     }
 
     public void drawObstacles(Pencil pencil) {
@@ -274,42 +275,44 @@ public class JavaFXUI extends GUIBase {
                 pencil.stroked(1).color(Color.DARKBLUE).circle(circleObstacle.origin, circleObstacle.radius);
             }
         });
-        pencil.stroked(5).color(Color.BLUE).box(new Vector2(1000, 1000), 2000);
+        pencil.stroked(5).color(Color.BLUE).rect(new Vector2(mapWidth / 2, mapHeight / 2), new Vector2(mapWidth, mapHeight));
     }
 
     public void drawPath(Attacker<Vector2> attacker,  Pencil pencil) {
         DimensionalPath<DimensionalWayPoint<Vector2>> path = attacker.actualPath();
         MCRRT.PathGenerationConfiguration configuration = attacker.configuration;
         if (path != null && path.size() != 0) {
-            Vector2 last = attacker.position();
+            Vector2 last = attacker.position().cpy();
             int counter = 0;
             for (DimensionalWayPoint<Vector2> wayPoint2D : path) {
                 Color color = Color.ORANGE;
-                if (counter < configuration.immutablePathLength) {
+//                if (counter < configuration.immutablePathLength) {
+//                    color = Color.BLACK;
+//                } else if (counter < configuration.mutablePathLength) {
+//                    color = Color.RED;
+//                }
+                if (counter % 2 == 0) {
                     color = Color.BLACK;
-                } else if (counter < configuration.mutablePathLength) {
-                    color = Color.RED;
                 }
-                pencil.stroked(2 * scaleBase).color(color).line(wayPoint2D.origin, last);
-//                pencil.filled().color(color).circle(wayPoint2D.origin, wayPoint2D.radius);
-                last = wayPoint2D.origin;
+                pencil.stroked(2 * scaleBase).color(color).line(last.cpy(), last.translate(wayPoint2D.origin));
                 counter++;
             }
         }
+        stage.setTitle("" + path.size());
     }
 
     private Attacker<Vector2> leftUpAttacker() {
         Vector2 attackerPosition = new Vector2(5, 5);
-        Vector2 targetPosition = new Vector2(1900, 1900);
+        Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
+        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 100, 5, 200, 50, 5, target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
         return attackerLeftUp;
     }
 
     private Attacker<Vector2> middleLeftAttacker() {
         Vector2 attackerPosition = new Vector2(5, 925);
-        Vector2 targetPosition = new Vector2(1900, 1900);
+        Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
         Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5,target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
@@ -318,27 +321,26 @@ public class JavaFXUI extends GUIBase {
 
     private Attacker<Vector2> rightUpAttacker() {
         Vector2 attackerPosition = new Vector2(1955, 5);
-        Vector2 targetPosition = new Vector2(1900, 1900);
+        Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
+        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
         return attackerLeftUp;
     }
 
     private Attacker<Vector2> rightUpMiddleAttacker() {
         Vector2 attackerPosition = new Vector2(1125, 265);
-        Vector2 targetPosition = new Vector2(1900, 1900);
+        Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
-
+        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
         return attackerLeftUp;
     }
 
     public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = obstacleTestCase();
+        List<Obstacle<Vector2>> circleObstacles = randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
         List<Attacker<Vector2>> attackers = new ArrayList<>();
-        world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(2000, 2000), new Vector2()));
+        world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(mapWidth, mapHeight), new Vector2()));
         attackers.add(leftUpAttacker());
 //        attackers.add(middleLeftAttacker());
 //        attackers.add(rightUpAttacker());
@@ -369,8 +371,8 @@ public class JavaFXUI extends GUIBase {
     @Override
     protected void initializeComponents(Stage primaryStage, Scene scene, Pane root, Canvas canvas) {
         super.initializeComponents(primaryStage, scene, root, canvas);
-        this.height = 2000;
-        this.width = 2000;
+        this.height = mapHeight;
+        this.width = mapWidth;
         primaryStage.setTitle("Test Flight");
         stage = primaryStage;
         ContextMenu menu = new ContextMenu();
@@ -386,7 +388,7 @@ public class JavaFXUI extends GUIBase {
         canvas.setOnScroll(event -> {
             double deltaY = event.getDeltaY();
             if (deltaY < 0) {
-                scrollZoomBase = scrollZoomBase > 1 ? scrollZoomBase - 0.1 : 1;
+                scrollZoomBase = scrollZoomBase > 0.2 ? scrollZoomBase - 0.1 : 0.2;
             } else if (deltaY > 0) {
                 scrollZoomBase = scrollZoomBase < 100 ? scrollZoomBase + 0.1 : 100;
             }
