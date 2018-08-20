@@ -7,6 +7,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import lab.mars.MCRRTImp.infrastructure.ui.AircraftSimulator;
 import lab.mars.RRTBase.*;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
@@ -15,10 +16,10 @@ import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class JavaFXUI extends GUIBase {
 
-    private double scaleBase = 1;
     private Stage stage;
     private World<Vector2> world;
     private RRT rrt;
@@ -234,7 +235,7 @@ public class JavaFXUI extends GUIBase {
 
     private List<Obstacle<Vector2>> randomObstacles(int count, double redZoneRadius, double maxRadius, Vector2... redZoneOrigins) {
         List<Obstacle<Vector2>> obstacles = new ArrayList<>();
-        for (int i = 0; i < count;) {
+        for (int i = 0; i < count; ) {
             double x = MathUtil.random(0, mapWidth);
             double y = MathUtil.random(0, mapHeight);
             double radius = MathUtil.random(0, maxRadius);
@@ -250,7 +251,7 @@ public class JavaFXUI extends GUIBase {
             if (flag) {
                 continue;
             }
-            i ++;
+            i++;
             obstacles.add(new CircleObstacle(x, y, radius));
             System.out.println(String.format("obstacles.translate(new CircleObstacle(%f, %f, %f));", x, y, radius));
         }
@@ -258,27 +259,27 @@ public class JavaFXUI extends GUIBase {
     }
 
 
-    public void drawTarget(Attacker<Vector2> attacker, Pencil pencil) {
+    private void drawTarget(Attacker<Vector2> attacker, Pencil pencil) {
         DimensionalWayPoint<Vector2> target = attacker.target();
         pencil.filled().color(Color.YELLOWGREEN).circle(target.origin, target.radius);
     }
 
-    public void drawUAV(Attacker<Vector2> attacker, Pencil pencil) {
+    private void drawUAV(Attacker<Vector2> attacker, Pencil pencil) {
         pencil.filled().color(new Color(1, 0, 0, 0.3)).circle(attacker.position(), 10);
     }
 
-    public void drawObstacles(Pencil pencil) {
+    private void drawObstacles(Pencil pencil) {
         world.allObstacles().forEach(obs -> {
             if (obs instanceof CircleObstacle) {
-                CircleObstacle circleObstacle = (CircleObstacle)obs;
+                CircleObstacle circleObstacle = (CircleObstacle) obs;
                 pencil.filled().color(Color.LIGHTBLUE).circle(circleObstacle.origin, circleObstacle.radius);
                 pencil.stroked(1).color(Color.DARKBLUE).circle(circleObstacle.origin, circleObstacle.radius);
             }
         });
-        pencil.stroked(5).color(Color.BLUE).rect(new Vector2(mapWidth / 2, mapHeight / 2), new Vector2(mapWidth, mapHeight));
+        pencil.stroked(5).color(Color.BLUE).rect(new Vector2(mapWidth / 2f, mapHeight / 2f), new Vector2(mapWidth, mapHeight));
     }
 
-    public void drawLeaves(Attacker<Vector2> attacker, Pencil pencil) {
+    private void drawLeaves(Attacker<Vector2> attacker, Pencil pencil) {
         List<NTreeNode<DimensionalWayPoint<Vector2>>> leaves = attacker.getLeaves();
         leaves.forEach(leaf -> {
             DimensionalWayPoint<Vector2> wayPoint = leaf.getElement();
@@ -286,27 +287,52 @@ public class JavaFXUI extends GUIBase {
         });
     }
 
-    public void drawPath(Attacker<Vector2> attacker,  Pencil pencil) {
-        DimensionalPath<DimensionalWayPoint<Vector2>> path = attacker.actualPath();
-        MCRRT.PathGenerationConfiguration configuration = attacker.configuration;
-        if (path != null && path.size() != 0) {
-            Vector2 last = attacker.position().cpy();
-            int counter = 0;
-            for (DimensionalWayPoint<Vector2> wayPoint2D : path) {
-                Color color = Color.ORANGE;
+    private void drawAreaPath(Attacker<Vector2> attacker, Pencil pencil) {
+        Queue<DimensionalPath<DimensionalWayPoint<Vector2>>> paths = attacker.areaPath();
+        if (paths.size() != 0) {
+            DimensionalPath<DimensionalWayPoint<Vector2>> path;
+            Vector2 cellSize = attacker.gridWorld().cellSize();
+            if (paths.size() != 1) {
+                path = paths.poll();
+            } else {
+                path = paths.peek();
+            }
+            for (DimensionalWayPoint<Vector2> wayPoint : path) {
+                pencil.filled().color(Color.LIGHTBLUE).rect(wayPoint.origin.cpy().translate(new Vector2(cellSize.x() / 2, cellSize.y() / 2)), cellSize);
+                pencil.stroked(1.0).color(Color.BLUE).rect(wayPoint.origin.cpy().translate(new Vector2(cellSize.x() / 2, cellSize.y() / 2)), cellSize);
+            }
+        }
+    }
+
+    private void drawPath(Attacker<Vector2> attacker, Pencil pencil) {
+        Queue<DimensionalPath<DimensionalWayPoint<Vector2>>> paths = attacker.actualPath();
+        if (paths.size() != 0) {
+            DimensionalPath<DimensionalWayPoint<Vector2>> path;
+            if (paths.size() != 1) {
+                path = paths.poll();
+            } else {
+                path = paths.peek();
+            }
+            MCRRT.PathGenerationConfiguration configuration = attacker.configuration;
+            if (path != null && path.size() != 0) {
+                Vector2 last = attacker.position().cpy();
+                int counter = 0;
+                for (DimensionalWayPoint<Vector2> wayPoint2D : path) {
+                    Color color = Color.ORANGE;
 //                if (counter < configuration.immutablePathLength) {
 //                    color = Color.BLACK;
 //                } else if (counter < configuration.mutablePathLength) {
 //                    color = Color.RED;
 //                }
-                if (counter % 2 == 0) {
-                    color = Color.BLACK;
+                    if (counter % 2 == 0) {
+                        color = Color.BLACK;
+                    }
+                    pencil.stroked(2 * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin));
+                    counter++;
                 }
-                pencil.stroked(2 * scaleBase).color(color).line(last.cpy(), last.translate(wayPoint2D.origin));
-                counter++;
             }
+
         }
-        stage.setTitle("" + path.size());
     }
 
     private Attacker<Vector2> leftUpAttacker() {
@@ -322,7 +348,7 @@ public class JavaFXUI extends GUIBase {
         Vector2 attackerPosition = new Vector2(5, 925);
         Vector2 targetPosition = new Vector2(1200, 780);
         DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5,target, world.area(), world::allObstacles);
+        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 30, 200, 50, 5, target, world.area(), world::allObstacles);
         attackerLeftUp.setDesignatedTarget(target);
         return attackerLeftUp;
     }
@@ -346,7 +372,7 @@ public class JavaFXUI extends GUIBase {
     }
 
     public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = new ArrayList<>();//randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
+        List<Obstacle<Vector2>> circleObstacles = randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
         List<Attacker<Vector2>> attackers = new ArrayList<>();
         world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(mapWidth, mapHeight), new Vector2()));
         attackers.add(leftUpAttacker());
@@ -361,9 +387,12 @@ public class JavaFXUI extends GUIBase {
 
     @Override
     protected void draw(Pencil pencil) {
-        pencil.scale(scaleBase).pixelOffset(shiftX, shiftY);
+        for (Attacker<Vector2> attacker : world.attacker()) {
+            drawGrid(attacker, pencil);
+        }
         drawObstacles(pencil);
         for (Attacker<Vector2> attacker : world.attacker()) {
+            drawAreaPath(attacker, pencil);
             drawPath(attacker, pencil);
             drawTarget(attacker, pencil);
             drawUAV(attacker, pencil);
@@ -371,11 +400,26 @@ public class JavaFXUI extends GUIBase {
         }
     }
 
-    private double shiftX = 1;
-    private double shiftY = 1;
-    private double scrollZoomBase = 1;
-    private double lastMouseX = -1;
-    private double lastMouseY = -1;
+    private void drawGrid(Attacker<Vector2> attacker, Pencil pencil) {
+        ScaledGrid<Vector2> scaledGrid = attacker.gridWorld();
+        if (scaledGrid == null) {
+            return;
+        }
+        pencil.stroked(5).rect(new Vector2(mapWidth / 2f, mapHeight / 2f), new Vector2(mapWidth, mapHeight));
+        Vector2 cellSize = scaledGrid.cellSize();
+        scaledGrid.forEach(v -> {
+            Color color;
+            if (scaledGrid.check(v)) {
+                color = Color.RED;
+            } else {
+                color = new Color(0.2,0.7, 0, 1);
+            }
+            Vector2 rectCentroid = new Vector2(v.x() + cellSize.x() / 2, v.y() + cellSize.y() / 2);
+            pencil.filled().color(color).rect(rectCentroid, cellSize);
+            pencil.stroked(0.5).color(Color.BLUE).rect(rectCentroid, cellSize);
+        });
+    }
+
 
     @Override
     protected void initializeComponents(Stage primaryStage, Scene scene, Pane root, Canvas canvas) {
@@ -393,36 +437,7 @@ public class JavaFXUI extends GUIBase {
             world.attacker().forEach(Attacker::startAlgorithm);
             AircraftSimulator.start(1 / 24.0);
         });
-        primaryStage.widthProperty().addListener((ob, ov, nv) -> scaleBase = ((double)nv * scrollZoomBase) / width);
-        canvas.setOnScroll(event -> {
-            double deltaY = event.getDeltaY();
-            if (deltaY < 0) {
-                scrollZoomBase = scrollZoomBase > 0.2 ? scrollZoomBase - 0.1 : 0.2;
-            } else if (deltaY > 0) {
-                scrollZoomBase = scrollZoomBase < 100 ? scrollZoomBase + 0.1 : 100;
-            }
-            scaleBase = (scene.getWidth() * scrollZoomBase) / width;
-        });
-        canvas.setOnMouseDragged(event -> {
-            double mouseX = event.getX();
-            double mouseY = event.getY();
-            if (lastMouseX == -1) {
-                lastMouseX = mouseX;
-                lastMouseY = mouseY;
-                return;
-            }
-            double deltaX = mouseX - lastMouseX;
-            double deltaY = mouseY - lastMouseY;
-            shiftX += deltaX;
-            shiftY += deltaY;
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
-        });
-        canvas.setOnMouseMoved(event ->{
-            lastMouseX = event.getX();
-            lastMouseY = event.getY();
-        });
-        primaryStage.heightProperty().addListener((ob, ov, nv) -> scaleBase =  (double) nv / height);
+
     }
 
 }

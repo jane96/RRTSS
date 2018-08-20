@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.Vector2BasedImp;
+package lab.mars.MCRRTImp.model;
 
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.MCRRTImp.algorithm.MCTSSampler;
@@ -7,6 +7,9 @@ import lab.mars.RRTBase.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
@@ -18,11 +21,13 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     private DimensionalWayPoint<V> designatedTargetPosition;
 
-    private DimensionalPath<DimensionalWayPoint<V>> actualPath = new DimensionalPath<>();
+    private Queue<DimensionalPath<DimensionalWayPoint<V>>> actualPath = new ConcurrentLinkedQueue<>();
 
-    private ScaledGrid gridWorld;
+    private Queue<DimensionalPath<DimensionalWayPoint<V>>> areaPath = new ConcurrentLinkedQueue<>();
 
-    private MCTSSampler<V> algorithm;
+    private ScaledGrid<V> gridWorld;
+
+    private RRT algorithm;
 
     private List<NTreeNode<DimensionalWayPoint<V>>> leaves = new ArrayList<>();
 
@@ -43,23 +48,29 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
-        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
+        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, this::setAreaPath, this::setGridWorld);
+//        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
+
     }
 
     public void setDesignatedTarget(DimensionalWayPoint<V> target) {
         this.designatedTargetPosition = target;
     }
 
-    public DimensionalPath<DimensionalWayPoint<V>> actualPath() {
+    public Queue<DimensionalPath<DimensionalWayPoint<V>>> actualPath() {
         return actualPath;
     }
 
-    public DimensionalWayPoint target() {
+    public DimensionalWayPoint<V> target() {
         return designatedTargetPosition;
     }
 
-    public ScaledGrid gridWorld() {
+    public ScaledGrid<V> gridWorld() {
         return gridWorld;
+    }
+
+    public void setAreaPath(DimensionalPath<DimensionalWayPoint<V>> areaPath) {
+        this.areaPath.offer(areaPath);
     }
 
     public void setGridWorld(ScaledGrid<V> gridWorld) {
@@ -67,7 +78,11 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
     }
 
     public void setActualPath(DimensionalPath<DimensionalWayPoint<V>> actualPath) {
-        this.actualPath = actualPath;
+        this.actualPath.offer(actualPath);
+    }
+
+    public Queue<DimensionalPath<DimensionalWayPoint<V>>> areaPath() {
+        return this.areaPath;
     }
 
     @Override

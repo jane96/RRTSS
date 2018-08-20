@@ -142,12 +142,28 @@ public class Space<V extends Vector<V>> implements Iterable<V> {
         return new VectorIterator();
     }
 
+    public long size() {
+        long sum = 1;
+        for (int i = 0; i < dimensionCount;i ++) {
+            sum *= Math.ceil((highestValues[i] - lowestValues[i]) / stepValues[i]);
+        }
+        return sum;
+    }
+
+    @Override
+    public String toString() {
+        return "Space{" +
+                "lowerBound=" + lowerBound +
+                ", upperBound=" + upperBound +
+                ", step=" + step +
+                '}';
+    }
+
     private class VectorIterator implements Iterator<V> {
 
         private V cursor;
 
-
-        private double stepLength2 = step.len2();
+        private boolean hasNext = true;
 
         VectorIterator() {
             cursor = lowerBound.cpy();
@@ -155,19 +171,23 @@ public class Space<V extends Vector<V>> implements Iterable<V> {
 
         @Override
         public boolean hasNext() {
-            return cursor.distance2(upperBound) > stepLength2;
+            return hasNext;
         }
 
         @Override
         public V next() {
             V ret = cursor.cpy();
-            for (int i = dimensionCount - 1; i >= 0; i--) {
+            int i;
+            for (i = dimensionCount - 1; i >= 0; i--) {
                 cursor.dimensions[i].value += stepValues[i];
                 if (cursor.dimensions[i].value >= highestValues[i]) {
                     cursor.dimensions[i].value = lowestValues[i];
                     continue;
                 }
                 break;
+            }
+            if (i < 0) {
+                hasNext = false;
             }
             return ret;
         }

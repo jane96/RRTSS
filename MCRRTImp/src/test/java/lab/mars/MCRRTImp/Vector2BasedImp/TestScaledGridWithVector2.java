@@ -1,44 +1,24 @@
-package lab.mars.MCRRTImp;
+package lab.mars.MCRRTImp.Vector2BasedImp;
 
-import lab.mars.MCRRTImp.Vector2BasedImp.Attacker;
 import lab.mars.MCRRTImp.Vector2BasedImp.CircleObstacle;
-import lab.mars.MCRRTImp.Vector2BasedImp.World;
-import lab.mars.MCRRTImp.model.DimensionalWayPoint;
-import lab.mars.RRTBase.MathUtil;
 import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
+import lab.mars.MCRRTImp.model.GridCell;
+import lab.mars.MCRRTImp.model.ScaledGrid;
+import lab.mars.RRTBase.MathUtil;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Space;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class TestMCRRT {
+public class TestScaledGridWithVector2 {
 
-    @Test
-    public void testListMapSortedOrder() {
-        List<Vector2> testCase = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            testCase.add(new Vector2(MathUtil.random(0, 100), MathUtil.random(0, 100)));
-        }
-        Vector2 comparator = new Vector2(1, 0);
-        Stream<Map.Entry<Vector2, Double>> map = testCase.stream().
-                collect(Collectors.toMap(dir -> dir, dir -> dir.angle(comparator))).
-                entrySet().stream().sorted(Comparator.comparingDouble(Map.Entry::getValue));
-        map.forEach(e -> System.out.println(e.getKey() + ", " + e.getValue()));
-    }
-
-    private World<Vector2> world;
-
-    @Before
-    public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = obstacleTestCase();
-        List<Attacker<Vector2>> attackers = new ArrayList<>();
-        world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(2000, 2000), new Vector2()));
-        attackers.add(leftUpAttacker());
-    }
+    ScaledGrid<Vector2> scaledGrid;
+    Space<Vector2> originalSpace;
 
     private List<Obstacle<Vector2>> obstacleTestCase() {
         List<Obstacle<Vector2>> obstacles = new ArrayList<>();
@@ -245,17 +225,34 @@ public class TestMCRRT {
         return obstacles;
     }
 
-    private Attacker<Vector2> leftUpAttacker() {
-        Vector2 attackerPosition = new Vector2(5, 5);
-        Vector2 targetPosition = new Vector2(1900, 1900);
-        DimensionalWayPoint<Vector2> target = new DimensionalWayPoint<>(targetPosition, 5, new Vector2());
-        Attacker<Vector2> attackerLeftUp = new Attacker<>(attackerPosition, new Vector2(1, 1).normalize().scale(4.1666667), 10, 5, 200, 50, 5, target, world.area(), world::allObstacles);
-        attackerLeftUp.setDesignatedTarget(target);
-        return attackerLeftUp;
+    private List<Obstacle<Vector2>> generateRandomObstacle(int count, Space<Vector2> space, double radiusUpper) {
+        List<Obstacle<Vector2>> obstacles = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Vector2 sampled = space.sample();
+            double radius = MathUtil.random(0, radiusUpper);
+            obstacles.add(new CircleObstacle(sampled.x(), sampled.y(), radius));
+        }
+        return obstacles;
+    }
+    @Before
+    public void testCreate() {
+        originalSpace = new Space<>(new Vector2(2000, 2000), new Vector2(0,0));
+        scaledGrid = new ScaledGrid<>(originalSpace, 40);
     }
 
     @Test
-    public void testAll() {
-        world.attacker().forEach(Attacker::startAlgorithm);
+    public void testScan() {
+        List<Obstacle<Vector2>> obstacles = generateRandomObstacle(100, originalSpace, 30);
+        long start = System.currentTimeMillis();
+        scaledGrid.scan(obstacles);
+        System.out.println(System.currentTimeMillis() - start + "ms");
+        Set<String> gridString = new HashSet<>();
+        int count = 0;
+        for (GridCell<Vector2> c : scaledGrid.grid) {
+            count++;
+            gridString.add(c.toString());
+        }
+        assert count == gridString.size();
     }
+
 }

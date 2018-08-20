@@ -29,11 +29,15 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
     private V cellSize;
 
 
-    public GridCell<V> transform(V position) throws IndexOutOfBoundsException{
+    public GridCell<V> transform(V position) {
         if (!scaledSpace.include(position)) {
             throw new IndexOutOfBoundsException("failed to transform out bound position " + position + " because grid is defined as " + scaledSpace);
         }
         return new GridCell<>(scaledSpace.formalize(position));
+    }
+
+    public V formalize(V position) {
+        return scaledSpace.formalize(position);
     }
 
     public V cellSize() {
@@ -66,6 +70,10 @@ public class ScaledGrid<V extends Vector<V>> implements Iterable<V> {
 
         }
 
+    }
+
+    public long size() {
+        return scaledSpace.size();
     }
 
     /**

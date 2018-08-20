@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.Vector2BasedImp;
+package lab.mars.MCRRTImp.infrastructure.ui;
 
 public class AircraftSimulator {
 

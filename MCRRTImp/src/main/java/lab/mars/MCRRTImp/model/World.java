@@ -1,6 +1,6 @@
-package lab.mars.MCRRTImp.Vector2BasedImp;
+package lab.mars.MCRRTImp.model;
 
-import lab.mars.MCRRTImp.Vector2BasedImp.Attacker;
+import lab.mars.MCRRTImp.model.Attacker;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Space;
 import lab.mars.RRTBase.Vector;
