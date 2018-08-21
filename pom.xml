@@ -7,12 +7,10 @@
     <groupId>lab.mars</groupId>
     <artifactId>RRT</artifactId>
     <packaging>pom</packaging>
-    <version>1.1</version>
+    <version>1.2</version>
     <modules>
-        <module>ProbabilityModifyRRTImp</module>
         <module>RRTBase</module>
         <module>MCRRTImp</module>
-        <module>HRRT</module>
     </modules>
 
     <properties>
@@ -109,5 +107,16 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>deployment</id>
+            <url>http://maven.marslab.org/repository/maven-snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>deployment</id>
+            <url>http://maven.marslab.org/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
 
 </project>

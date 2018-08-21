@@ -2,19 +2,15 @@ package lab.mars.MCRRTImp.Vector2BasedImp;
 
 import javafx.application.Application;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import lab.mars.MCRRTImp.Vector2BasedImp.CircleObstacle;
-import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
-import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
-import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
+import infrastructure.Vector2BasedImp.CircleObstacle;
+import infrastructure.Vector2BasedImp.Vector2;
+import infrastructure.ui.GUIBase;
+import infrastructure.ui.Pencil;
 import lab.mars.MCRRTImp.model.GridCell;
 import lab.mars.MCRRTImp.model.ScaledGrid;
 import lab.mars.RRTBase.MathUtil;
 import lab.mars.RRTBase.Obstacle;
 import lab.mars.RRTBase.Space;
-import lab.mars.RRTBase.Vector;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;

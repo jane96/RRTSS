@@ -1,13 +1,11 @@
 package lab.mars.MCRRTImp.algorithm;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.RRTBase.*;
 import lab.mars.RRTBase.Vector;
 
 import java.util.*;
-
+@Deprecated
 public class MCTSSampler<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, DimensionalWayPoint<V>, DimensionalPath<DimensionalWayPoint<V>>> {
 
     private Space<V> spaceRestriction;
@@ -19,14 +17,14 @@ public class MCTSSampler<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V
     private Applier<List<DimensionalPath<DimensionalWayPoint<V>>>> pathListApplier;
 
     public MCTSSampler(double deltaTime,
-                       @NotNull Space<V> spaceRestriction,
-                       @NotNull Provider<List<Obstacle<V>>> obstacleProvider,
-                       @NotNull Provider<SimulatedVehicle<V>> aircraftProvider,
-                       @NotNull Provider<DimensionalWayPoint<V>> targetProvider,
-                       @NotNull Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
-                       @Nullable Applier<NTreeNode<DimensionalWayPoint<V>>> treeApplier,
-                       @Nullable Applier<List<NTreeNode<DimensionalWayPoint<V>>>> leafApplier,
-                       @Nullable Applier<List<DimensionalPath<DimensionalWayPoint<V>>>> pathListApplier) {
+                        Space<V> spaceRestriction,
+                        Provider<List<Obstacle<V>>> obstacleProvider,
+                        Provider<SimulatedVehicle<V>> aircraftProvider,
+                        Provider<DimensionalWayPoint<V>> targetProvider,
+                        Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
+                        Applier<NTreeNode<DimensionalWayPoint<V>>> treeApplier,
+                        Applier<List<NTreeNode<DimensionalWayPoint<V>>>> leafApplier,
+                        Applier<List<DimensionalPath<DimensionalWayPoint<V>>>> pathListApplier) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
         this.spaceRestriction = spaceRestriction;
         this.treeApplier = treeApplier;

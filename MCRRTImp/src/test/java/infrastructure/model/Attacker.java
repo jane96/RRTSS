@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.model;
+package infrastructure.model;
 
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.MCRRTImp.algorithm.MCTSSampler;

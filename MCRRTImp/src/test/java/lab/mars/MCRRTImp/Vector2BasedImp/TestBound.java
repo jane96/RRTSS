@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp.Vector2BasedImp;
 
-import lab.mars.MCRRTImp.Vector2BasedImp.Bound;
-import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
+import infrastructure.Vector2BasedImp.Bound;
+import infrastructure.Vector2BasedImp.Vector2;
 import org.junit.Test;
 
 public class TestBound {

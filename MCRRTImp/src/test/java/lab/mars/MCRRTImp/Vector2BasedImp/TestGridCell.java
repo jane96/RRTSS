@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp.Vector2BasedImp;
 
-import lab.mars.MCRRTImp.PolarBasedImp.Polar;
-import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
+import infrastructure.PolarBasedImp.Polar;
+import infrastructure.Vector2BasedImp.Vector2;
 import lab.mars.MCRRTImp.model.GridCell;
 import org.junit.Test;
 

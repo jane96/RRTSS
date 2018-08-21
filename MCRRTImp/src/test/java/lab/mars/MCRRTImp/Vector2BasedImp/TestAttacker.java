@@ -2,10 +2,11 @@ package lab.mars.MCRRTImp.Vector2BasedImp;
 
 import javafx.application.Application;
 import javafx.scene.paint.Color;
-import lab.mars.MCRRTImp.model.Attacker;
+import infrastructure.Vector2BasedImp.Vector2;
+import infrastructure.model.Attacker;
 import lab.mars.MCRRTImp.model.Transform;
-import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
-import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
+import infrastructure.ui.GUIBase;
+import infrastructure.ui.Pencil;
 import org.junit.Test;
 
 import java.util.List;

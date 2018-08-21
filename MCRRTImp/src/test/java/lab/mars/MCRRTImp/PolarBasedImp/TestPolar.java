@@ -1,6 +1,6 @@
 package lab.mars.MCRRTImp.PolarBasedImp;
 
-import lab.mars.MCRRTImp.PolarBasedImp.Polar;
+import infrastructure.PolarBasedImp.Polar;
 import org.junit.Test;
 
 public class TestPolar {

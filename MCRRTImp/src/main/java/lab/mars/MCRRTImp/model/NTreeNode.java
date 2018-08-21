@@ -1,7 +1,4 @@
 package lab.mars.MCRRTImp.model;
-
-import com.sun.istack.internal.NotNull;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +66,7 @@ public class NTreeNode<E> implements Iterable<NTreeNode<E>> {
         double distance(E from, E to);
     }
 
-    @NotNull
+
     public NTreeNode<E> findNearest(E element, DistanceFunc<E> func) {
         NTreeNode<E> minimum = null;
         double minDistance = Double.POSITIVE_INFINITY;

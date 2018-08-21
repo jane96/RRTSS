@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.infrastructure.ui;
+package infrastructure.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;

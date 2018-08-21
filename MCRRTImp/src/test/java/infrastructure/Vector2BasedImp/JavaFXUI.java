@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.Vector2BasedImp;
+package infrastructure.Vector2BasedImp;
 
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -7,12 +7,14 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import lab.mars.MCRRTImp.infrastructure.ui.AircraftSimulator;
+import infrastructure.model.Attacker;
+import infrastructure.model.World;
+import infrastructure.ui.AircraftSimulator;
 import lab.mars.RRTBase.*;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
-import lab.mars.MCRRTImp.infrastructure.ui.GUIBase;
-import lab.mars.MCRRTImp.infrastructure.ui.Pencil;
+import infrastructure.ui.GUIBase;
+import infrastructure.ui.Pencil;
 
 import java.util.ArrayList;
 import java.util.List;

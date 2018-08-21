@@ -1,7 +1,5 @@
 package lab.mars.MCRRTImp.algorithm;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import lab.mars.MCRRTImp.model.*;
 import lab.mars.RRTBase.*;
 import lab.mars.RRTBase.Vector;
@@ -37,10 +35,10 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
     public interface PathSampler<V extends Vector<V>> {
 
-        DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar, @NotNull DimensionalPath<DimensionalWayPoint<V>> lastPath);
+        DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar,  DimensionalPath<DimensionalWayPoint<V>> lastPath);
     }
 
-    private DimensionalPath<DimensionalWayPoint<V>> defaultSampler(SimulatedVehicle<V> simulatedVehicle, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar, @NotNull DimensionalPath<DimensionalWayPoint<V>> lastPath) {
+    private DimensionalPath<DimensionalWayPoint<V>> defaultSampler(SimulatedVehicle<V> simulatedVehicle, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar,  DimensionalPath<DimensionalWayPoint<V>> lastPath) {
         while (true) {
             System.out.println("first level");
             DimensionalPath<DimensionalWayPoint<V>> areaPath = firstLevelRRT(vehicle.position(), vehicle.velocity());
@@ -230,15 +228,15 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
 
     public MCRRT(double deltaTime,
-                 @NotNull Space<V> spaceRestriction,
-                 @Nullable PathSampler<V> pathSampler,
-                 @NotNull PathGenerationConfiguration configuration,
-                 @NotNull Provider<List<Obstacle<V>>> obstacleProvider,
-                 @NotNull Provider<SimulatedVehicle<V>> aircraftProvider,
-                 @NotNull Provider<DimensionalWayPoint<V>> targetProvider,
-                 @NotNull Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
-                 @NotNull Applier<DimensionalPath<DimensionalWayPoint<V>>> areaPathApplier,
-                 @Nullable Applier<ScaledGrid> grid2DApplier
+                  Space<V> spaceRestriction,
+                  PathSampler<V> pathSampler,
+                  PathGenerationConfiguration configuration,
+                  Provider<List<Obstacle<V>>> obstacleProvider,
+                  Provider<SimulatedVehicle<V>> aircraftProvider,
+                  Provider<DimensionalWayPoint<V>> targetProvider,
+                  Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
+                  Applier<DimensionalPath<DimensionalWayPoint<V>>> areaPathApplier,
+                  Applier<ScaledGrid> grid2DApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
         this.spaceRestriction = spaceRestriction;

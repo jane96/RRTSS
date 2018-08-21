@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.Vector2BasedImp;
+package infrastructure.Vector2BasedImp;
 
 import lab.mars.RRTBase.Dimension;
 import lab.mars.RRTBase.MathUtil;

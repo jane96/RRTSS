@@ -1,7 +1,7 @@
 package lab.mars.MCRRTImp.Vector2BasedImp;
 
-import lab.mars.MCRRTImp.Vector2BasedImp.CircleObstacle;
-import lab.mars.MCRRTImp.Vector2BasedImp.Vector2;
+import infrastructure.Vector2BasedImp.CircleObstacle;
+import infrastructure.Vector2BasedImp.Vector2;
 import lab.mars.MCRRTImp.model.GridCell;
 import lab.mars.MCRRTImp.model.ScaledGrid;
 import lab.mars.RRTBase.MathUtil;

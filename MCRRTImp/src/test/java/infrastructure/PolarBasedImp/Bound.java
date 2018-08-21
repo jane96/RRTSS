@@ -1,4 +1,4 @@
-package lab.mars.MCRRTImp.PolarBasedImp;
+package infrastructure.PolarBasedImp;
 
 import lab.mars.RRTBase.Obstacle;
 
