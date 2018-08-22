@@ -100,7 +100,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
 
     public void startAlgorithm() {
-        this.algorithm.solve(false);
+        this.algorithm.solve(true);
     }
 
 }

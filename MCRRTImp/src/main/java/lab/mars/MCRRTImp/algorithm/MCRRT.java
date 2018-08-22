@@ -43,9 +43,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
             System.out.println("first level");
             DimensionalPath<DimensionalWayPoint<V>> areaPath = firstLevelRRT(vehicle.position(), vehicle.velocity());
             System.out.println("second level");
-            DimensionalPath<DimensionalWayPoint<V>> actualPath = secondLevelRRT(areaPath, vehicle.position(), vehicle.velocity(), 1000);
-//            pathApplier.apply(actualPath);
-            return actualPath;
+            return secondLevelRRT(areaPath, vehicle.position(), vehicle.velocity(), pathConfiguration.immutablePathLength + pathConfiguration.mutablePathLength + pathConfiguration.thirdPathLength);
         }
     }
 
@@ -102,9 +100,11 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                     path.forEach(cellPath::add);
                     cellPath.ended = true;
                     System.out.println(System.currentTimeMillis() - startTime + "ms");
-                    DimensionalPath<DimensionalWayPoint<V>> copied = new DimensionalPath<>();
-                    cellPath.forEach(copied::add);
-                    areaPathApplier.apply(copied);
+                    if (areaPathApplier != null) {
+                        DimensionalPath<DimensionalWayPoint<V>> copied = new DimensionalPath<>();
+                        cellPath.forEach(copied::add);
+                        areaPathApplier.apply(copied);
+                    }
                     return cellPath;
                 }
                 step_count++;
@@ -135,7 +135,19 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
         }
         for (int s = startIdx; s < areaPath.size(); s++) {
             DimensionalWayPoint<V> area = areaPath.get(s);
-            while (start.distance(area.origin) > area.radius) {
+            while (start.distance2(area.origin) > area.radius * area.radius) {
+                boolean continued = false;
+                for (int c = s; c < areaPath.size(); c ++) {
+                    DimensionalWayPoint<V> position = areaPath.get(c);
+                    if (start.distance2(position.origin) <= position.radius * position.radius) {
+                        continued = true;
+                        s = c;
+                        break;
+                    }
+                }
+                if (continued) {
+                    break;
+                }
                 Map<Integer, Double> comparableMap = new HashMap<>();
                 List<Transform<V>> transforms = vehicle.simulateKinetic(v, deltaTime);
                 for (Transform<V> transform : transforms) {
@@ -191,35 +203,28 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                         v = selected.velocity.cpy().normalize().scale(3);
                         if (ret.size() == count) {
                             return ret;
-                        } else {
-                            DimensionalPath<DimensionalWayPoint<V>> copied = new DimensionalPath<>();
-                            ret.forEach(copied::add);
-                            pathApplier.apply(copied);
-
                         }
                         break;
                     }
-                    if (accessedTransforms.size() == transforms.size()) {
-                        for (int i = 0; i < deadEndCount; i++) {
-                            if (ret.size() != 0) {
-                                ret.removeAt(ret.size() - 1);
-                            }
+                    for (int i = 0; i < deadEndCount; i++) {
+                        if (ret.size() != 0) {
+                            ret.removeAt(ret.size() - 1);
                         }
-                        if (ret.size() == 0) {
-                            start = vehicle.position();
-                            v = vehicle.velocity();
-                        } else {
-                            DimensionalWayPoint<V> last = ret.end();
-                            start = last.origin;
-                            v = last.velocity;
-                        }
-                        accessedTransforms.clear();
-                        deadEndCount++;
-                        if (ret.size() == 0) {
-                            deadEndCount = 0;
-                        }
-                        break;
                     }
+                    if (ret.size() == 0) {
+                        start = vehicle.position();
+                        v = vehicle.velocity();
+                    } else {
+                        DimensionalWayPoint<V> last = ret.end();
+                        start = last.origin;
+                        v = last.velocity;
+                    }
+                    accessedTransforms.clear();
+                    deadEndCount++;
+                    if (ret.size() == 0) {
+                        deadEndCount = 0;
+                    }
+                    break;
                 }
             }
         }

@@ -374,7 +374,7 @@ public class JavaFXUI extends GUIBase {
     }
 
     public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = randomObstacles(100, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
+        List<Obstacle<Vector2>> circleObstacles = randomObstacles(20, 20, 50, new Vector2(5, 5), new Vector2(1200, 780));
         List<Attacker<Vector2>> attackers = new ArrayList<>();
         world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(mapWidth, mapHeight), new Vector2()));
         attackers.add(leftUpAttacker());
@@ -389,12 +389,12 @@ public class JavaFXUI extends GUIBase {
 
     @Override
     protected void draw(Pencil pencil) {
-        for (Attacker<Vector2> attacker : world.attacker()) {
-            drawGrid(attacker, pencil);
-        }
+//        for (Attacker<Vector2> attacker : world.attacker()) {
+//            drawGrid(attacker, pencil);
+//        }
         drawObstacles(pencil);
         for (Attacker<Vector2> attacker : world.attacker()) {
-            drawAreaPath(attacker, pencil);
+//            drawAreaPath(attacker, pencil);
             drawPath(attacker, pencil);
             drawTarget(attacker, pencil);
             drawUAV(attacker, pencil);
@@ -414,7 +414,7 @@ public class JavaFXUI extends GUIBase {
             if (scaledGrid.check(v)) {
                 color = Color.RED;
             } else {
-                color = new Color(0.2,0.7, 0, 1);
+                color = new Color(0.2, 0.7, 0, 1);
             }
             Vector2 rectCentroid = new Vector2(v.x() + cellSize.x() / 2, v.y() + cellSize.y() / 2);
             pencil.filled().color(color).rect(rectCentroid, cellSize);
@@ -437,7 +437,6 @@ public class JavaFXUI extends GUIBase {
         canvas.setOnContextMenuRequested(event -> menu.show(canvas, event.getScreenX(), event.getScreenY()));
         solve.setOnAction(event -> {
             world.attacker().forEach(Attacker::startAlgorithm);
-            AircraftSimulator.start(1 / 24.0);
         });
 
     }
