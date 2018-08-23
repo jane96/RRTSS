@@ -34,7 +34,7 @@ public class TestMCRRT {
 
     @Before
     public void buildWorld() {
-        List<Obstacle<Vector2>> circleObstacles = obstacleTestCase();
+        List<Obstacle<Vector2>> circleObstacles = new ArrayList<>();
         List<Attacker<Vector2>> attackers = new ArrayList<>();
         world = new World<>(attackers, circleObstacles, new Space<>(new Vector2(2000, 2000), new Vector2()));
         attackers.add(leftUpAttacker());

@@ -11,13 +11,17 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
     private Space<V> spaceRestriction;
 
-    private Applier<ScaledGrid> grid2DApplier;
+    private ScaledGrid<V> gridCache;
 
     private Applier<DimensionalPath<DimensionalWayPoint<V>>> areaPathApplier;
 
     private PathGenerationConfiguration pathGenerationConfiguration;
 
     private PathSampler<V> pathSampler;
+
+    private DimensionalPath<DimensionalWayPoint<V>> areaPathCache = null;
+
+    private DimensionalPath<DimensionalWayPoint<V>> actualPathCache = null;
 
     public static class PathGenerationConfiguration {
         public int immutablePathLength = 0;
@@ -35,25 +39,60 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
     public interface PathSampler<V extends Vector<V>> {
 
-        DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar,  DimensionalPath<DimensionalWayPoint<V>> lastPath);
+        DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, PathGenerationConfiguration pathConfiguration, double timeScalar);
     }
 
-    private DimensionalPath<DimensionalWayPoint<V>> defaultSampler(SimulatedVehicle<V> simulatedVehicle, PathGenerationConfiguration pathConfiguration, ScaledGrid<V> scaledSpace, double timeScalar,  DimensionalPath<DimensionalWayPoint<V>> lastPath) {
-        while (true) {
-            System.out.println("first level");
-            DimensionalPath<DimensionalWayPoint<V>> areaPath = firstLevelRRT(vehicle.position(), vehicle.velocity());
-            System.out.println("second level");
-            return secondLevelRRT(areaPath, vehicle.position(), vehicle.velocity(), pathConfiguration.immutablePathLength + pathConfiguration.mutablePathLength + pathConfiguration.thirdPathLength);
+    private DimensionalPath<DimensionalWayPoint<V>> defaultSampler(SimulatedVehicle<V> simulatedVehicle, PathGenerationConfiguration pathConfiguration, double timeScalar) {
+        if (areaPathCache == null) {
+            areaPathCache = firstLevelRRT(vehicle.position(), vehicle.velocity());
+        } else {
+            gridCache.scan(obstacles);
+            for (DimensionalWayPoint<V> wayPoint :
+                    areaPathCache) {
+                if (gridCache.check(wayPoint.origin)) {
+                    areaPathCache = firstLevelRRT(vehicle.position(), vehicle.velocity());
+                    actualPathCache = null;
+                    break;
+                }
+            }
         }
+        if (actualPathCache != null) {
+            DimensionalWayPoint<V> nearest = null;
+            int idx = 0;
+            double nearestPointLength = Double.MAX_VALUE;
+            V position = vehicle.position();
+            for (DimensionalWayPoint<V> wayPoint : actualPathCache) {
+                double distance = wayPoint.origin.distance2(position);
+                if (distance < nearestPointLength) {
+                    idx = actualPathCache.indexOf(wayPoint);
+                    nearest = wayPoint;
+                    nearestPointLength = distance;
+                }
+            }
+            DimensionalPath<DimensionalWayPoint<V>> generated = new DimensionalPath<>();
+            if (idx + pathConfiguration.immutablePathLength < actualPathCache.size() - 1) {
+                nearest = actualPathCache.get(idx + pathConfiguration.immutablePathLength);
+                for (int i = 0; i < pathConfiguration.immutablePathLength; i++) {
+                    generated.add(actualPathCache.get(i + idx + 1));
+                }
+            }
+            actualPathCache = secondLevelRRT(areaPathCache, nearest.origin, nearest.velocity, pathConfiguration.mutablePathLength + pathConfiguration.thirdPathLength);
+            actualPathCache.forEach(generated::add);
+            actualPathCache = generated;
+        } else {
+            actualPathCache = secondLevelRRT(areaPathCache, vehicle.position(), vehicle.velocity(), pathConfiguration.immutablePathLength + pathConfiguration.mutablePathLength + pathConfiguration.thirdPathLength);
+        }
+        DimensionalPath<DimensionalWayPoint<V>> copied = new DimensionalPath<>();
+        actualPathCache.forEach(copied::add);
+        return copied;
     }
 
 
     private DimensionalPath<DimensionalWayPoint<V>> firstLevelRRT(V plannerStart, V plannerVelocity) {
         ScaledGrid<V> gridWorld;
-        double timeScalar = deltaTime * 10;
+        double timeScalar = deltaTime * 20;
         NTreeNode<DimensionalWayPoint<V>> pathRoot;
         double gridCellEdgeLength;
-        long startTime = System.currentTimeMillis();
         while (true) {
             List<Transform<V>> transforms = vehicle.simulateKinetic(plannerVelocity, timeScalar);
             int scaleBase = (int) transforms.stream().max(Comparator.comparingDouble(o -> o.position.len())).get().position.len();
@@ -64,7 +103,6 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
             gridCellEdgeLength = gridWorld.cellSize().len();
             //TODO : decide the actual cell growth length according to growth direction
             pathRoot = new NTreeNode<>(new DimensionalWayPoint<>(gridAircraft, gridCellEdgeLength, plannerVelocity));
-            grid2DApplier.apply(gridWorld);
             if (gridWorld.check(target.origin) && timeScalar >= deltaTime) {
                 timeScalar -= 1;
                 if (timeScalar <= deltaTime) {
@@ -72,12 +110,13 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                 }
                 continue;
             }
+            gridCache = gridWorld;
             int step_count = 0;
             DimensionalWayPoint<V> nearest = null;
             double distance = Double.MAX_VALUE;
             while (step_count < gridWorld.size()) {
                 DimensionalWayPoint<V> sampled = new DimensionalWayPoint<>(gridWorld.sample(), gridCellEdgeLength, plannerVelocity);
-                if (MathUtil.random(0, 1) < 0.3) {
+                if (MathUtil.random(0, 1) < 0.2) {
                     sampled = new DimensionalWayPoint<>(target.origin.cpy(), gridCellEdgeLength, plannerVelocity);
                 }
                 NTreeNode<DimensionalWayPoint<V>> nearestNode = pathRoot.findNearest(sampled, (c1, c2) -> c1.origin.distance2(c2.origin));
@@ -99,7 +138,6 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                     DimensionalPath<DimensionalWayPoint<V>> cellPath = new DimensionalPath<>();
                     path.forEach(cellPath::add);
                     cellPath.ended = true;
-                    System.out.println(System.currentTimeMillis() - startTime + "ms");
                     if (areaPathApplier != null) {
                         DimensionalPath<DimensionalWayPoint<V>> copied = new DimensionalPath<>();
                         cellPath.forEach(copied::add);
@@ -128,6 +166,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
         double rotationLimitsOnOneSide = vehicle.rotationLimits() / 2;
         int deadEndCount = 0;
         int startIdx = 0;
+        areaPath.add(target);
         for (DimensionalWayPoint<V> area : areaPath) {
             if (area.origin.distance2(start) <= area.radius * area.radius) {
                 startIdx = areaPath.indexOf(area);
@@ -137,7 +176,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
             DimensionalWayPoint<V> area = areaPath.get(s);
             while (start.distance2(area.origin) > area.radius * area.radius) {
                 boolean continued = false;
-                for (int c = s; c < areaPath.size(); c ++) {
+                for (int c = s; c < areaPath.size(); c++) {
                     DimensionalWayPoint<V> position = areaPath.get(c);
                     if (start.distance2(position.origin) <= position.radius * position.radius) {
                         continued = true;
@@ -176,36 +215,32 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                 }
                 final double _valueSum = valueSum;
                 comparableMap.entrySet().forEach(e -> e.setValue(e.getValue() / _valueSum));
-                Set<Integer> accessedTransforms = new HashSet<>();
-                while (true) {
-                    double probability = MathUtil.random(0, 1);
-                    double sum = 0;
-                    boolean safeTransform = true;
-                    Transform<V> selected = null;
-                    for (Map.Entry<Integer, Double> entry : comparableMap.entrySet()) {
-                        sum += entry.getValue();
-                        if (sum >= probability) {
-                            int idx = entry.getKey();
-                            selected = transforms.get(idx);
-                            accessedTransforms.add(idx);
-                            for (Obstacle<V> obs : obstacles) {
-                                if (obs.contains(selected.position)) {
-                                    safeTransform = false;
-                                    break;
-                                }
+                double probability = MathUtil.random(0, 1);
+                double sum = 0;
+                boolean safeTransform = true;
+                Transform<V> selected = null;
+                for (Map.Entry<Integer, Double> entry : comparableMap.entrySet()) {
+                    sum += entry.getValue();
+                    if (sum >= probability) {
+                        int idx = entry.getKey();
+                        selected = transforms.get(idx);
+                        for (Obstacle<V> obs : obstacles) {
+                            if (obs.contains(selected.position)) {
+                                safeTransform = false;
+                                break;
                             }
-                            break;
-                        }
-                    }
-                    if (safeTransform) {
-                        ret.add(new DimensionalWayPoint<>(selected.position, selected.velocity.len(), selected.velocity));
-                        start = selected.position.cpy();
-                        v = selected.velocity.cpy().normalize().scale(3);
-                        if (ret.size() == count) {
-                            return ret;
                         }
                         break;
                     }
+                }
+                if (safeTransform) {
+                    ret.add(new DimensionalWayPoint<>(selected.position, selected.velocity.len(), selected.velocity));
+                    start = selected.position.cpy();
+                    v = selected.velocity.cpy().normalize().scale(3);
+                    if (ret.size() == count) {
+                        return ret;
+                    }
+                } else {
                     for (int i = 0; i < deadEndCount; i++) {
                         if (ret.size() != 0) {
                             ret.removeAt(ret.size() - 1);
@@ -219,12 +254,10 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                         start = last.origin;
                         v = last.velocity;
                     }
-                    accessedTransforms.clear();
                     deadEndCount++;
                     if (ret.size() == 0) {
                         deadEndCount = 0;
                     }
-                    break;
                 }
             }
         }
@@ -233,19 +266,17 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
 
     public MCRRT(double deltaTime,
-                  Space<V> spaceRestriction,
-                  PathSampler<V> pathSampler,
-                  PathGenerationConfiguration configuration,
-                  Provider<List<Obstacle<V>>> obstacleProvider,
-                  Provider<SimulatedVehicle<V>> aircraftProvider,
-                  Provider<DimensionalWayPoint<V>> targetProvider,
-                  Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
-                  Applier<DimensionalPath<DimensionalWayPoint<V>>> areaPathApplier,
-                  Applier<ScaledGrid> grid2DApplier
+                 Space<V> spaceRestriction,
+                 PathSampler<V> pathSampler,
+                 PathGenerationConfiguration configuration,
+                 Provider<List<Obstacle<V>>> obstacleProvider,
+                 Provider<SimulatedVehicle<V>> aircraftProvider,
+                 Provider<DimensionalWayPoint<V>> targetProvider,
+                 Applier<DimensionalPath<DimensionalWayPoint<V>>> pathApplier,
+                 Applier<DimensionalPath<DimensionalWayPoint<V>>> areaPathApplier
     ) {
         super(deltaTime, obstacleProvider, aircraftProvider, targetProvider, pathApplier);
         this.spaceRestriction = spaceRestriction;
-        this.grid2DApplier = grid2DApplier;
         this.areaPathApplier = areaPathApplier;
         this.pathGenerationConfiguration = configuration;
         if (pathSampler != null) {
@@ -257,21 +288,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
 
 
     private DimensionalPath<DimensionalWayPoint<V>> selfImprovingRRT() {
-        V plannerStartVelocity = vehicle.velocity();
-        DimensionalPath<DimensionalWayPoint<V>> lastGeneratedPath = new DimensionalPath<>();
-        double scaledTime = deltaTime;
-        while (true) {
-            List<Transform<V>> initialTransforms = vehicle.simulateKinetic(plannerStartVelocity, scaledTime);
-            double scalar = initialTransforms.get(0).position.len();
-            ScaledGrid<V> scaledSpace = new ScaledGrid<>(spaceRestriction, scalar);
-            lastGeneratedPath = this.pathSampler.sample(vehicle, pathGenerationConfiguration, scaledSpace, scaledTime, lastGeneratedPath);
-            System.out.println("returned");
-            scaledTime /= 2;
-//            if (scaledTime <= deltaTime) {
-            return lastGeneratedPath;
-//            }
-        }
-
+        return this.pathSampler.sample(vehicle, pathGenerationConfiguration, deltaTime);
     }
 
     @Override

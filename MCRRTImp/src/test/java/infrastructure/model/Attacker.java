@@ -48,7 +48,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
-        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, this::setAreaPath, this::setGridWorld);
+        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, this::setAreaPath);
 //        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
 
     }
