@@ -48,7 +48,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
-        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, this::setAreaPath);
+        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::actualPath, this::setActualPath, this::setAreaPath);
 //        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
 
     }
@@ -57,8 +57,11 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.designatedTargetPosition = target;
     }
 
-    public Queue<DimensionalPath<DimensionalWayPoint<V>>> actualPath() {
-        return actualPath;
+    public DimensionalPath<DimensionalWayPoint<V>> actualPath() {
+        while (actualPath.size() > 1) {
+            actualPath.poll();
+        }
+        return actualPath.peek();
     }
 
     public DimensionalWayPoint<V> target() {
@@ -79,6 +82,7 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     public void setActualPath(DimensionalPath<DimensionalWayPoint<V>> actualPath) {
         this.actualPath.offer(actualPath);
+//        startAlgorithm();
     }
 
     public Queue<DimensionalPath<DimensionalWayPoint<V>>> areaPath() {
@@ -100,7 +104,11 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
 
     public void startAlgorithm() {
-        this.algorithm.solve(true);
+        new Thread(() -> {
+            while (true) {
+                algorithm.solve(true);
+            }
+        }).start();
     }
 
 }

@@ -19,9 +19,12 @@ public class TestAttacker {
         double timeScalar = 1;
         while (timeScalar < 100) {
             List<Transform<Vector2>> transforms = aircraft.simulateKinetic(aircraft.velocity(), timeScalar);
-            System.out.println("time scalar : " + timeScalar);
-            System.out.println(transforms.get(0).position.angle(transforms.get(transforms.size() - 1).position));
+//            System.out.println("time scalar : " + timeScalar);
+//            System.out.println(transforms.get(0).position.angle(transforms.get(transforms.size() - 1).position));
             timeScalar ++;
+            transforms.forEach(transform -> {
+                System.out.println(transform.velocity.angle(new Vector2(1, 1)));
+            });
         }
     }
 
