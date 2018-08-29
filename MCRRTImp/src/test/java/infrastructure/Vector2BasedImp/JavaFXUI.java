@@ -104,11 +104,11 @@ public class JavaFXUI extends GUIBase {
     private void drawPath(Attacker<Vector2> attacker, Pencil pencil) {
 
         DimensionalPath<DimensionalWayPoint<Vector2>> path = attacker.actualPath();
-        MCRRT.PathGenerationConfiguration configuration = attacker.configuration;
         if (path != null && path.size() != 0) {
             Vector2 last = attacker.position().cpy();
             int counter = 0;
-            for (DimensionalWayPoint<Vector2> wayPoint2D : path) {
+            for (int i = 0; i <path.size(); i++) {
+                DimensionalWayPoint<Vector2> wayPoint2D = path.get(i);
                 Color color = Color.ORANGE;
 //                if (counter < configuration.immutablePathLength) {
 //                    color = Color.BLACK;
@@ -120,8 +120,7 @@ public class JavaFXUI extends GUIBase {
                 }
                 pencil.stroked(2 * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin));
                 counter++;
-
-            }
+        }
 
         }
     }
@@ -185,7 +184,7 @@ public class JavaFXUI extends GUIBase {
 //        }
         drawObstacles(pencil);
         for (Attacker<Vector2> attacker : world.attacker()) {
-//            drawAreaPath(attacker, pencil);
+            drawAreaPath(attacker, pencil);
             drawPath(attacker, pencil);
             drawTarget(attacker, pencil);
             drawUAV(attacker, pencil);

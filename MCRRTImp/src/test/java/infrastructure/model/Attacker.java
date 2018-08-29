@@ -1,5 +1,6 @@
 package infrastructure.model;
 
+import infrastructure.Vector2BasedImp.Vector2;
 import lab.mars.MCRRTImp.algorithm.MCRRT;
 import lab.mars.MCRRTImp.algorithm.MCTSSampler;
 import lab.mars.MCRRTImp.model.*;
@@ -29,6 +30,8 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
 
     private RRT algorithm;
 
+    private Provider<List<Obstacle<V>>> obstacleProvider;
+
     private List<NTreeNode<DimensionalWayPoint<V>>> leaves = new ArrayList<>();
 
     public List<NTreeNode<DimensionalWayPoint<V>>> getLeaves() {
@@ -39,16 +42,16 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         this.leaves = leaves;
     }
 
-    public MCRRT.PathGenerationConfiguration configuration = new MCRRT.PathGenerationConfiguration(50, 250, 500, 20);
 
     public Attacker(V position, V velocity, double rotationLimits, int numberOfDirection, double safeDistance, double viewDistance, double viewAngle, DimensionalWayPoint<V> designatedTargetPosition,
                     Space<V> area, Provider<List<Obstacle<V>>> obstacleProvider) {
         super(position, velocity, rotationLimits, numberOfDirection, safeDistance);
+        this.obstacleProvider = obstacleProvider;
         this.topVelocity = velocity.len();
         this.viewDistance = viewDistance;
         this.designatedTargetPosition = designatedTargetPosition;
         this.viewAngle = viewAngle;
-        this.algorithm = new MCRRT<>(1, area, null, this.configuration, obstacleProvider, () -> this, () -> designatedTargetPosition, this::actualPath, this::setActualPath, this::setAreaPath);
+        this.algorithm = new MCRRT<>(1 / 2.0, area, null, () -> 1000,   obstacleProvider, () -> this, () -> designatedTargetPosition, (set) -> {},  this::setActualPath, false);
 //        this.algorithm = new MCTSSampler<>(10, area, obstacleProvider, () -> this, () -> designatedTargetPosition, this::setActualPath, null, this::leafApplier, null);
 
     }
@@ -107,6 +110,19 @@ public class Attacker<V extends Vector<V>> extends SimulatedVehicle<V> {
         new Thread(() -> {
             while (true) {
                 algorithm.solve(true);
+                V cpy = position.cpy();
+                boolean flag = false;
+                do {
+                    cpy.dimensions()[0].value = MathUtil.random(0.0, 1920.0);
+                    cpy.dimensions()[1].value = MathUtil.random(0.0, 1080.0);
+                    flag = false;
+                    for (Obstacle<V> obstacle : obstacleProvider.provide()) {
+                        if (obstacle.contains(cpy)) {
+                            flag = true;
+                        }
+                    }
+                }while (flag);
+                position.set(cpy);
             }
         }).start();
     }

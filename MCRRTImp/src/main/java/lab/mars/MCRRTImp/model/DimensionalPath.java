@@ -10,6 +10,8 @@ public class DimensionalPath< W extends WayPoint> implements Path<W> {
 
     public boolean ended = false;
 
+    public long utility = 0;
+
     private LinkedList<W> pathStorage = new LinkedList<>();
 
     public W next(W current) {
