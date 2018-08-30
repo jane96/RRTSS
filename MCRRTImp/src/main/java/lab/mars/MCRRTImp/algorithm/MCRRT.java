@@ -19,7 +19,6 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
     private PathSampler<V> pathSampler;
 
     public interface PathSampler<V extends Vector<V>> {
-
         DimensionalPath<DimensionalWayPoint<V>> sample(SimulatedVehicle<V> attacker, double timeScalar);
     }
 
@@ -149,8 +148,7 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
         verbose("2nd level : starting actual path generation");
         for (int s = startIdx; s < areaPath.size(); s++) {
             DimensionalWayPoint<V> area = areaPath.get(s);
-            int lastSelectedIdx = 0;
-            int sameDirectionCount = 0;
+            int straightDirectionCount = 0;
             while (start.distance2(area.origin) > area.radius * area.radius) {
                 boolean continued = false;
                 for (int c = s + 1; c < areaPath.size(); c++) {
@@ -228,16 +226,16 @@ public class MCRRT<V extends Vector<V>> extends RRT<SimulatedVehicle<V>, V, Dime
                 if (safeTransform) {
                     verbose("2nd level : expanding actual path point :" + selected.position);
                     ret.add(new DimensionalWayPoint<>(selected.position, selected.velocity.len(), selected.velocity));
-                    ret.utility -= Math.abs(selectedIdx - Math.ceil(transforms.size() / 2.0));
                     start = selected.position.cpy();
                     v = selected.velocity.cpy();
-                    if (lastSelectedIdx == selectedIdx) {
-                        sameDirectionCount += 1;
-                        ret.utility -= (sameDirectionCount);
+                    if (selectedIdx == Math.ceil(transforms.size() / 2.0)) {
+                        straightDirectionCount += 1;
+                        ret.utility -= (straightDirectionCount);
                     } else {
-                        sameDirectionCount = 0;
+                        if (straightDirectionCount > 0) {
+                            straightDirectionCount -= 1;
+                        }
                     }
-                    lastSelectedIdx = selectedIdx;
                     if (ret.size() == count) {
                         ret.utility -= ret.end().origin.distance2(target.origin);
                         ret.utility -= ret.size();
