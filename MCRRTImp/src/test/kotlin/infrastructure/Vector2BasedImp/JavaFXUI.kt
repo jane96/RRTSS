@@ -158,7 +158,7 @@ class JavaFXUI : GUIBase() {
     }
 
     fun buildWorld() {
-        val circleObstacles = randomObstacles(20, 20.0, 50.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
+        val circleObstacles = randomObstacles(20, 20.0, 30.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
         val attackers = ArrayList<Attacker<Vector2>>()
         world = World(attackers, circleObstacles, Space(Vector2(mapWidth.toDouble(), mapHeight.toDouble()), Vector2()))
         for (i in 0..0) {
@@ -202,7 +202,6 @@ class JavaFXUI : GUIBase() {
             pencil.stroked(0.5).color(Color.BLUE).rect(rectCentroid, cellSize)
         }
     }
-
 
     override fun initializeComponents(primaryStage: Stage, scene: Scene, root: Pane, canvas: Canvas) {
         super.initializeComponents(primaryStage, scene, root, canvas)

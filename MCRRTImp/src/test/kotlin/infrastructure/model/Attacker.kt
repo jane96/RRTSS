@@ -30,13 +30,11 @@ class Attacker<V : Vector<V>>(position: V,
     private var gridWorld: DiscreteWorld<V>? = null
 
     private val algorithm: MCRRT<V> = MCRRT(
-            deltaTime = 1 / 2.0,
             spaceRestriction = area,
-            pathLengthProvider = { 1000 },
             obstacleProvider = obstacleProvider,
             vehicleProvider = { this },
             targetProvider = { designatedTargetPosition },
-            verbose = false
+            verbose = true
     )
 
     var leaves: List<NTreeNode<WayPoint<V>>> = ArrayList()
@@ -52,10 +50,10 @@ class Attacker<V : Vector<V>>(position: V,
     }
 
     fun actualPath(): Path<WayPoint<V>> ? {
-        return if (actualPath.isNotEmpty()) {
-            actualPath.poll()
-        } else {
-            null
+        return when {
+            actualPath.size > 1 -> actualPath.poll()
+            actualPath.size > 0 -> actualPath.peek()
+            else -> null
         }
     }
 
@@ -99,9 +97,17 @@ class Attacker<V : Vector<V>>(position: V,
 
     fun startAlgorithm() {
         Thread {
-            while (true) {
-                algorithm.solve(OneTimeConfiguration(Long.MAX_VALUE)) { value ->
-                    actualPath.offer(value.path)
+                algorithm.solve(OneTimeConfiguration(
+                        timeTolerance = Long.MAX_VALUE,
+                        levelOneReplan = true,
+                        levelTwoReplan = true,
+                        levelTwoStartIdx = 0,
+                        wayPointApproachDistance = 10.0,
+                        firstLevelDeltaTime = 4.0,
+                        secondLevelDeltaTime = 1.0)) { value ->
+                    if (value.status == MCRRT.ResultStatus.Complete) {
+                        actualPath.offer(value.levelOnePath)
+                    }
                 }
                 val cpy = position.cpy()
                 var flag: Boolean
@@ -116,8 +122,7 @@ class Attacker<V : Vector<V>>(position: V,
                     }
                 } while (flag)
                 position.set(cpy)
-            }
-        }.start()
+            }.start()
     }
 
 }

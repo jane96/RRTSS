@@ -33,6 +33,10 @@ class NTreeNode<E>(val element: E) : Iterable<NTreeNode<E>> {
         return children[idx]
     }
 
+    fun clear() {
+        children.clear()
+    }
+
     private class VisitRecorder<E>(val node: NTreeNode<E>, var childVisited: Int = 0)
 
     fun nearestOf(element: E, distanceFunc: (E, E) -> Double): NTreeNode<E> {
