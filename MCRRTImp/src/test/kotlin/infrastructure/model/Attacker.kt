@@ -106,7 +106,7 @@ class Attacker<V : Vector<V>>(position: V,
 
         Thread {
             var i = 0
-            while (i++ < 1) {
+            while (i++ < 20) {
                 algorithm.solve(OneTimeConfiguration(
                         timeTolerance = Long.MAX_VALUE,
                         levelOneReplan = true,
@@ -114,7 +114,7 @@ class Attacker<V : Vector<V>>(position: V,
                         levelTwoFromIdx = 1,
                         levelTwoToIdx = 2,
                         wayPointApproachDistance = 10.0,
-                        firstLevelDeltaTime = 1200.0,
+                        firstLevelDeltaTime = 600.0,
                         secondLevelDeltaTime = 1.0)) { value ->
 
                     when (value.status) {

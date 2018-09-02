@@ -85,7 +85,7 @@ class MCRRT<V : Vector<V>>(
 
     private fun defaultSampler(vehicle: SimulatedVehicle<V>, configuration: OneTimeConfiguration): Result<V> {
         startTime = System.currentTimeMillis()
-        if (configuration.levelOneReplan || areaPathCache == null) {
+        if (configuration.levelOneReplan) {
             areaPathCache = firstLevelRRT(this.vehicle.position, this.vehicle.velocity, configuration.firstLevelDeltaTime, configuration.timeTolerance)
             if (areaPathCache == null) {
                 verbose("algorithm failed reason : first level timed out")
@@ -95,7 +95,7 @@ class MCRRT<V : Vector<V>>(
                 return Result(ResultStatus.Impossible)
             }
         }
-        if (configuration.levelTwoReplan || actualPathCache == null) {
+        if (configuration.levelTwoReplan) {
             this.vehicle = vehicleProvider()
             val newPath = secondLevelRRT(
                     areaPath = areaPathCache!!,
@@ -119,7 +119,7 @@ class MCRRT<V : Vector<V>>(
     private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, deltaTime: Double, timeTolerance: Long): Path<WayPoint<V>>? {
         while (true) {
             val transforms = vehicle.simulateKinetic(plannerVelocity, 1.0)
-            val scaleBase = transforms.map { it.position.len() }.sortedBy { it }[0] * deltaTime
+            val scaleBase = transforms.map { it.position.len() }.sortedBy { it }.asReversed()[0] * deltaTime
             transforms.forEach { transform -> transform.position.translate(plannerStart) }
             val gridWorld = DiscreteWorld(spaceRestriction, scaleBase)
             val gridScanStartTime = System.currentTimeMillis()
@@ -139,21 +139,15 @@ class MCRRT<V : Vector<V>>(
                 if (0.0 random 1.0 < 0.2) {
                     sampled = WayPoint(target.origin.cpy(), gridCellEdgeLength, plannerVelocity)
                 }
-                val sampledNearestNode = pathRoot.nearestChildOf(sampled) { c1, s -> c1.element.origin.distance(s.origin)
-                }
-                val transformList = vehicle.simulateKinetic(sampledNearestNode.element.velocity, 1.0)
-                val nextTransform = transformList
-                        .map {  Pair(it, sampled.origin.distance(it.position.scale(deltaTime).translate(sampledNearestNode.element.origin))) }
-                        .sortedBy { it.second }[0].first
-                sampled.origin.set(nextTransform.position)
-                sampled.velocity.set(nextTransform.velocity)
-                val delta = sampled.origin.cpy().translate(sampledNearestNode.element.origin.cpy().reverse())
+                val sampledNearestNode = pathRoot.nearestChildOf(sampled) { c1, s -> c1.element.origin.distance(s.origin) }
+                val expandDirection = sampled.origin.cpy().translate(sampledNearestNode.element.origin.cpy().reverse())
+                sampled.origin.set(gridWorld.formalize(sampledNearestNode.element.origin)).translate(expandDirection.normalize().scale(gridCellEdgeLength))
                 var sampledInvalid = false
                 if (gridWorld.insideObstacle(sampled.origin)) {
                     sampledInvalid = true
                 } else {
-                    for (i in 1 until 11) {
-                        val position = sampledNearestNode.element.origin.cpy().translate(delta.cpy().scale(i.toDouble() / 10.0))
+                    for (i in 1 until 10) {
+                        val position = sampledNearestNode.element.origin.cpy().translate(expandDirection.cpy().scale(i.toDouble() / 10.0))
                         if (gridWorld.insideObstacle(position)) {
                             sampledInvalid = true
                             break

@@ -122,8 +122,8 @@ class JavaFXUI : GUIBase() {
                 for (i in (0 until path.size)) {
                     val wayPoint2D = path[i]
                     if (path.finished) {
-                        lineWidth = 1.0
-                        color = Color.RED
+                        lineWidth = 2.0
+                        color = Color.WHITE
                     }
                     pencil.filled().color(color).box(last.cpy(), wayPoint2D.radius / 10)
                     pencil.stroked(lineWidth * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin))
@@ -134,7 +134,7 @@ class JavaFXUI : GUIBase() {
 
     private fun leftUpAttacker(): Attacker<Vector2> {
         val attackerPosition = Vector2(5.0, 5.0)
-        val targetPosition = Vector2(1800.0, 080.0)
+        val targetPosition = Vector2(1800.0, 1000.0)
         val target = WayPoint(targetPosition, 5.0, Vector2())
         val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(4.1666667 / 1000.0 * 6), 10.0, 5, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
         attackerLeftUp.setDesignatedTarget(target)
@@ -169,7 +169,7 @@ class JavaFXUI : GUIBase() {
     }
 
     fun buildWorld() {
-        val circleObstacles = randomObstacles(150, 20.0, 30.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
+        val circleObstacles = randomObstacles(50, 20.0, 30.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
         val attackers = ArrayList<Attacker<Vector2>>()
         world = World(attackers, circleObstacles, Space(Vector2(mapWidth.toDouble(), mapHeight.toDouble()), Vector2()))
         for (i in 0..0) {
