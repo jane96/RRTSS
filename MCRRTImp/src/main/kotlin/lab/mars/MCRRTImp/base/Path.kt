@@ -13,7 +13,9 @@ class Path<W : WayPoint<*>> : Iterable<W> {
     val end: W
         get() = pathStorage.peekLast()
 
-    var utility = 0
+    var finished = false
+
+    var utility = 0.0
 
     fun isEmpty(): Boolean {
         return pathStorage.isEmpty()
@@ -39,6 +41,7 @@ class Path<W : WayPoint<*>> : Iterable<W> {
     fun remove(current: W) {
         pathStorage.removeFirstOccurrence(current)
     }
+
 
     override fun iterator(): Iterator<W> {
         return pathStorage.iterator()

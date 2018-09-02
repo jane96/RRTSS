@@ -17,7 +17,6 @@ import javafx.application.Application
 import lab.mars.MCRRTImp.base.*
 
 import java.util.ArrayList
-import java.util.Queue
 
 class JavaFXUI : GUIBase() {
 
@@ -100,22 +99,34 @@ class JavaFXUI : GUIBase() {
 
     private fun drawPath(attacker: Attacker<Vector2>, pencil: Pencil) {
 
-        val path = attacker.actualPath()
-        path?.run {
+        val paths = attacker.actualPath()
+        var min = Double.MAX_VALUE
+        var max = Double.MIN_VALUE
+        var maximumPathIdx = -1
+        paths.forEachIndexed { idx, it ->
+            if (it.utility < min) {
+                min = it.utility
+            }
+            if (it.utility > max) {
+                max = it.utility
+                if (it.finished ) {
+                    maximumPathIdx = idx
+                }
+            }
+        }
+        paths.forEachIndexed { idx, path ->
             if (path.size != 0) {
                 val last = attacker.position.cpy()
-                for ((counter, i) in (0 until path.size).withIndex()) {
+                var lineWidth = 1.0
+                var color = Color.BLACK.interpolate(Color.color(0.8,0.8,0.8), if (max == min) 1.0 else (path.utility - min) / (max - min))
+                for (i in (0 until path.size)) {
                     val wayPoint2D = path[i]
-                    var color = Color.ORANGE
-                    //                if (counter < configuration.immutablePathLength) {
-                    //                    color = Color.BLACK;
-                    //                } else if (counter < configuration.mutablePathLength) {
-                    //                    color = Color.RED;
-                    //                }
-                    if (counter % 2 == 0) {
-                        color = Color.BLACK
+                    if (path.finished) {
+                        lineWidth = 1.0
+                        color = Color.RED
                     }
-                    pencil.stroked(2 * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin))
+                    pencil.filled().color(color).box(last.cpy(), wayPoint2D.radius / 10)
+                    pencil.stroked(lineWidth * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin))
                 }
             }
         }
@@ -123,9 +134,9 @@ class JavaFXUI : GUIBase() {
 
     private fun leftUpAttacker(): Attacker<Vector2> {
         val attackerPosition = Vector2(5.0, 5.0)
-        val targetPosition = Vector2(1200.0, 780.0)
+        val targetPosition = Vector2(1800.0, 080.0)
         val target = WayPoint(targetPosition, 5.0, Vector2())
-        val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(4.1666667), 10.0, 5, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
+        val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(4.1666667 / 1000.0 * 6), 10.0, 5, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
         attackerLeftUp.setDesignatedTarget(target)
         return attackerLeftUp
     }
@@ -150,7 +161,7 @@ class JavaFXUI : GUIBase() {
 
     private fun rightUpMiddleAttacker(): Attacker<Vector2> {
         val attackerPosition = Vector2(1125.0, 265.0)
-        val targetPosition = Vector2(1200.0, 780.0)
+        val targetPosition = Vector2(1200.0, 980.0)
         val target = WayPoint(targetPosition, 5.0, Vector2())
         val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(4.1666667), 10.0, 30, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
         attackerLeftUp.setDesignatedTarget(target)
@@ -158,7 +169,7 @@ class JavaFXUI : GUIBase() {
     }
 
     fun buildWorld() {
-        val circleObstacles = randomObstacles(20, 20.0, 30.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
+        val circleObstacles = randomObstacles(150, 20.0, 30.0, Vector2(5.0, 5.0), Vector2(1200.0, 780.0))
         val attackers = ArrayList<Attacker<Vector2>>()
         world = World(attackers, circleObstacles, Space(Vector2(mapWidth.toDouble(), mapHeight.toDouble()), Vector2()))
         for (i in 0..0) {

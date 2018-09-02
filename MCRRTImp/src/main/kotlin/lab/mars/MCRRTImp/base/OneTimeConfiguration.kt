@@ -4,8 +4,9 @@ open class OneTimeConfiguration(
         val timeTolerance : Long,
         val levelOneReplan : Boolean,
         val levelTwoReplan : Boolean,
-        val levelTwoStartIdx : Int,
-        val wayPointApproachDistance : Double,
+        val levelTwoFromIdx : Int = 0,
+        val levelTwoToIdx : Int = 0,
+        val wayPointApproachDistance : Double = 0.0,
         val firstLevelDeltaTime : Double,
-        val secondLevelDeltaTime : Double
+        val secondLevelDeltaTime : Double = 0.0
         )

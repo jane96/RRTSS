@@ -17,9 +17,9 @@ class Attacker<V : Vector<V>>(position: V,
                               safeDistance: Double,
                               private val viewDistance: Double,
                               private val viewAngle: Double,
-                              private var designatedTargetPosition: WayPoint<V>,
-                              area: Space<V>,
-                              private val obstacleProvider: () -> List<Obstacle<V>>) : SimulatedVehicle<V>(position, velocity, rotationLimits, numberOfDirection, safeDistance) {
+                              private val designatedTargetPosition: WayPoint<V>?,
+                              area: Space<V>?,
+                              private val obstacleProvider: (() -> List<Obstacle<V>>)?) : SimulatedVehicle<V>(position, velocity, rotationLimits, numberOfDirection, safeDistance) {
 
     private val topVelocity: Double = velocity.len()
 
@@ -29,13 +29,18 @@ class Attacker<V : Vector<V>>(position: V,
 
     private var gridWorld: DiscreteWorld<V>? = null
 
-    private val algorithm: MCRRT<V> = MCRRT(
-            spaceRestriction = area,
-            obstacleProvider = obstacleProvider,
-            vehicleProvider = { this },
-            targetProvider = { designatedTargetPosition },
-            verbose = true
-    )
+    private lateinit var algorithm: MCRRT<V>
+
+    init {
+        if (area != null && obstacleProvider != null && designatedTargetPosition != null)
+            algorithm = MCRRT(
+                    spaceRestriction = area,
+                    obstacleProvider = obstacleProvider,
+                    vehicleProvider = { this },
+                    targetProvider = { designatedTargetPosition },
+                    verbose = true
+            )
+    }
 
     var leaves: List<NTreeNode<WayPoint<V>>> = ArrayList()
         private set
@@ -46,15 +51,17 @@ class Attacker<V : Vector<V>>(position: V,
 
 
     fun setDesignatedTarget(target: WayPoint<V>) {
-        this.designatedTargetPosition = target
+        this.designatedTargetPosition?.apply {
+            origin.set(target.origin)
+            velocity.set(target.velocity)
+        }
     }
 
-    fun actualPath(): Path<WayPoint<V>> ? {
-        return when {
-            actualPath.size > 1 -> actualPath.poll()
-            actualPath.size > 0 -> actualPath.peek()
-            else -> null
-        }
+    fun actualPath(): List<Path<WayPoint<V>>> {
+        val ret = ArrayList<Path<WayPoint<V>>>()
+        actualPath.forEach { ret.add(it) }
+        ret.sortBy {  it.utility }
+        return ret
     }
 
     fun target(): WayPoint<V>? {
@@ -96,17 +103,27 @@ class Attacker<V : Vector<V>>(position: V,
 
 
     fun startAlgorithm() {
+
         Thread {
+            var i = 0
+            while (i++ < 1) {
                 algorithm.solve(OneTimeConfiguration(
                         timeTolerance = Long.MAX_VALUE,
                         levelOneReplan = true,
                         levelTwoReplan = true,
-                        levelTwoStartIdx = 0,
+                        levelTwoFromIdx = 1,
+                        levelTwoToIdx = 2,
                         wayPointApproachDistance = 10.0,
-                        firstLevelDeltaTime = 4.0,
+                        firstLevelDeltaTime = 1200.0,
                         secondLevelDeltaTime = 1.0)) { value ->
-                    if (value.status == MCRRT.ResultStatus.Complete) {
-                        actualPath.offer(value.levelOnePath)
+
+                    when (value.status) {
+                        MCRRT.ResultStatus.Complete -> {
+                            actualPath.offer(value.levelOnePath)
+                        }
+                        MCRRT.ResultStatus.InProgress -> {
+                            actualPath.offer(value.levelOnePath)
+                        }
                     }
                 }
                 val cpy = position.cpy()
@@ -115,14 +132,18 @@ class Attacker<V : Vector<V>>(position: V,
                     cpy.dimensions[0].value = 0.0 random 1920.0
                     cpy.dimensions[1].value = 0.0 random 1080.0
                     flag = false
-                    for (obstacle in obstacleProvider()) {
-                        if (obstacle.contains(cpy)) {
-                            flag = true
+                    if (obstacleProvider != null) {
+                        for (obstacle in obstacleProvider.invoke()) {
+                            if (obstacle.contains(cpy)) {
+                                flag = true
+                            }
                         }
                     }
                 } while (flag)
                 position.set(cpy)
-            }.start()
+            }
+            println("over")
+        }.start()
     }
 
 }

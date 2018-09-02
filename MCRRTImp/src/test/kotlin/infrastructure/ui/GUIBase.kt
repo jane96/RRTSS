@@ -1,5 +1,6 @@
 package infrastructure.ui
 
+import infrastructure.Vector2BasedImp.Vector2
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.scene.Scene
@@ -7,6 +8,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 
 abstract class GUIBase : Application() {
@@ -83,6 +85,7 @@ abstract class GUIBase : Application() {
             Platform.runLater {
                 pencil.clearRect(0.0, 0.0, width.toDouble(), height.toDouble())
                 userPencil.scale(scaleBase).pixelOffset(shiftX, shiftY)
+                userPencil.filled().color(Color.BLACK).rect(Vector2(width / 2.0, height / 2.0), Vector2(width.toDouble(), height.toDouble()))
                 draw(userPencil)
             }
         }

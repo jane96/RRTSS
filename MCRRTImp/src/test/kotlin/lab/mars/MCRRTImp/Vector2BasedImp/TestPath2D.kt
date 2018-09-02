@@ -15,7 +15,7 @@
 //        assert path.start().equals(new WayPoint(0, 0, 1, 0, 0, 0));
 //
 //        path.remove(new WayPoint(0, 0, 1, 0, 0, 0));
-//        assert path.size() == 0 && path.empty();
+//        assert path.childrenSize() == 0 && path.empty();
 //    }
 //
 //    @Test
@@ -25,9 +25,9 @@
 //        for (int i = 0; i < 100; i++) {
 //            path.add(wayPoint);
 //        }
-//        assert path.size() == 100;
+//        assert path.childrenSize() == 100;
 //        path.removeAt(0);
-//        assert path.size() == 99;
+//        assert path.childrenSize() == 99;
 //        wayPoint.radius = 100;
 //        assert path.end().radius == 100;
 //    }
@@ -40,7 +40,7 @@
 //            path.add(new WayPoint(100, 100, 100, 0, 0, 0));
 //        }
 //        long addFinish = System.currentTimeMillis();
-//        assert path.size() == 100000;
+//        assert path.childrenSize() == 100000;
 //        System.out.println("translate spends " + (addFinish - time) + " ms");
 //        time = System.currentTimeMillis();
 //        for (int i = 0; i < 100000; i++) {

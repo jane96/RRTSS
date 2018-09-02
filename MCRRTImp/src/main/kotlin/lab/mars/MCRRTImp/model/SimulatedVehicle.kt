@@ -33,7 +33,7 @@ abstract class SimulatedVehicle<V : Vector<V>>(private val positionV: V, private
                 translated.translate(rotated.normalize().scale(newV * deltaTime / sliceCount))
                 c++
             }
-            ret.add(Transform(nextV, translated))
+            ret.add(Transform(translated, nextV))
         }
         return ret
     }

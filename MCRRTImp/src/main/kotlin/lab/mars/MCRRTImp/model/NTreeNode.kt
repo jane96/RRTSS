@@ -1,6 +1,9 @@
 package lab.mars.MCRRTImp.model
 
+import lab.mars.MCRRTImp.base.epsilonEquals
+import lab.mars.MCRRTImp.base.random
 import java.util.*
+import kotlin.collections.ArrayList
 
 class NTreeNode<E>(val element: E) : Iterable<NTreeNode<E>> {
 
@@ -33,6 +36,13 @@ class NTreeNode<E>(val element: E) : Iterable<NTreeNode<E>> {
         return children[idx]
     }
 
+    val childrenSize
+        get() = children.size
+
+    fun forEachChild(func: (child: NTreeNode<E>) -> Unit) {
+        children.forEach(func)
+    }
+
     fun clear() {
         children.clear()
     }
@@ -50,6 +60,22 @@ class NTreeNode<E>(val element: E) : Iterable<NTreeNode<E>> {
             }
         }
         return minimum!!
+    }
+
+    fun nearestChildOf(element: E, distanceFunc: (NTreeNode<E>, E) -> Double): NTreeNode<E> {
+        var minDistance = Double.MAX_VALUE
+        val minList = ArrayList<NTreeNode<E>>()
+        this.forEach {
+            val distance = distanceFunc(it, element)
+            if (distance < minDistance) {
+                minList.clear()
+                minDistance = distance
+            }
+            if (distance epsilonEquals  minDistance) {
+                minList.add(it)
+            }
+        }
+        return minList[(0.0 random minList.size.toDouble()).toInt()]
     }
 
     fun traceTo(element: E): List<E> {

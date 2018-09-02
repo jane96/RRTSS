@@ -6,12 +6,13 @@ import org.apache.commons.math3.distribution.NormalDistribution
 
 typealias PathSampler<V> = (SimulatedVehicle<V>, OneTimeConfiguration) -> MCRRT.Result<V>
 
+@Suppress("NOTHING_TO_INLINE")
 class MCRRT<V : Vector<V>>(
         private val spaceRestriction: Space<V>,
         pathSampler: PathSampler<V>? = null,
-        protected val obstacleProvider: () -> List<Obstacle<V>>,
-        protected val vehicleProvider: () -> SimulatedVehicle<V>,
-        protected val targetProvider: () -> WayPoint<V>,
+        private val obstacleProvider: () -> List<Obstacle<V>>,
+        private val vehicleProvider: () -> SimulatedVehicle<V>,
+        private val targetProvider: () -> WayPoint<V>,
         var verbose: Boolean = false
 ) {
 
@@ -23,7 +24,7 @@ class MCRRT<V : Vector<V>>(
     private lateinit var target: WayPoint<V>
 
 
-    private fun beforeAlgorithm() {
+    private inline fun beforeAlgorithm() {
         this.obstacles = obstacleProvider()
         this.vehicle = vehicleProvider()
         this.target = targetProvider()
@@ -41,6 +42,7 @@ class MCRRT<V : Vector<V>>(
 
     enum class ResultStatus {
         Complete,
+        InProgress,
         TimedOut,
         Impossible
     }
@@ -97,9 +99,10 @@ class MCRRT<V : Vector<V>>(
             this.vehicle = vehicleProvider()
             val newPath = secondLevelRRT(
                     areaPath = areaPathCache!!,
-                    idx = configuration.levelTwoStartIdx,
-                    startPosition = this.vehicle.position,
-                    startVelocity = this.vehicle.velocity,
+                    idxFrom = configuration.levelTwoFromIdx,
+                    idxTo = configuration.levelTwoToIdx,
+                    fromPosition = this.vehicle.position,
+                    fromVelocity = this.vehicle.velocity,
                     approachDistance = configuration.wayPointApproachDistance,
                     deltaTime = configuration.secondLevelDeltaTime,
                     timeTolerance = configuration.timeTolerance)
@@ -109,82 +112,74 @@ class MCRRT<V : Vector<V>>(
             }
             actualPathCache = newPath
         }
-        return Result(ResultStatus.Complete, areaPathCache, actualPathCache)
+        return Result(ResultStatus.Complete, levelOnePath =  areaPathCache, levelTwoPath =  actualPathCache)
     }
 
 
     private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, deltaTime: Double, timeTolerance: Long): Path<WayPoint<V>>? {
-        val gridWorld: DiscreteWorld<V>
-        var timeScalar = deltaTime
-        val pathRoot: NTreeNode<WayPoint<V>>
-        val gridCellEdgeLength: Double
         while (true) {
             val transforms = vehicle.simulateKinetic(plannerVelocity, 1.0)
-            val scaleBase = transforms.map { it.position.len() }.sortedBy { it }.asReversed()[0] * deltaTime
+            val scaleBase = transforms.map { it.position.len() }.sortedBy { it }[0] * deltaTime
             transforms.forEach { transform -> transform.position.translate(plannerStart) }
-            gridWorld = DiscreteWorld(spaceRestriction, scaleBase)
+            val gridWorld = DiscreteWorld(spaceRestriction, scaleBase)
             val gridScanStartTime = System.currentTimeMillis()
             verbose("1st level : start grid world scan")
             gridWorld.scan(obstacles)
             verbose("1st level : grid scan completed in " + (System.currentTimeMillis() - gridScanStartTime) + "ms")
-            val gridAircraft = gridWorld.formalize(plannerStart)
-            gridCellEdgeLength = gridWorld.cellSize.len()
-            pathRoot = NTreeNode(WayPoint(gridAircraft, gridCellEdgeLength, plannerVelocity))
+            val gridCellEdgeLength = gridWorld.cellSize.len()
+            val pathRoot = NTreeNode(WayPoint(plannerStart, gridCellEdgeLength, plannerVelocity))
             if (gridWorld.insideObstacle(target.origin)) {
                 return Path()
             }
-            val targetCell = gridWorld.formalize(target.origin)
             var stepCount = 0
-            var nearest: WayPoint<V>? = null
-            var distance = java.lang.Double.MAX_VALUE
             verbose("1st level : starting area path generation")
+            var targetNearestDistance = Double.MAX_VALUE
             while (true) {
-                var sampled: WayPoint<V> = WayPoint(spaceRestriction.sample(), gridCellEdgeLength, plannerVelocity)
-                if (nearest != null /*&& 0.0.random(1.0) < 1 - nearest.origin.distance(target.origin) / plannerStart.distance(target.origin)*/) {
+                var sampled: WayPoint<V> = WayPoint(gridWorld.sample(), gridCellEdgeLength, plannerVelocity)
+                if (0.0 random 1.0 < 0.2) {
                     sampled = WayPoint(target.origin.cpy(), gridCellEdgeLength, plannerVelocity)
                 }
-                val nearestNode = pathRoot.nearestOf(sampled) { c1, s ->
-                    val delta = s.origin.cpy().translate(c1.origin.cpy().reverse())
-                    val transformList = vehicle.simulateKinetic(c1.velocity, deltaTime)
-
-                    val sortedByAngle = transformList.map { it -> Pair(it, it.position.angle(delta)) }.filter { it.second <= vehicle.rotationLimits * deltaTime }
-                    if (sortedByAngle.size != transformList.size) {
-                        Double.MAX_VALUE
-                    } else {
-                        c1.origin.distance2(s.origin)
+                val sampledNearestNode = pathRoot.nearestChildOf(sampled) { c1, s -> c1.element.origin.distance(s.origin)
+                }
+                val transformList = vehicle.simulateKinetic(sampledNearestNode.element.velocity, 1.0)
+                val nextTransform = transformList
+                        .map {  Pair(it, sampled.origin.distance(it.position.scale(deltaTime).translate(sampledNearestNode.element.origin))) }
+                        .sortedBy { it.second }[0].first
+                sampled.origin.set(nextTransform.position)
+                sampled.velocity.set(nextTransform.velocity)
+                val delta = sampled.origin.cpy().translate(sampledNearestNode.element.origin.cpy().reverse())
+                var sampledInvalid = false
+                if (gridWorld.insideObstacle(sampled.origin)) {
+                    sampledInvalid = true
+                } else {
+                    for (i in 1 until 11) {
+                        val position = sampledNearestNode.element.origin.cpy().translate(delta.cpy().scale(i.toDouble() / 10.0))
+                        if (gridWorld.insideObstacle(position)) {
+                            sampledInvalid = true
+                            break
+                        }
                     }
                 }
-                val delta = sampled.origin.cpy().translate(nearestNode.element.origin.cpy().reverse())
-                val transformList = vehicle.simulateKinetic(nearestNode.element.velocity, deltaTime)
-                val nextTransform = transformList.map { it -> Pair(it, it.position.angle(delta)) }.sortedBy { it.second }[0].first
-                val stepped = nearestNode.element.origin.cpy().translate(nextTransform.position)
-                if (gridWorld.insideObstacle(stepped)) {
-                    stepCount++
-                    if (stepCount > gridWorld.size) {
-                        pathRoot.clear()
-                        distance = Double.MAX_VALUE
-                        nearest = null
-                        stepCount = 0
-                    }
+                if (sampledInvalid) {
                     continue
                 }
-                sampled.origin.set(stepped)
-                sampled.velocity.set(nextTransform.velocity)
-                nearestNode += (sampled)
-                verbose("1st level : generate node on area path " + sampled.origin)
-                val dis = target.origin.distance2(stepped)
-                if (dis < distance) {
-                    distance = dis
-                    nearest = sampled
-                    val trace = pathRoot.traceTo(nearest)
-                    pathApplier(Result(ResultStatus.Complete, trace.toPath()))
+                sampled.origin.set(gridWorld.formalize(sampled.origin))
+                sampledNearestNode += (sampled)
+                val distance = sampled.origin.distance(target.origin)
+                if (distance < targetNearestDistance) {
+                    targetNearestDistance = distance
                 }
-                if (gridWorld.formalize(sampled.origin).epsilonEquals(targetCell)) {
+                verbose("1st level : generate node on area path " + sampled.origin)
+                val path = pathRoot.traceTo(sampled).toPath()
+                path.utility = (0 - path.size - (path.end.origin.distance(target.origin.cpy())))
+                pathApplier(Result(ResultStatus.InProgress, path))
+                if (sampled.origin.distance(target.origin.cpy()) <= gridCellEdgeLength) {
                     verbose("1st level : area path generation complete")
-                    val path = pathRoot.traceTo(sampled)
-                    val cellPath = Path<WayPoint<V>>()
-                    path.forEach(cellPath::add)
-                    cellPath.utility = 0 - cellPath.size
+                    val trace = pathRoot.traceTo(sampled)
+                    val cellPath = trace.toPath()
+                    cellPath.add(WayPoint(target.origin, gridCellEdgeLength, target.velocity))
+                    cellPath.utility =  (0 - cellPath.size - (cellPath.end.origin.distance(target.origin.cpy())))
+                    cellPath.finished = true
                     return cellPath
                 }
                 if (System.currentTimeMillis() - startTime > timeTolerance) {
@@ -196,109 +191,110 @@ class MCRRT<V : Vector<V>>(
 
     }
 
-    private fun secondLevelRRT(areaPath: Path<WayPoint<V>>, idx: Int, startPosition: V, startVelocity: V, approachDistance: Double, deltaTime: Double, timeTolerance: Long): Path<WayPoint<V>>? {
-        var curPosition = startPosition
-        var curVelocity = startVelocity
+    private fun secondLevelRRT(areaPath: Path<WayPoint<V>>, idxFrom : Int, idxTo: Int, fromPosition: V, fromVelocity: V, approachDistance: Double, deltaTime: Double, timeTolerance: Long): Path<WayPoint<V>>? {
+        var curPosition = fromPosition
+        var curVelocity = fromVelocity
         val ret = Path<WayPoint<V>>()
         val N01 = NormalDistribution(0.0, 1.0)
         val rotationLimitsOnOneSide = vehicle.rotationLimits / 2
         var deadEndCount = 0
         verbose("2nd level : starting actual path generation")
-        val area = areaPath[idx]
         var straightDirectionCount = 0
-        while (curPosition.distance2(area.origin) > area.radius * area.radius) {
-            val comparableMap = HashMap<Int, Double>()
-            val transforms = vehicle.simulateKinetic(curVelocity, deltaTime)
-            for (transform in transforms) {
-                transform.position.translate(curPosition)
-            }
-            var outOfBound = false
-            val origin = area.origin
-            for (i in transforms.indices) {
-                val t = transforms[i]
-                val target = origin.cpy().translate(curPosition.cpy().reverse()).normalize()
-                val next = t.velocity.cpy().normalize()
-                val angle = target.angle(next)
-                if (angle > rotationLimitsOnOneSide) {
-                    outOfBound = true
+        for (i in idxFrom until idxTo + 1) {
+            val area = areaPath[i]
+            while (curPosition.distance2(area.origin) > approachDistance * approachDistance) {
+                val comparableMap = HashMap<Int, Double>()
+                val transforms = vehicle.simulateKinetic(curVelocity, deltaTime)
+                for (transform in transforms) {
+                    transform.position.translate(curPosition)
                 }
-                comparableMap[i] = angle
-            }
-            if (!outOfBound) {
-                comparableMap.entries.forEach { e -> e.setValue(1 - N01.cumulativeProbability(e.value / rotationLimitsOnOneSide * 2.58)) }
-            } else {
-                val minAngle = comparableMap.values.stream().min { obj, anotherDouble -> obj.compareTo(anotherDouble) }.get()
-                comparableMap.entries.forEach { e -> e.setValue(1 - N01.cumulativeProbability((e.value - minAngle) / rotationLimitsOnOneSide * 2.58)) }
-            }
-            var valueSum = 0.0
-            for (value in comparableMap.values) {
-                valueSum += value
-            }
-            comparableMap.entries.forEach { e -> e.setValue(e.value / valueSum) }
-            val probability = 0.0 random 1.0
-            var sum = 0.0
-            var safeTransform = true
-            val selectedIdx =
-                    if (Math.random() <= (1 - curPosition.distance2(area.origin) / area.origin.distance2(areaPath[idx + 1].origin))) {
-                        comparableMap.entries.sortedBy { 1 - it.value }[0].key
-                    } else {
-                        comparableMap.entries.sortedBy { it.value }
-                                .map {
-                                    sum += it.value
-                                    Pair(it.key, sum)
-                                }.filter { it.second >= probability }[0].first
+                var outOfBound = false
+                val origin = area.origin.cpy()
+                for (i in transforms.indices) {
+                    val t = transforms[i]
+                    val target = origin.cpy().translate(curPosition.cpy().reverse()).normalize()
+                    val next = t.velocity.cpy().normalize()
+                    val angle = target.angle(next)
+                    if (angle > rotationLimitsOnOneSide) {
+                        outOfBound = true
                     }
-            val selected = transforms[selectedIdx]
-            if (!spaceRestriction.contains(selected.position)) {
-                safeTransform = false
-            }
-            for (obs in obstacles) {
-                if (obs.contains(selected.position)) {
+                    comparableMap[i] = angle
+                }
+                if (!outOfBound) {
+                    comparableMap.entries.forEach { e -> e.setValue(1 - N01.cumulativeProbability(e.value / rotationLimitsOnOneSide * 2.58)) }
+                } else {
+                    val minAngle = comparableMap.values.stream().min { obj, anotherDouble -> obj.compareTo(anotherDouble) }.get()
+                    comparableMap.entries.forEach { e -> e.setValue(1 - N01.cumulativeProbability((e.value - minAngle) / rotationLimitsOnOneSide * 2.58)) }
+                }
+                var valueSum = 0.0
+                for (value in comparableMap.values) {
+                    valueSum += value
+                }
+                comparableMap.entries.forEach { e -> e.setValue(e.value / valueSum) }
+                val probability = 0.0 random 1.0
+                var sum = 0.0
+                var safeTransform = true
+                val selectedIdx =
+                        if (Math.random() <= (1 - curPosition.distance2(area.origin) / area.origin.distance2(areaPath[idxTo + 1].origin))) {
+                            comparableMap.entries.sortedBy { 1 - it.value }[0].key
+                        } else {
+                            comparableMap.entries.sortedBy { it.value }
+                                    .map {
+                                        sum += it.value
+                                        Pair(it.key, sum)
+                                    }.filter { it.second >= probability }[0].first
+                        }
+                val selected = transforms[selectedIdx]
+                if (!spaceRestriction.contains(selected.position)) {
                     safeTransform = false
                 }
-            }
-            if (safeTransform) {
-                verbose("2nd level : expanding actual path point :" + selected.position)
-                ret.add(WayPoint(selected.position, selected.velocity.len(), selected.velocity))
-                curPosition = selected.position.cpy()
-                curVelocity = selected.velocity.cpy()
-                if (selectedIdx.toDouble() == Math.ceil(transforms.size / 2.0)) {
-                    straightDirectionCount += 1
-                    ret.utility -= straightDirectionCount
-                } else {
-                    if (straightDirectionCount > 0) {
-                        straightDirectionCount -= 1
+                for (obs in obstacles) {
+                    if (obs.contains(selected.position)) {
+                        safeTransform = false
                     }
                 }
-                if (ret.end.origin.distance(area.origin) <= approachDistance) {
-                    ret.utility -= ret.end.origin.distance2(target.origin).toInt()
-                    ret.utility -= ret.size
-                    verbose("2nd level : finished path generation")
-                    return ret
-                }
-            } else {
-                deadEndCount++
-                verbose("2nd level : dead end back propagation with $deadEndCount path points ")
-                for (i in 0 until deadEndCount) {
-                    if (ret.size != 0) {
-                        ret.remove(ret.end)
+                if (safeTransform) {
+                    verbose("2nd level : expanding actual path point :" + selected.position)
+                    ret.add(WayPoint(selected.position, selected.velocity.len(), selected.velocity))
+                    curPosition = selected.position.cpy()
+                    curVelocity = selected.velocity.cpy()
+                    if (selectedIdx.toDouble() == Math.ceil(transforms.size / 2.0)) {
+                        straightDirectionCount += 1
+                        ret.utility -= straightDirectionCount
+                    } else {
+                        if (straightDirectionCount > 0) {
+                            straightDirectionCount -= 1
+                        }
+                    }
+                    if (ret.end.origin.distance(area.origin) <= approachDistance) {
+                        ret.utility -= ret.end.origin.distance2(target.origin).toInt()
+                        ret.utility -= ret.size
+                        break
+                    }
+                } else {
+                    deadEndCount++
+                    verbose("2nd level : dead end back propagation with $deadEndCount path points ")
+                    for (i in 0 until deadEndCount) {
+                        if (ret.size != 0) {
+                            ret.remove(ret.end)
+                        }
+                    }
+                    if (ret.size == 0) {
+                        curPosition = vehicle.position.cpy()
+                        curVelocity = vehicle.velocity.cpy()
+                        deadEndCount = 0
+                    } else {
+                        val last = ret.end
+                        curPosition = last.origin.cpy()
+                        curVelocity = last.velocity.cpy()
                     }
                 }
-                if (ret.size == 0) {
-                    curPosition = vehicle.position.cpy()
-                    curVelocity = vehicle.velocity.cpy()
-                    deadEndCount = 0
-                } else {
-                    val last = ret.end
-                    curPosition = last.origin.cpy()
-                    curVelocity = last.velocity.cpy()
+                if (System.currentTimeMillis() - startTime > timeTolerance) {
+                    return null
                 }
-            }
-            if (System.currentTimeMillis() - startTime > timeTolerance) {
-                return null
             }
         }
-
+        verbose("2nd level : finished path generation")
         return ret
     }
 
