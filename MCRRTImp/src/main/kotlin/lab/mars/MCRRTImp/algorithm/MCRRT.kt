@@ -126,8 +126,7 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : start grid world scan")
             gridWorld.scan(obstacles)
             verbose("1st level : grid scan completed in " + (System.currentTimeMillis() - gridScanStartTime) + "ms")
-            val gridCellEdgeLength = gridWorld.cellSize.len()
-            val pathRoot = NTreeNode(WayPoint(plannerStart, gridCellEdgeLength, plannerVelocity))
+            val pathRoot = NTreeNode(WayPoint(plannerStart, scaleBase, plannerVelocity))
             if (gridWorld.insideObstacle(target.origin)) {
                 return Path()
             }
@@ -135,13 +134,13 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : starting area path generation")
             var targetNearestDistance = Double.MAX_VALUE
             while (true) {
-                var sampled: WayPoint<V> = WayPoint(gridWorld.sample(), gridCellEdgeLength, plannerVelocity)
+                var sampled: WayPoint<V> = WayPoint(gridWorld.sample(), scaleBase, plannerVelocity)
                 if (0.0 random 1.0 < 0.2) {
-                    sampled = WayPoint(target.origin.cpy(), gridCellEdgeLength, plannerVelocity)
+                    sampled = WayPoint(target.origin.cpy(), scaleBase, plannerVelocity)
                 }
                 val sampledNearestNode = pathRoot.nearestChildOf(sampled) { c1, s -> c1.element.origin.distance(s.origin) }
                 val expandDirection = sampled.origin.cpy().translate(sampledNearestNode.element.origin.cpy().reverse())
-                sampled.origin.set(gridWorld.formalize(sampledNearestNode.element.origin)).translate(expandDirection.normalize().scale(gridCellEdgeLength))
+                sampled.origin.set(gridWorld.formalize(sampledNearestNode.element.origin)).translate(expandDirection.normalize().scale(scaleBase))
                 var sampledInvalid = false
                 if (gridWorld.insideObstacle(sampled.origin)) {
                     sampledInvalid = true
@@ -158,6 +157,14 @@ class MCRRT<V : Vector<V>>(
                     continue
                 }
                 sampled.origin.set(gridWorld.formalize(sampled.origin))
+                sampledNearestNode.forEachChild {
+                    if (it.element.origin.epsilonEquals(sampled.origin)) {
+                        sampledInvalid = true
+                    }
+                }
+                if (sampledInvalid) {
+                    continue
+                }
                 sampledNearestNode += (sampled)
                 val distance = sampled.origin.distance(target.origin)
                 if (distance < targetNearestDistance) {
@@ -167,11 +174,11 @@ class MCRRT<V : Vector<V>>(
                 val path = pathRoot.traceTo(sampled).toPath()
                 path.utility = (0 - path.size - (path.end.origin.distance(target.origin.cpy())))
                 pathApplier(Result(ResultStatus.InProgress, path))
-                if (sampled.origin.distance(target.origin.cpy()) <= gridCellEdgeLength) {
+                if (sampled.origin.distance(target.origin.cpy()) <= scaleBase) {
                     verbose("1st level : area path generation complete")
                     val trace = pathRoot.traceTo(sampled)
                     val cellPath = trace.toPath()
-                    cellPath.add(WayPoint(target.origin, gridCellEdgeLength, target.velocity))
+                    cellPath.add(WayPoint(target.origin, scaleBase, target.velocity))
                     cellPath.utility =  (0 - cellPath.size - (cellPath.end.origin.distance(target.origin.cpy())))
                     cellPath.finished = true
                     return cellPath

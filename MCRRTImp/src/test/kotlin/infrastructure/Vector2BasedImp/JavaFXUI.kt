@@ -136,7 +136,7 @@ class JavaFXUI : GUIBase() {
         val attackerPosition = Vector2(5.0, 5.0)
         val targetPosition = Vector2(1800.0, 1000.0)
         val target = WayPoint(targetPosition, 5.0, Vector2())
-        val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(4.1666667 / 1000.0 * 6), 10.0, 5, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
+        val attackerLeftUp = Attacker(attackerPosition, Vector2(1.0, 1.0).normalize().scale(400.0 / 3600.0), 10.0, 5, 200.0, 50.0, 5.0, target, world!!.area()) { world!!.allObstacles() }
         attackerLeftUp.setDesignatedTarget(target)
         return attackerLeftUp
     }

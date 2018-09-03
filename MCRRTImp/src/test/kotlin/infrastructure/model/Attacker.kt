@@ -119,6 +119,7 @@ class Attacker<V : Vector<V>>(position: V,
 
                     when (value.status) {
                         MCRRT.ResultStatus.Complete -> {
+                            actualPath.clear()
                             actualPath.offer(value.levelOnePath)
                         }
                         MCRRT.ResultStatus.InProgress -> {

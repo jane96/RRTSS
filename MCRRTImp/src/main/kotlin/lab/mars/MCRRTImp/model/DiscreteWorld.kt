@@ -45,7 +45,9 @@ class DiscreteWorld<V : Vector<V>> : Iterable<V> {
     }
 
     fun formalize(position : V) : V {
-        return scaledSpace.formalize(position)
+        val formalized = scaledSpace.formalize(position)
+        formalized.forEachIndexed { idx, dimension -> dimension.value += cellSize.dimensions[idx].value / 2 }
+        return formalized
     }
 
     fun scan(obstacles : List<Obstacle<V>>) {

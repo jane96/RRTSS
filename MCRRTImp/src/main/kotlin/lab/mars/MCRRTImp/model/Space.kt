@@ -103,7 +103,7 @@ class Space<V : Vector<V>> : Iterable<V> {
 
     infix fun formalize(position: V): V {
         if (!contains(position)) {
-            throw IllegalArgumentException("position to be formalized not included in this space")
+            throw IllegalArgumentException("position $position to be formalized not included in this space $this")
         }
         if (!iterable) {
             return position.cpy()

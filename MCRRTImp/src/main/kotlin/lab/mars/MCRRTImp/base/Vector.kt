@@ -52,4 +52,8 @@ abstract class Vector<T : Vector<T>>(vararg values : Double) : Iterable<Dimensio
     override fun iterator(): Iterator<Dimension> {
         return dimensions.iterator()
     }
+
+    operator fun get(idx : Int) : Double {
+        return dimensions[idx].value
+    }
 }
