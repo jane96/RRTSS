@@ -21,11 +21,11 @@ class Path<W : WayPoint<*>> : Iterable<W> {
         return pathStorage.isEmpty()
     }
 
-    fun nextOf(current: W) : W{
+    fun nextOf(current: W): W {
         return pathStorage[pathStorage.indexOf(current) + 1]
     }
 
-    fun lastOf(current: W) : W {
+    fun lastOf(current: W): W {
         return pathStorage[pathStorage.indexOf(current) - 1]
     }
 
@@ -40,6 +40,13 @@ class Path<W : WayPoint<*>> : Iterable<W> {
 
     fun remove(current: W) {
         pathStorage.removeFirstOccurrence(current)
+    }
+
+    fun cpy(): Path<W> {
+        val ret = Path<W>()
+        ret.utility = this.utility
+        this.forEach { ret.add(it) }
+        return ret
     }
 
 

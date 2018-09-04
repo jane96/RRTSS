@@ -38,7 +38,9 @@ class Attacker<V : Vector<V>>(position: V,
                     obstacleProvider = obstacleProvider,
                     vehicleProvider = { this },
                     targetProvider = { designatedTargetPosition },
-                    verbose = true
+                    verbose = true,
+                    firstLevelDeltaTime = 600.0,
+                    secondLevelDeltaTime = 1.0
             )
     }
 
@@ -106,20 +108,17 @@ class Attacker<V : Vector<V>>(position: V,
 
         Thread {
             var i = 0
-            while (i++ < 20) {
+            while (i++ < 1) {
                 algorithm.solve(OneTimeConfiguration(
                         timeTolerance = Long.MAX_VALUE,
                         levelOneReplan = true,
                         levelTwoReplan = true,
                         levelTwoFromIdx = 1,
                         levelTwoToIdx = 2,
-                        wayPointApproachDistance = 10.0,
-                        firstLevelDeltaTime = 600.0,
-                        secondLevelDeltaTime = 1.0)) { value ->
+                        wayPointApproachDistance = 10.0)) { value ->
 
                     when (value.status) {
                         MCRRT.ResultStatus.Complete -> {
-                            actualPath.clear()
                             actualPath.offer(value.levelOnePath)
                         }
                         MCRRT.ResultStatus.InProgress -> {
