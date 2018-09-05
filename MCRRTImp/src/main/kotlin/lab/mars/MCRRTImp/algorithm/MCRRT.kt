@@ -96,7 +96,12 @@ class MCRRT<V : Vector<V>>(
     private fun defaultSampler(vehicle: SimulatedVehicle<V>, configuration: OneTimeConfiguration): Result<V> {
         startTime = System.currentTimeMillis()
         if (configuration.levelOneReplan) {
-            areaPathCache = firstLevelRRT(this.vehicle.position, this.vehicle.velocity, firstLevelDeltaTime, configuration.timeTolerance)
+            areaPathCache = firstLevelRRT(
+                    plannerStart = this.vehicle.position,
+                    plannerVelocity =  this.vehicle.velocity,
+                    deltaTime = firstLevelDeltaTime,
+                    cacheIdx = configuration.levelTwoFromIdx,
+                    timeTolerance =  configuration.timeTolerance)
             if (areaPathCache == null) {
                 verbose("algorithm failed reason : first level timed out")
                 return Result(ResultStatus.TimedOut)
@@ -126,7 +131,7 @@ class MCRRT<V : Vector<V>>(
     }
 
 
-    private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, deltaTime: Double, timeTolerance: Long): Path<WayPoint<V>>? {
+    private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, deltaTime: Double, cacheIdx : Int = -1, timeTolerance: Long): Path<WayPoint<V>>? {
         while (true) {
             val transforms = vehicle.simulateKinetic(plannerVelocity, 1.0)
             val scaleBase = transforms.map { it.position.len() }.sortedBy { it }.asReversed()[0] * deltaTime
@@ -136,7 +141,20 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : start grid world scan")
             gridWorld.scan(obstacles)
             verbose("1st level : grid scan completed in " + (System.currentTimeMillis() - gridScanStartTime) + "ms")
-            val pathRoot = NTreeNode(WayPoint(plannerStart, scaleBase, plannerVelocity))
+            val pathStart : NTreeNode<WayPoint<V>>
+            val pathRoot : NTreeNode<WayPoint<V>>
+            if (cacheIdx != -1) {
+                pathStart = NTreeNode(areaPathCache!![0])
+                var child = pathStart
+                for (idx in 1 until cacheIdx) {
+                    child.add(areaPathCache!![idx])
+                    child = child[0]
+                }
+                pathRoot = child
+            } else {
+                pathStart = NTreeNode(WayPoint(plannerStart, scaleBase, plannerVelocity))
+                pathRoot = pathStart
+            }
             if (gridWorld.insideObstacle(target.origin)) {
                 return Path()
             }
@@ -144,6 +162,7 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : starting area path generation")
             var targetNearestDistance = Double.MAX_VALUE
             while (true) {
+
                 var sampled: WayPoint<V> = WayPoint(gridWorld.sample(), scaleBase, plannerVelocity)
                 if (0.0 random 1.0 < 0.2) {
                     sampled = WayPoint(target.origin.cpy(), scaleBase, plannerVelocity)
@@ -166,7 +185,6 @@ class MCRRT<V : Vector<V>>(
                 if (sampledInvalid) {
                     continue
                 }
-                sampled.origin.set(gridWorld.formalize(sampled.origin))
                 sampledNearestNode.forEachChild {
                     if (it.element.origin.epsilonEquals(sampled.origin)) {
                         sampledInvalid = true
@@ -181,12 +199,12 @@ class MCRRT<V : Vector<V>>(
                     targetNearestDistance = distance
                 }
                 verbose("1st level : generate node on area path " + sampled.origin)
-                val path = pathRoot.traceTo(sampled).toPath()
+                val path = pathStart.traceTo(sampled).toPath()
                 path.utility = (0 - path.size - (path.end.origin.distance(target.origin.cpy())))
                 pathApplier(Result(ResultStatus.InProgress, path))
                 if (sampled.origin.distance(target.origin.cpy()) <= scaleBase) {
                     verbose("1st level : area path generation complete")
-                    val trace = pathRoot.traceTo(sampled)
+                    val trace = pathStart.traceTo(sampled)
                     val cellPath = trace.toPath()
                     cellPath.add(WayPoint(target.origin, scaleBase, target.velocity))
                     cellPath.forEach {

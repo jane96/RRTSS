@@ -12,10 +12,10 @@ import org.junit.Test
 class TestAttacker : GUIBase() {
 
 
-        private val aircraft = Attacker(Vector2(100.0, 100.0), Vector2(1.0, 1.0).normalize().scale(4.16666667), 10.0, 5, 200.0, 50.0, 2.0, null, null, null)
+        private val aircraft = Attacker(Vector2(100.0, 100.0), Vector2(1.0, 1.0).normalize().scale(4.16666667), 10.0, 100, 200.0, 50.0, 2.0, null, null, null)
 
 
-        var deltaTime = 1.0
+        var deltaTime = 30.0
 
         override fun draw(pencil: Pencil) {
             val transforms = aircraft.simulateKinetic(aircraft.velocity, deltaTime)
