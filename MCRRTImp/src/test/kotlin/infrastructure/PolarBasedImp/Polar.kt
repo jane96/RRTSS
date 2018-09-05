@@ -8,6 +8,10 @@ import java.util.Objects
 
 
 class Polar @JvmOverloads constructor(r: Double = 0.0, theta: Double = 0.0) : Vector<Polar>(r, (theta + 360) % 360) {
+    override fun crs(other: Polar): Double {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun epsilonEquals(other: Polar): Boolean {
         return epsilonEquals(other, 0.001)
     }

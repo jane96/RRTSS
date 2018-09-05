@@ -5,11 +5,9 @@ import lab.mars.MCRRTImp.base.Vector
 import lab.mars.MCRRTImp.model.*
 import org.apache.commons.math3.distribution.NormalDistribution
 import java.util.*
-import java.util.concurrent.LinkedBlockingQueue
 
-typealias PathSampler<V> = (SimulatedVehicle<V>, OneTimeConfiguration) -> MCRRT.Result<V>
+typealias PathSampler<V> = (SimulatedVehicle<V>, OneTimeConfiguration<V>) -> Unit
 
-@Suppress("NOTHING_TO_INLINE")
 class MCRRT<V : Vector<V>>(
         private val spaceRestriction: Space<V>,
         pathSampler: PathSampler<V>? = null,
@@ -35,12 +33,12 @@ class MCRRT<V : Vector<V>>(
     }
 
 
-    private lateinit var pathApplier : (Result<V>) -> Unit
+    private lateinit var pathApplier: (Result<V>) -> Unit
 
-    fun solve(oneTimeConfiguration: OneTimeConfiguration, pathApplier: (Result<V>) -> Unit) {
+    fun solve(oneTimeConfiguration: OneTimeConfiguration<V>, pathApplier: (Result<V>) -> Unit) {
         beforeAlgorithm()
         this.pathApplier = pathApplier
-        pathApplier(algorithm(oneTimeConfiguration))
+        algorithm(oneTimeConfiguration)
     }
 
 
@@ -52,7 +50,7 @@ class MCRRT<V : Vector<V>>(
     }
 
 
-    class Result<V : Vector<V>>(val status: ResultStatus, val levelOnePath: Path<WayPoint<V>>? = null, val levelTwoPaths: Queue<Path<WayPoint<V>>>? = null)
+    class Result<V : Vector<V>>(val status: ResultStatus, val areaPath: Path<WayPoint<V>>? = null, val actualPath: Path<WayPoint<V>>? = null)
 
 
     private val pathSampler: PathSampler<V>
@@ -69,9 +67,7 @@ class MCRRT<V : Vector<V>>(
 
     private var areaPathCache: Path<WayPoint<V>>? = null
 
-    private var actualPathCache = LinkedBlockingQueue<Path<WayPoint<V>>>()
-
-    private fun List<WayPoint<V>>.toPath() : Path<WayPoint<V>> {
+    private fun List<WayPoint<V>>.toPath(): Path<WayPoint<V>> {
         val currentPath = Path<WayPoint<V>>()
         this.forEach { currentPath.add(it) }
         return currentPath
@@ -83,36 +79,40 @@ class MCRRT<V : Vector<V>>(
         }
     }
 
-    private fun algorithm(oneTimeConfiguration: OneTimeConfiguration): Result<V> {
-        return this.pathSampler(vehicle, oneTimeConfiguration)
+    private fun algorithm(oneTimeConfiguration: OneTimeConfiguration<V>) {
+        this.pathSampler(vehicle, oneTimeConfiguration)
     }
 
-    private fun <E> LinkedBlockingQueue<E>.cpy() : LinkedBlockingQueue<E> {
-        val ret = LinkedBlockingQueue<E>()
-        this.forEach { ret.offer(it) }
-        return ret
-    }
-
-    private fun defaultSampler(vehicle: SimulatedVehicle<V>, configuration: OneTimeConfiguration): Result<V> {
+    private fun defaultSampler(vehicle: SimulatedVehicle<V>, configuration: OneTimeConfiguration<V>) {
         startTime = System.currentTimeMillis()
         if (configuration.levelOneReplan) {
-            areaPathCache = firstLevelRRT(
-                    plannerStart = this.vehicle.position,
-                    plannerVelocity =  this.vehicle.velocity,
-                    deltaTime = firstLevelDeltaTime,
-                    cacheIdx = configuration.levelTwoFromIdx,
-                    timeTolerance =  configuration.timeTolerance)
-            if (areaPathCache == null) {
-                verbose("algorithm failed reason : first level timed out")
-                return Result(ResultStatus.TimedOut)
-            } else if (areaPathCache!!.size == 0) {
-                verbose("algorithm failed reason : target impossible to reach" )
-                return Result(ResultStatus.Impossible)
+            if (configuration.levelOneUseCache) {
+                areaPathCache = configuration.levelOnePathCache
             }
+            val newPath = firstLevelRRT(
+                    plannerStart = this.vehicle.position,
+                    plannerVelocity = this.vehicle.velocity,
+                    rotationLimits = configuration.levelOneRotationLimit,
+                    deltaTime = firstLevelDeltaTime,
+                    cacheIdx = configuration.levelOneReplanCacheIdx,
+                    timeTolerance = configuration.timeTolerance)
+            if (newPath == null) {
+                verbose("algorithm failed reason : first level timed out")
+                pathApplier.invoke(Result(ResultStatus.TimedOut))
+                return
+            } else if (newPath.size == 0) {
+                verbose("algorithm failed reason : target impossible to reach")
+                pathApplier(Result(ResultStatus.Impossible))
+                return
+            }
+            areaPathCache = newPath
         }
         if (configuration.levelTwoReplan) {
             this.vehicle = vehicleProvider()
-            val newPaths = secondLevelRRT(
+            if (configuration.levelOneUseCache) {
+                this.areaPathCache = configuration.levelOnePathCache
+            }
+            secondLevelRRT(
                     areaPath = areaPathCache!!,
                     idxFrom = configuration.levelTwoFromIdx,
                     idxTo = configuration.levelTwoToIdx,
@@ -121,17 +121,13 @@ class MCRRT<V : Vector<V>>(
                     approachDistance = configuration.wayPointApproachDistance,
                     deltaTime = secondLevelDeltaTime,
                     timeTolerance = configuration.timeTolerance)
-            if (newPaths == null) {
-                verbose("algorithm failed reason : second level timed out")
-                return Result(ResultStatus.TimedOut)
-            }
-            actualPathCache = newPaths
+        } else {
+            pathApplier.invoke(Result(ResultStatus.Complete, areaPathCache))
         }
-        return Result(ResultStatus.Complete, levelOnePath =  areaPathCache!!.cpy(), levelTwoPaths =  actualPathCache.cpy())
     }
 
 
-    private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, deltaTime: Double, cacheIdx : Int = -1, timeTolerance: Long): Path<WayPoint<V>>? {
+    private fun firstLevelRRT(plannerStart: V, plannerVelocity: V, rotationLimits: Double, deltaTime: Double, cacheIdx: Int = -1, timeTolerance: Long): Path<WayPoint<V>>? {
         while (true) {
             val transforms = vehicle.simulateKinetic(plannerVelocity, 1.0)
             val scaleBase = transforms.map { it.position.len() }.sortedBy { it }.asReversed()[0] * deltaTime
@@ -141,8 +137,8 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : start grid world scan")
             gridWorld.scan(obstacles)
             verbose("1st level : grid scan completed in " + (System.currentTimeMillis() - gridScanStartTime) + "ms")
-            val pathStart : NTreeNode<WayPoint<V>>
-            val pathRoot : NTreeNode<WayPoint<V>>
+            val pathStart: NTreeNode<WayPoint<V>>
+            val expansionStart: NTreeNode<WayPoint<V>>
             if (cacheIdx != -1) {
                 pathStart = NTreeNode(areaPathCache!![0])
                 var child = pathStart
@@ -150,10 +146,10 @@ class MCRRT<V : Vector<V>>(
                     child.add(areaPathCache!![idx])
                     child = child[0]
                 }
-                pathRoot = child
+                expansionStart = child
             } else {
                 pathStart = NTreeNode(WayPoint(plannerStart, scaleBase, plannerVelocity))
-                pathRoot = pathStart
+                expansionStart = pathStart
             }
             if (gridWorld.insideObstacle(target.origin)) {
                 return Path()
@@ -162,14 +158,31 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : starting area path generation")
             var targetNearestDistance = Double.MAX_VALUE
             while (true) {
-
-                var sampled: WayPoint<V> = WayPoint(gridWorld.sample(), scaleBase, plannerVelocity)
-                if (0.0 random 1.0 < 0.2) {
+                var sampled: WayPoint<V> = WayPoint(spaceRestriction.sample(), scaleBase, plannerVelocity)
+                if (0.0 random 1.0 < 0.5) {
                     sampled = WayPoint(target.origin.cpy(), scaleBase, plannerVelocity)
                 }
-                val sampledNearestNode = pathRoot.nearestChildOf(sampled) { c1, s -> c1.element.origin.distance(s.origin) }
+                val sampledNearestNode = expansionStart.nearestChildOf(sampled) { c1, s ->
+                    if (c1.childrenSize >= rotationLimits) {
+                        Double.MAX_VALUE
+                    }
+                    c1.element.origin.distance(s.origin)
+
+                }
+                val direction: V = if (sampledNearestNode.parent != null) {
+                    sampledNearestNode.element.origin.cpy().translate(sampledNearestNode.parent!!.element.origin.cpy().reverse())
+                } else {
+                    plannerVelocity
+                }
                 val expandDirection = sampled.origin.cpy().translate(sampledNearestNode.element.origin.cpy().reverse())
-                sampled.origin.set(gridWorld.formalize(sampledNearestNode.element.origin)).translate(expandDirection.normalize().scale(scaleBase))
+                if (expandDirection.angle(direction) > rotationLimits) {
+                    if (expandDirection.crs(direction) < 0) {
+                        expandDirection.set(direction.cpy().rotate(rotationLimits))
+                    } else {
+                        expandDirection.set(direction.cpy().rotate(-rotationLimits))
+                    }
+                }
+                sampled.origin.set(sampledNearestNode.element.origin.cpy().translate(expandDirection.normalize().scale(scaleBase)))
                 var sampledInvalid = false
                 if (gridWorld.insideObstacle(sampled.origin)) {
                     sampledInvalid = true
@@ -185,28 +198,16 @@ class MCRRT<V : Vector<V>>(
                 if (sampledInvalid) {
                     continue
                 }
-                sampledNearestNode.forEachChild {
-                    if (it.element.origin.epsilonEquals(sampled.origin)) {
-                        sampledInvalid = true
-                    }
-                }
-                if (sampledInvalid) {
-                    continue
-                }
                 sampledNearestNode += (sampled)
                 val distance = sampled.origin.distance(target.origin)
                 if (distance < targetNearestDistance) {
                     targetNearestDistance = distance
                 }
                 verbose("1st level : generate node on area path " + sampled.origin)
-                val path = pathStart.traceTo(sampled).toPath()
-                path.utility = (0 - path.size - (path.end.origin.distance(target.origin.cpy())))
-                pathApplier(Result(ResultStatus.InProgress, path))
                 if (sampled.origin.distance(target.origin.cpy()) <= scaleBase) {
                     verbose("1st level : area path generation complete")
                     val trace = pathStart.traceTo(sampled)
                     val cellPath = trace.toPath()
-                    cellPath.add(WayPoint(target.origin, scaleBase, target.velocity))
                     cellPath.forEach {
                         cellPath.utility -= it.origin.distance(target.origin)
                     }
@@ -222,19 +223,27 @@ class MCRRT<V : Vector<V>>(
 
     }
 
-    private fun secondLevelRRT(areaPath: Path<WayPoint<V>>, idxFrom : Int, idxTo: Int, fromPosition: V, fromVelocity: V, approachDistance: Double, deltaTime: Double, timeTolerance: Long): LinkedBlockingQueue<Path<WayPoint<V>>>? {
+    private fun secondLevelRRT(areaPath: Path<WayPoint<V>>, idxFrom: Int, idxTo: Int, fromPosition: V, fromVelocity: V, approachDistance: Double, deltaTime: Double, timeTolerance: Long) {
         var curPosition = fromPosition
         var curVelocity = fromVelocity
-        val ret = LinkedBlockingQueue<Path<WayPoint<V>>>()
         val N01 = NormalDistribution(0.0, 1.0)
         val rotationLimitsOnOneSide = vehicle.rotationLimits / 2
         var deadEndCount = 0
         verbose("2nd level : starting actual path generation")
+        val idxUpperBound = if (idxTo >= areaPath.size) areaPath.size - 1 else idxTo
         var straightDirectionCount = 0
-        for (i in idxFrom until idxTo + 1) {
-            val area = areaPath[i]
+        var idx = idxFrom
+        while (idx <= idxUpperBound) {
+            val area = areaPath[idx]
             val currentPath = Path<WayPoint<V>>()
+            val from = idx
             while (curPosition.distance2(area.origin) > approachDistance * approachDistance) {
+                for (j in idx + 1 until idxUpperBound) {
+                    if (curPosition.distance2(area.origin) <= approachDistance * approachDistance) {
+                        idx = j + 1
+                        break
+                    }
+                }
                 val comparableMap = HashMap<Int, Double>()
                 val transforms = vehicle.simulateKinetic(curVelocity, deltaTime)
                 for (transform in transforms) {
@@ -263,18 +272,12 @@ class MCRRT<V : Vector<V>>(
                 }
                 comparableMap.entries.forEach { e -> e.setValue(e.value / valueSum) }
                 val probability = 0.0 random 1.0
-                var sum = 0.0
                 var safeTransform = true
                 val selectedIdx =
-                        if (Math.random() <= (1 - curPosition.distance2(area.origin) / area.origin.distance2(areaPath[idxTo + 1].origin))) {
-                            comparableMap.entries.sortedBy { 1 - it.value }[0].key
-                        } else {
-                            comparableMap.entries.sortedBy { it.value }
-                                    .map {
-                                        sum += it.value
-                                        Pair(it.key, sum)
-                                    }.filter { it.second >= probability }[0].first
-                        }
+                        comparableMap.entries
+                                .map {
+                                    Pair(it.key, Math.abs(it.value - probability))
+                                }.sortedBy { it.second }[0].first
                 val selected = transforms[selectedIdx]
                 if (!spaceRestriction.contains(selected.position)) {
                     safeTransform = false
@@ -300,7 +303,6 @@ class MCRRT<V : Vector<V>>(
                     if (currentPath.end.origin.distance(area.origin) <= approachDistance) {
                         currentPath.utility -= currentPath.end.origin.distance2(target.origin).toInt()
                         currentPath.utility -= currentPath.size
-                        ret.offer(currentPath)
                         break
                     }
                 } else {
@@ -322,12 +324,21 @@ class MCRRT<V : Vector<V>>(
                     }
                 }
                 if (System.currentTimeMillis() - startTime > timeTolerance) {
-                    return null
+                    pathApplier.invoke(Result(ResultStatus.TimedOut))
+                    return
                 }
             }
+            currentPath.from = from
+            currentPath.to = idx
+            if (idx == idxUpperBound) {
+                pathApplier.invoke(Result(ResultStatus.Complete, areaPath, currentPath))
+            } else {
+                pathApplier.invoke(Result(ResultStatus.InProgress, areaPath, currentPath))
+            }
+            idx++
         }
         verbose("2nd level : finished path generation")
-        return ret
+
     }
 
 

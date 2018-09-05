@@ -4,6 +4,11 @@ import java.util.*
 
 
 class Path<W : WayPoint<*>> : Iterable<W> {
+
+    var from = 0
+
+    var to = 0
+
     operator fun get(idx: Int): W {
         return pathStorage[idx]
     }

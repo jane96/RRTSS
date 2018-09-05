@@ -91,7 +91,7 @@ class JavaFXUI : GUIBase() {
             }
             val cellSize = Vector2(path[0].radius, path[0].radius)
             for (wayPoint in path) {
-                pencil.filled().color(Color.LIGHTBLUE).rect(wayPoint.origin.cpy().translate(Vector2(cellSize.x() / 2, cellSize.y() / 2)), cellSize)
+                pencil.filled().color(Color.WHITE).rect(wayPoint.origin.cpy().translate(Vector2(cellSize.x() / 2, cellSize.y() / 2)), cellSize)
                 pencil.stroked(1.0).color(Color.BLUE).rect(wayPoint.origin.cpy().translate(Vector2(cellSize.x() / 2, cellSize.y() / 2)), cellSize)
             }
         }
@@ -116,17 +116,19 @@ class JavaFXUI : GUIBase() {
         }
         paths.forEachIndexed { idx, path ->
             if (path.size != 0) {
-                val last = attacker.position.cpy()
+                var last = path[0].origin
                 var lineWidth = 1.0
-                var color = Color.BLACK.interpolate(Color.color(0.8,0.8,0.8), if (max == min) 1.0 else (path.utility - min) / (max - min))
-                for (i in (0 until path.size)) {
+                var color = Color.RED//Color.BLACK.interpolate(Color.color(0.8,0.8,0.8), if (max == min) 1.0 else (path.utility - min) / (max - min))
+                for (i in 1 until path.size) {
                     val wayPoint2D = path[i]
                     if (path.finished) {
                         lineWidth = 2.0
                         color = Color.WHITE
                     }
-                    pencil.filled().color(color).box(last.cpy(), wayPoint2D.radius / 10)
-                    pencil.stroked(lineWidth * scaleBase).color(color).line(last.cpy(), last.set(wayPoint2D.origin))
+//                    pencil.filled().color(color).box(last.cpy(), wayPoint2D.radius / 10)
+                    pencil.stroked(lineWidth * scaleBase).color(color).line(last.cpy(), wayPoint2D.origin)
+                    last = wayPoint2D.origin
+
                 }
             }
         }
@@ -190,11 +192,11 @@ class JavaFXUI : GUIBase() {
         //        }
         drawObstacles(pencil)
         for (attacker in world!!.attacker()) {
-            drawAreaPath(attacker, pencil)
+//            drawAreaPath(attacker, pencil)
             drawPath(attacker, pencil)
             drawTarget(attacker, pencil)
             drawUAV(attacker, pencil)
-            drawLeaves(attacker, pencil)
+//            drawLeaves(attacker, pencil)
         }
     }
 

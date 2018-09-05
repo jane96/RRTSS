@@ -1,13 +1,11 @@
 package infrastructure.model
 
-import infrastructure.Vector2BasedImp.Vector2
 import lab.mars.MCRRTImp.algorithm.MCRRT
 import lab.mars.MCRRTImp.base.*
 import lab.mars.MCRRTImp.model.*
 
 import java.util.ArrayList
 import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class Attacker<V : Vector<V>>(position: V,
@@ -38,9 +36,9 @@ class Attacker<V : Vector<V>>(position: V,
                     obstacleProvider = obstacleProvider,
                     vehicleProvider = { this },
                     targetProvider = { designatedTargetPosition },
-                    verbose = true,
+                    verbose = false,
                     firstLevelDeltaTime = 600.0,
-                    secondLevelDeltaTime = 1.0
+                    secondLevelDeltaTime = 10.0
             )
     }
 
@@ -88,7 +86,7 @@ class Attacker<V : Vector<V>>(position: V,
     }
 
     fun areaPath(): Queue<Path<WayPoint<V>>> {
-        return this.areaPath
+            return this.areaPath
     }
 
     override fun simulateVelocity(currentVelocity: Double, angle: Double): Double {
@@ -108,21 +106,39 @@ class Attacker<V : Vector<V>>(position: V,
 
         Thread {
             var i = 0
-            while (i++ < 1) {
-                algorithm.solve(OneTimeConfiguration(
-                        timeTolerance = Long.MAX_VALUE,
-                        levelOneReplan = true,
-                        levelTwoReplan = true,
-                        levelTwoFromIdx = 1,
-                        levelTwoToIdx = 2,
-                        wayPointApproachDistance = 10.0)) { value ->
+            while (true) {
+                i++
+                println(i)
+                val configuration : OneTimeConfiguration<V>
+                if (i > 1) {
+                    configuration = OneTimeConfiguration(
+                            timeTolerance = Long.MAX_VALUE,
+                            levelOneReplan = true,
+                            levelTwoReplan = false,
+                            wayPointApproachDistance = 10.0,
+                            levelOneUseCache = true,
+                            levelOnePathCache = actualPath.peek(),
+                            levelOneReplanCacheIdx = 10
 
+                    )
+                } else {
+                    configuration = OneTimeConfiguration(
+                            timeTolerance = Long.MAX_VALUE,
+                            levelOneReplan = true,
+                            levelTwoReplan = true,
+                            levelTwoFromIdx = 0,
+                            levelTwoToIdx = 1,
+                            wayPointApproachDistance = 10.0,
+                            levelOneUseCache = false)
+                }
+                algorithm.solve(configuration) { value ->
                     when (value.status) {
-                        MCRRT.ResultStatus.Complete -> {
-                            actualPath.offer(value.levelOnePath)
+                        MCRRT.ResultStatus.InProgress, MCRRT.ResultStatus.Complete -> {
+                            actualPath.clear()
+                            actualPath.add(value.areaPath!!)
                         }
-                        MCRRT.ResultStatus.InProgress -> {
-                            actualPath.offer(value.levelOnePath)
+                        else -> {
+                            println(value.status)
                         }
                     }
                 }

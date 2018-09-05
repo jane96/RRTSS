@@ -56,4 +56,6 @@ abstract class Vector<T : Vector<T>>(vararg values : Double) : Iterable<Dimensio
     operator fun get(idx : Int) : Double {
         return dimensions[idx].value
     }
+
+    abstract fun crs(other : T): Double
 }

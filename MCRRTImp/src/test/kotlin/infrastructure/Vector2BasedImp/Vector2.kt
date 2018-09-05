@@ -6,6 +6,9 @@ import java.util.Objects
 
 
 class Vector2 @JvmOverloads constructor(x: Double = 0.0, y: Double = 0.0) : Vector<Vector2>(x, y) {
+    override fun crs(other: Vector2): Double {
+        return this.x.value * other.y.value - this.y.value * other.x.value
+    }
 
     private val x: Dimension = dimensions[0]
 
