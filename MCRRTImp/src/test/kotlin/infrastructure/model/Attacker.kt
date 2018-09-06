@@ -107,7 +107,7 @@ class Attacker<V : Vector<V>>(position: V,
         Thread {
             var i = 0
             while (true) {
-                i++
+//                i++
                 println(i)
                 val configuration : OneTimeConfiguration<V>
                 if (i > 1) {
@@ -127,7 +127,7 @@ class Attacker<V : Vector<V>>(position: V,
                             levelOneReplan = true,
                             levelTwoReplan = true,
                             levelTwoFromIdx = 0,
-                            levelTwoToIdx = 1,
+                            levelTwoToIdx = 100,
                             wayPointApproachDistance = 10.0,
                             levelOneUseCache = false)
                 }

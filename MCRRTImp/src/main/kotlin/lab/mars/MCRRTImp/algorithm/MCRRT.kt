@@ -242,6 +242,7 @@ class MCRRT<V : Vector<V>>(
             val area = areaPath[idx]
             val currentPath = Path<WayPoint<V>>()
             val from = idx - 1
+            var selectSafest = false
             while (curPosition.distance2(area.origin) > approachDistance * approachDistance) {
                 for (j in idx until idxUpperBound) {
                     if (curPosition.distance2(area.origin) <= approachDistance * approachDistance) {
@@ -278,7 +279,8 @@ class MCRRT<V : Vector<V>>(
                 comparableMap.entries.forEach { e -> e.setValue(e.value / valueSum) }
                 val probability = 0.0 random 1.0
                 var safeTransform = true
-                val selectedIdx =
+                val selectedIdx = if (selectSafest) comparableMap.entries.sortedBy { it.value }.asReversed()[0].key
+                        else
                         comparableMap.entries
                                 .map {
                                     Pair(it.key, Math.abs(it.value - probability))
@@ -293,6 +295,9 @@ class MCRRT<V : Vector<V>>(
                     }
                 }
                 if (safeTransform) {
+                    if (deadEndCount == 0) {
+                        selectSafest = false
+                    }
                     verbose("2nd level : expanding actual path point :" + selected.position)
                     currentPath.add(WayPoint(selected.position, selected.velocity.len(), selected.velocity))
                     curPosition = selected.position.cpy()
@@ -312,6 +317,7 @@ class MCRRT<V : Vector<V>>(
                     }
                 } else {
                     deadEndCount++
+                    selectSafest = true
                     verbose("2nd level : dead end back propagation with $deadEndCount path points ")
                     (0 until deadEndCount).forEach {
                         if (currentPath.size != 0) {
