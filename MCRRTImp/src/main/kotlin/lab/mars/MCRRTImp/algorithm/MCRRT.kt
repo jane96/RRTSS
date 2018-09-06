@@ -142,7 +142,7 @@ class MCRRT<V : Vector<V>>(
             if (cacheIdx != -1) {
                 pathStart = NTreeNode(areaPathCache!![0])
                 var child = pathStart
-                for (idx in 1 until cacheIdx) {
+                for (idx in 1 until cacheIdx + 1) {
                     child.add(areaPathCache!![idx])
                     child = child[0]
                 }
@@ -187,11 +187,15 @@ class MCRRT<V : Vector<V>>(
                 if (gridWorld.insideObstacle(sampled.origin)) {
                     sampledInvalid = true
                 } else {
-                    for (i in 1 until 10) {
-                        val position = sampledNearestNode.element.origin.cpy().translate(expandDirection.cpy().scale(i.toDouble() / 10.0))
-                        if (gridWorld.insideObstacle(position)) {
-                            sampledInvalid = true
-                            break
+                    (1 until 10).run {
+                        forEach { i ->
+                            val position = sampledNearestNode.element.origin.cpy().translate(expandDirection.cpy().scale(i.toDouble() / 10.0))
+                            obstacles.forEach {
+                                if (it.contains(position)) {
+                                    sampledInvalid = true
+                                    return@run
+                                }
+                            }
                         }
                     }
                 }
@@ -233,12 +237,13 @@ class MCRRT<V : Vector<V>>(
         val idxUpperBound = if (idxTo >= areaPath.size) areaPath.size - 1 else idxTo
         var straightDirectionCount = 0
         var idx = idxFrom
-        while (idx <= idxUpperBound) {
+        while (idx < idxUpperBound) {
+            idx++
             val area = areaPath[idx]
             val currentPath = Path<WayPoint<V>>()
-            val from = idx
+            val from = idx - 1
             while (curPosition.distance2(area.origin) > approachDistance * approachDistance) {
-                for (j in idx + 1 until idxUpperBound) {
+                for (j in idx until idxUpperBound) {
                     if (curPosition.distance2(area.origin) <= approachDistance * approachDistance) {
                         idx = j + 1
                         break
@@ -335,7 +340,6 @@ class MCRRT<V : Vector<V>>(
             } else {
                 pathApplier.invoke(Result(ResultStatus.InProgress, areaPath, currentPath))
             }
-            idx++
         }
         verbose("2nd level : finished path generation")
 

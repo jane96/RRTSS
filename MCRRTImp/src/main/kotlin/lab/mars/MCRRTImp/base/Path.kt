@@ -54,6 +54,10 @@ class Path<W : WayPoint<*>> : Iterable<W> {
         return ret
     }
 
+    fun clear() {
+        this.pathStorage.clear()
+    }
+
 
     override fun iterator(): Iterator<W> {
         return pathStorage.iterator()
