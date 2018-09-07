@@ -158,6 +158,9 @@ class MCRRT<V : Vector<V>>(
             verbose("1st level : starting area path generation")
             var targetNearestDistance = Double.MAX_VALUE
             while (true) {
+                if (System.currentTimeMillis() - startTime > timeTolerance) {
+                    return null
+                }
                 var sampled: WayPoint<V> = WayPoint(spaceRestriction.sample(), scaleBase, plannerVelocity)
                 if (0.0 random 1.0 < 0.5) {
                     sampled = WayPoint(target.origin.cpy(), scaleBase, plannerVelocity)
@@ -217,9 +220,6 @@ class MCRRT<V : Vector<V>>(
                     }
                     cellPath.finished = true
                     return cellPath
-                }
-                if (System.currentTimeMillis() - startTime > timeTolerance) {
-                    return null
                 }
                 stepCount++
             }
